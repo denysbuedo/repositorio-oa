@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import UploadModal from './components/UploadModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -304,10 +305,15 @@ function HomeContent() {
               <p className="subtitle">Gestion inteligente de Recursos Educativos</p>
             </div>
           </div>
-          <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-            <span className="btn-icon">+</span>
-            Nuevo Objeto
-          </button>
+          <div className="header-actions">
+            <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+              <span className="btn-icon">+</span>
+              Nuevo Objeto
+            </button>
+            <Link href="/admin" className="btn-admin">
+              Administrar
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -493,6 +499,13 @@ function HomeContent() {
           display: flex;
           align-items: center;
           gap: 1rem;
+        }
+
+        .header-actions {
+          display: flex;
+          gap: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
         }
 
         .title {
@@ -732,6 +745,22 @@ function HomeContent() {
 
         .btn-primary:hover {
           background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-2px);
+        }
+
+        .btn-admin {
+          background: white;
+          color: #1e293b;
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          padding: 0.75rem 1.5rem;
+          border-radius: 0.5rem;
+          font-weight: 700;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+
+        .btn-admin:hover {
+          background: #f8fafc;
           transform: translateY(-2px);
         }
 
