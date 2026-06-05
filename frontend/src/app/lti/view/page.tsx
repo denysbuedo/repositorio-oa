@@ -22,32 +22,48 @@ function LtiContent() {
   const [object, setObject] = useState<LearningObject | null>(null);
   const [wordHtml, setWordHtml] = useState<string>('');
   const [loadingHtml, setLoadingHtml] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (objectId && objectId !== 'undefined') {
       fetch(`${API_URL}/learning-objects/${objectId}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
+        })
         .then((data: LearningObject) => {
           setObject(data);
           if (data.fileMimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             setLoadingHtml(true);
             fetch(`${API_URL}/learning-objects/${objectId}/html`)
-              .then(res => res.json())
+              .then(res => {
+                if (!res.ok) {
+                  throw new Error(`HTTP ${res.status}`);
+                }
+                return res.json();
+              })
               .then((htmlData: HtmlResponse) => {
-                setWordHtml(htmlData.html || '<p>El documento está vacío.</p>');
+                setWordHtml(htmlData.html || '<p>El documento esta vacio.</p>');
                 setLoadingHtml(false);
               })
               .catch(err => {
                 console.error("Error cargando HTML:", err);
+                setErrorMessage('No se pudo convertir el documento a HTML.');
                 setLoadingHtml(false);
               });
           }
         })
-        .catch(err => console.error("Error cargando objeto:", err));
+        .catch(err => {
+          console.error("Error cargando objeto:", err);
+          setErrorMessage('No se pudo cargar el recurso solicitado.');
+        });
     }
   }, [objectId]);
 
-  if (!objectId || objectId === 'undefined') return <div style={{ padding: '2rem' }}>Error: No se proporcionó un ID de objeto válido.</div>;
+  if (!objectId || objectId === 'undefined') return <div style={{ padding: '2rem' }}>Error: no se proporciono un ID de objeto valido.</div>;
+  if (errorMessage) return <div style={{ padding: '2rem', color: '#991b1b' }}>{errorMessage}</div>;
   if (!object) return <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando recurso seguro...</div>;
 
   return (
@@ -55,7 +71,7 @@ function LtiContent() {
       <header style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '1.2rem', margin: 0 }}>{object.title}</h1>
-          <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Recurso entregado vía LTI 1.3 por ROA God-Level</p>
+          <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Recurso entregado via LTI 1.3</p>
         </div>
         <a 
           href={`${API_URL}/${object.fileUrl}`} 
@@ -71,7 +87,7 @@ function LtiContent() {
             border: '1px solid #e2e8f0'
           }}
         >
-          ⬇️ Descargar Original
+          Descargar original
         </a>
       </header>
 
@@ -91,7 +107,7 @@ function LtiContent() {
           </div>
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <p>Este recurso es un archivo. Puedes descargarlo aquí:</p>
+            <p>Este recurso es un archivo. Puedes descargarlo aqui:</p>
             <a href={`${API_URL}/${object.fileUrl}`} className="btn" target="_blank">Descargar {object.title}</a>
           </div>
         )}
@@ -107,3 +123,4 @@ export default function LtiView() {
     </Suspense>
   );
 }
+

@@ -12,28 +12,33 @@ interface UploadModalProps {
 export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    description: ''
+    description: '',
   });
   const [createdId, setCreatedId] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
     try {
       const res = await fetch(`${API_URL}/learning-objects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
       setCreatedId(data.id);
       setStep(2);
     } catch (error) {
       console.error('Error creating learning object:', error);
-      alert('Error al crear el objeto');
+      setErrorMessage('No se pudo crear el objeto. Revisa los datos e intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -43,20 +48,24 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     if (!e.target.files?.[0] || !createdId) return;
     
     setLoading(true);
+    setErrorMessage('');
     const file = e.target.files[0];
     const formDataUpload = new FormData();
     formDataUpload.append('file', file);
 
     try {
-      await fetch(`${API_URL}/learning-objects/${createdId}/upload`, {
+      const res = await fetch(`${API_URL}/learning-objects/${createdId}/upload`, {
         method: 'POST',
-        body: formDataUpload
+        body: formDataUpload,
       });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error uploading file:', error);
-      alert('Error al subir el archivo');
+      setErrorMessage('No se pudo subir el archivo. Solo se permiten PDF o DOCX validos.');
     } finally {
       setLoading(false);
     }
@@ -70,11 +79,13 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
         </div>
 
+        {errorMessage && <div className="modal-error">{errorMessage}</div>}
+
         {step === 1 ? (
           <form onSubmit={handleCreate} className="form-group">
             <input 
               type="text" 
-              placeholder="Título del Objeto" 
+              placeholder="Titulo del objeto" 
               className="input"
               required 
               value={formData.title}
@@ -89,7 +100,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
               onChange={(e) => setFormData({...formData, author: e.target.value})}
             />
             <textarea 
-              placeholder="Descripción breve" 
+              placeholder="Descripcion breve" 
               className="input"
               rows={3}
               value={formData.description}
@@ -143,6 +154,16 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
           flex-direction: column;
           gap: 1rem;
         }
+        .modal-error {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #991b1b;
+          border-radius: 8px;
+          padding: 0.75rem;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
         .input {
           padding: 0.75rem;
           border: 1px solid var(--border);
@@ -159,3 +180,4 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     </div>
   );
 }
+

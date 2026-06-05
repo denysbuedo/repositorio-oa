@@ -21,7 +21,7 @@ export default function LtiSimulator() {
           <label>ID del Objeto en el Repositorio:</label>
           <input 
             type="text" 
-            placeholder="Pega aquí el UUID del objeto" 
+            placeholder="Pega aqui el UUID del objeto" 
             value={objectId}
             onChange={(e) => setObjectId(e.target.value)}
             style={{ padding: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
