@@ -218,7 +218,6 @@ function HomeContent() {
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
-            <div className="logo-icon">ROA</div>
             <div>
               <h1 className="title">Repositorio de Objetos de Aprendizaje</h1>
               <p className="subtitle">Gestion inteligente de Recursos Educativos</p>
@@ -405,18 +404,6 @@ function HomeContent() {
           display: flex;
           align-items: center;
           gap: 1rem;
-        }
-
-        .logo-icon {
-          font-size: 2.5rem;
-          background: rgba(255, 255, 255, 0.2);
-          width: 60px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 1rem;
-          backdrop-filter: blur(10px);
         }
 
         .title {
