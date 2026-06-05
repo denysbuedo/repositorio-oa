@@ -17,6 +17,9 @@ export interface OidcLoginParams {
 export class LtiService implements OnModuleInit {
   private keys: GenerateKeyPairResult;
   private jwks: JwksResponse = { keys: [] };
+  private readonly frontendUrl =
+    process.env.FRONTEND_URL ?? 'http://localhost:3000';
+  private readonly clientId = process.env.LTI_CLIENT_ID ?? 'moodle_client_id';
 
   async onModuleInit() {
     // Generar par de llaves directamente
@@ -52,7 +55,7 @@ export class LtiService implements OnModuleInit {
     redirectUrl.searchParams.append('response_mode', 'form_post');
     redirectUrl.searchParams.append('id_token_signed_response_alg', 'RS256');
     redirectUrl.searchParams.append('scope', 'openid');
-    redirectUrl.searchParams.append('client_id', 'moodle_client_id');
+    redirectUrl.searchParams.append('client_id', this.clientId);
     redirectUrl.searchParams.append('login_hint', login_hint);
     redirectUrl.searchParams.append('lti_message_hint', lti_message_hint);
     redirectUrl.searchParams.append('prompt', 'none');
@@ -60,6 +63,12 @@ export class LtiService implements OnModuleInit {
     redirectUrl.searchParams.append('state', state);
     redirectUrl.searchParams.append('nonce', nonce);
 
+    return redirectUrl.toString();
+  }
+
+  buildLaunchRedirectUrl(objectId: string): string {
+    const redirectUrl = new URL('/lti/view', this.frontendUrl);
+    redirectUrl.searchParams.set('objectId', objectId);
     return redirectUrl.toString();
   }
 }

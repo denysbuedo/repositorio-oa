@@ -1,0 +1,16 @@
+{
+  "name": "repositorio-oa",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/start_dev.ps1",
+    "backend:dev": "npm --prefix backend run start:dev",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "backend:build": "npm --prefix backend run build",
+    "frontend:build": "npm --prefix frontend run build",
+    "backend:lint": "npm --prefix backend run lint",
+    "frontend:lint": "npm --prefix frontend run lint",
+    "backend:test": "npm --prefix backend test -- --runInBand",
+    "verify": "npm run backend:lint && npm run backend:test && npm run backend:build && npm run frontend:lint && npm run frontend:build"
+  }
+}
