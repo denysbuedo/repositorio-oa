@@ -28,14 +28,20 @@ interface LearningObject {
   };
 }
 
+type ObjectStatus = 'draft' | 'published' | 'archived';
+
 function ObjectList({
   objects,
   loading,
   onRefresh,
+  onStatusChange,
+  onDelete,
 }: {
   objects: LearningObject[];
   loading: boolean;
   onRefresh: () => void;
+  onStatusChange: (id: string, status: ObjectStatus) => void;
+  onDelete: (id: string) => void;
 }) {
 
   return (
@@ -67,8 +73,8 @@ function ObjectList({
               <div key={obj.id} className="card">
                 <div className="card-header">
                   <div className="badge-group">
-                    <span className={`badge ${obj.status === 'published' ? 'badge-published' : 'badge-draft'}`}>
-                      {obj.status === 'published' ? 'Publicado' : 'Borrador'}
+                    <span className={`badge badge-${obj.status}`}>
+                      {getStatusLabel(obj.status)}
                     </span>
                     {obj.lomMetadata && (
                       <span className="badge badge-ai">
@@ -135,6 +141,27 @@ function ObjectList({
                     </a>
                   )}
                 </div>
+
+                <div className="card-actions" aria-label={`Acciones de ${obj.title}`}>
+                  {obj.status !== 'published' && (
+                    <button className="btn-action btn-action-primary" onClick={() => onStatusChange(obj.id, 'published')}>
+                      Publicar
+                    </button>
+                  )}
+                  {obj.status !== 'draft' && (
+                    <button className="btn-action" onClick={() => onStatusChange(obj.id, 'draft')}>
+                      Borrador
+                    </button>
+                  )}
+                  {obj.status !== 'archived' && (
+                    <button className="btn-action" onClick={() => onStatusChange(obj.id, 'archived')}>
+                      Archivar
+                    </button>
+                  )}
+                  <button className="btn-action btn-action-danger" onClick={() => onDelete(obj.id)}>
+                    Eliminar
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -142,6 +169,17 @@ function ObjectList({
       )}
     </>
   );
+}
+
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'published':
+      return 'Publicado';
+    case 'archived':
+      return 'Archivado';
+    default:
+      return 'Borrador';
+  }
 }
 
 function getDifficultyIcon(difficulty: string) {
@@ -164,10 +202,12 @@ function HomeContent() {
   const [typeFilter, setTypeFilter] = useState('');
   const [showStats, setShowStats] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchObjects = useCallback(() => {
     setLoading(true);
     setErrorMessage('');
+    setSuccessMessage('');
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
     if (difficultyFilter) params.append('difficulty', difficultyFilter);
@@ -197,6 +237,47 @@ function HomeContent() {
         setLoading(false);
       });
   }, [difficultyFilter, searchTerm, typeFilter]);
+
+  const updateObjectStatus = async (id: string, status: ObjectStatus) => {
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      setSuccessMessage(`Estado actualizado a ${getStatusLabel(status)}.`);
+      fetchObjects();
+    } catch (error) {
+      console.error('Error updating object status:', error);
+      setErrorMessage('No se pudo actualizar el estado del objeto.');
+    }
+  };
+
+  const deleteObject = async (id: string) => {
+    const confirmed = window.confirm('Esta accion eliminara el objeto. Deseas continuar?');
+    if (!confirmed) return;
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      setSuccessMessage('Objeto eliminado.');
+      fetchObjects();
+    } catch (error) {
+      console.error('Error deleting object:', error);
+      setErrorMessage('No se pudo eliminar el objeto.');
+    }
+  };
 
   // Calcular estadisticas
   const getStats = () => {
@@ -350,10 +431,18 @@ function HomeContent() {
         </div>
       )}
 
+      {successMessage && (
+        <div className="success-banner">
+          {successMessage}
+        </div>
+      )}
+
       <ObjectList 
         objects={objects} 
         loading={loading}
         onRefresh={fetchObjects} 
+        onStatusChange={updateObjectStatus}
+        onDelete={deleteObject}
       />
 
       {isModalOpen && (
@@ -506,6 +595,17 @@ function HomeContent() {
           background: #fef2f2;
           border: 1px solid #fecaca;
           color: #991b1b;
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+
+        .success-banner {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          color: #166534;
           border-radius: 0.5rem;
           padding: 0.75rem 1rem;
           margin-bottom: 1rem;
@@ -727,6 +827,11 @@ function HomeContent() {
           color: #991b1b;
         }
 
+        .badge-archived {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
         .badge-ai {
           background: #e0f2fe;
           color: #0369a1;
@@ -866,6 +971,52 @@ function HomeContent() {
 
         .btn-download:hover {
           background: #e2e8f0;
+        }
+
+        .card-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          padding-top: 0.75rem;
+          border-top: 1px solid #e2e8f0;
+        }
+
+        .btn-action {
+          background: white;
+          border: 1px solid #cbd5e1;
+          color: #334155;
+          border-radius: 0.375rem;
+          padding: 0.45rem 0.65rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+        }
+
+        .btn-action-primary {
+          background: #2563eb;
+          border-color: #2563eb;
+          color: white;
+        }
+
+        .btn-action-primary:hover {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
+
+        .btn-action-danger {
+          border-color: #fecaca;
+          color: #991b1b;
+        }
+
+        .btn-action-danger:hover {
+          background: #fef2f2;
+          border-color: #fca5a5;
         }
 
         /* Empty state */
