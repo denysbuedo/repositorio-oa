@@ -288,6 +288,7 @@ function HomeContent() {
               value={difficultyFilter}
               onChange={(e) => setDifficultyFilter(e.target.value)}
               className="filter-select"
+              aria-label="Nivel de dificultad"
             >
               <option value="">Todos los niveles</option>
               <option value="Very easy">🌟 Muy Fácil</option>
@@ -303,6 +304,7 @@ function HomeContent() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="filter-select"
+              aria-label="Tipo de recurso educativo"
             >
               <option value="">Todos los tipos</option>
               <option value="Narrative Text">📖 Texto Narrativo</option>
@@ -550,6 +552,7 @@ function HomeContent() {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+          min-width: 0;
         }
 
         .filter-label {
@@ -562,12 +565,24 @@ function HomeContent() {
 
         .filter-input,
         .filter-select {
+          width: 100%;
+          min-width: 220px;
           padding: 0.75rem;
           border: 1px solid #cbd5e1;
           border-radius: 0.5rem;
           font-size: 0.875rem;
           transition: all 0.2s;
           background: white;
+          color: #0f172a;
+        }
+
+        .filter-select {
+          cursor: pointer;
+        }
+
+        .filter-select option {
+          background: white;
+          color: #0f172a;
         }
 
         .filter-input:focus,
