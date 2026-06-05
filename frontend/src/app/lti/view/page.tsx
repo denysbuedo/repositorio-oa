@@ -3,24 +3,37 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+interface LearningObject {
+  id: string;
+  title: string;
+  fileUrl?: string;
+  fileMimeType?: string;
+}
+
+interface HtmlResponse {
+  html?: string;
+}
+
 function LtiContent() {
   const searchParams = useSearchParams();
   const objectId = searchParams.get('objectId');
-  const [object, setObject] = useState<any>(null);
+  const [object, setObject] = useState<LearningObject | null>(null);
   const [wordHtml, setWordHtml] = useState<string>('');
   const [loadingHtml, setLoadingHtml] = useState(false);
 
   useEffect(() => {
     if (objectId && objectId !== 'undefined') {
-      fetch(`http://localhost:3001/learning-objects/${objectId}`)
+      fetch(`${API_URL}/learning-objects/${objectId}`)
         .then(res => res.json())
-        .then(data => {
+        .then((data: LearningObject) => {
           setObject(data);
           if (data.fileMimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             setLoadingHtml(true);
-            fetch(`http://localhost:3001/learning-objects/${objectId}/html`)
+            fetch(`${API_URL}/learning-objects/${objectId}/html`)
               .then(res => res.json())
-              .then(htmlData => {
+              .then((htmlData: HtmlResponse) => {
                 setWordHtml(htmlData.html || '<p>El documento está vacío.</p>');
                 setLoadingHtml(false);
               })
@@ -45,7 +58,7 @@ function LtiContent() {
           <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Recurso entregado vía LTI 1.3 por ROA God-Level</p>
         </div>
         <a 
-          href={`http://localhost:3001/${object.fileUrl}`} 
+          href={`${API_URL}/${object.fileUrl}`} 
           download 
           style={{ 
             padding: '0.5rem 1rem', 
@@ -65,7 +78,7 @@ function LtiContent() {
       <div style={{ width: '100%', height: 'calc(100vh - 100px)', borderRadius: '8px', overflow: 'auto', border: '1px solid #ddd', background: '#f8fafc' }}>
         {object.fileMimeType === 'application/pdf' ? (
           <iframe 
-            src={`http://localhost:3001/${object.fileUrl}`} 
+            src={`${API_URL}/${object.fileUrl}`} 
             style={{ width: '100%', height: '100%', border: 'none' }}
           />
         ) : object.fileMimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
@@ -79,7 +92,7 @@ function LtiContent() {
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             <p>Este recurso es un archivo. Puedes descargarlo aquí:</p>
-            <a href={`http://localhost:3001/${object.fileUrl}`} className="btn" target="_blank">Descargar {object.title}</a>
+            <a href={`${API_URL}/${object.fileUrl}`} className="btn" target="_blank">Descargar {object.title}</a>
           </div>
         )}
       </div>

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
 interface UploadModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -21,7 +23,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/learning-objects', {
+      const res = await fetch(`${API_URL}/learning-objects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -30,6 +32,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
       setCreatedId(data.id);
       setStep(2);
     } catch (error) {
+      console.error('Error creating learning object:', error);
       alert('Error al crear el objeto');
     } finally {
       setLoading(false);
@@ -45,13 +48,14 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     formDataUpload.append('file', file);
 
     try {
-      await fetch(`http://localhost:3001/learning-objects/${createdId}/upload`, {
+      await fetch(`${API_URL}/learning-objects/${createdId}/upload`, {
         method: 'POST',
         body: formDataUpload
       });
       onSuccess();
       onClose();
     } catch (error) {
+      console.error('Error uploading file:', error);
       alert('Error al subir el archivo');
     } finally {
       setLoading(false);

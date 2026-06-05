@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 export default function LtiSimulator() {
-  const [targetUrl, setTargetUrl] = useState('http://localhost:3001/lti/launch');
+  const targetUrl = `${API_URL}/lti/launch`;
   const [objectId, setObjectId] = useState('');
-  const [isMounted, setIsMounted] = useState(false);
 
   // Evitar desajustes de hidratación (Hydration Mismatch)
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
-  if (!isMounted) return null;
 
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>

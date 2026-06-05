@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import UploadModal from './components/UploadModal';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface LearningObject {
   id: string;
@@ -26,7 +28,15 @@ interface LearningObject {
   };
 }
 
-function ObjectList({ objects, loading, searchTerm, difficultyFilter, typeFilter, onRefresh }: { objects: LearningObject[], loading: boolean, searchTerm: string, difficultyFilter: string, typeFilter: string, onRefresh: () => void }) {
+function ObjectList({
+  objects,
+  loading,
+  onRefresh,
+}: {
+  objects: LearningObject[];
+  loading: boolean;
+  onRefresh: () => void;
+}) {
 
   return (
     <>
@@ -60,14 +70,14 @@ function ObjectList({ objects, loading, searchTerm, difficultyFilter, typeFilter
                     <span className={`badge ${obj.status === 'published' ? 'badge-published' : 'badge-draft'}`}>
                       {obj.status === 'published' ? '✓ Publicado' : '📝 Borrador'}
                     </span>
-                    {(obj as any).lomMetadata && (
+                    {obj.lomMetadata && (
                       <span className="badge badge-ai">
                         🤖 IA Verificado
                       </span>
                     )}
-                    {(obj as any).lomMetadata?.educational?.difficulty && (
-                      <span className={`badge badge-difficulty-${(obj as any).lomMetadata.educational.difficulty.toLowerCase().replace(' ', '')}`}>
-                        {getDifficultyIcon((obj as any).lomMetadata.educational.difficulty)} {(obj as any).lomMetadata.educational.difficulty}
+                    {obj.lomMetadata?.educational?.difficulty && (
+                      <span className={`badge badge-difficulty-${obj.lomMetadata.educational.difficulty.toLowerCase().replace(' ', '')}`}>
+                        {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {obj.lomMetadata.educational.difficulty}
                       </span>
                     )}
                   </div>
@@ -90,21 +100,21 @@ function ObjectList({ objects, loading, searchTerm, difficultyFilter, typeFilter
 
                 <p className="card-description">{obj.description || 'Sin descripción'}</p>
 
-                {(obj as any).lomMetadata?.educational?.learningResourceType && (
+                {obj.lomMetadata?.educational?.learningResourceType && (
                   <div className="resource-type-tag">
                     <span className="resource-type-icon">🎯</span>
-                    <span>{(obj as any).lomMetadata.educational.learningResourceType}</span>
+                    <span>{obj.lomMetadata.educational.learningResourceType}</span>
                   </div>
                 )}
 
-                {(obj as any).lomMetadata && (
+                {obj.lomMetadata && (
                   <div className="lom-box">
                     <details>
                       <summary className="lom-summary">
                         📊 Metadatos IEEE LOM
                       </summary>
                       <pre className="lom-data">
-                        {JSON.stringify((obj as any).lomMetadata, null, 2)}
+                        {JSON.stringify(obj.lomMetadata, null, 2)}
                       </pre>
                     </details>
                   </div>
@@ -117,7 +127,7 @@ function ObjectList({ objects, loading, searchTerm, difficultyFilter, typeFilter
                   </div>
                   {obj.fileUrl && (
                     <a 
-                      href={`http://localhost:3001/${obj.fileUrl}`} 
+                      href={`${API_URL}/${obj.fileUrl}`} 
                       download 
                       className="btn-download"
                     >
@@ -144,24 +154,24 @@ function getDifficultyIcon(difficulty: string) {
   }
 }
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [showStats, setShowStats] = useState(true);
-  const searchParams = useSearchParams();
 
-  const fetchObjects = () => {
+  const fetchObjects = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
     if (difficultyFilter) params.append('difficulty', difficultyFilter);
     if (typeFilter) params.append('type', typeFilter);
     
-    fetch(`http://localhost:3001/learning-objects?${params.toString()}`)
+    fetch(`${API_URL}/learning-objects?${params.toString()}`)
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -182,28 +192,22 @@ export default function Home() {
         setObjects([]);
         setLoading(false);
       });
-  };
+  }, [difficultyFilter, searchTerm, typeFilter]);
 
   // Calcular estadísticas
   const getStats = () => {
     const published = objects.filter(o => o.status === 'published').length;
-    const withMetadata = objects.filter(o => (o as any).lomMetadata).length;
-    const uniqueTypes = new Set(objects.map(o => (o as any).lomMetadata?.educational?.learningResourceType).filter(Boolean)).size;
+    const withMetadata = objects.filter(o => o.lomMetadata).length;
+    const uniqueTypes = new Set(objects.map(o => o.lomMetadata?.educational?.learningResourceType).filter(Boolean)).size;
     return { published, withMetadata, uniqueTypes, total: objects.length };
   };
 
   const stats = getStats();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchObjects();
-  }, [searchTerm, difficultyFilter, typeFilter]);
-
-  useEffect(() => {
-    const initialSearch = searchParams.get('q');
-    if (initialSearch) {
-      setSearchTerm(initialSearch);
-    }
-  }, [searchParams]);
+  }, [fetchObjects]);
 
   return (
     <main className="container">
@@ -339,9 +343,6 @@ export default function Home() {
       <ObjectList 
         objects={objects} 
         loading={loading}
-        searchTerm={searchTerm} 
-        difficultyFilter={difficultyFilter} 
-        typeFilter={typeFilter}
         onRefresh={fetchObjects} 
       />
 
@@ -913,5 +914,13 @@ export default function Home() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<main className="container">Cargando repositorio...</main>}>
+      <HomeContent />
+    </Suspense>
   );
 }
