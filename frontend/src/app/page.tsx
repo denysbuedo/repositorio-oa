@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import UploadModal from './components/UploadModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -29,20 +28,14 @@ interface LearningObject {
   };
 }
 
-type ObjectStatus = 'draft' | 'published' | 'archived';
-
 function ObjectList({
   objects,
   loading,
   onRefresh,
-  onStatusChange,
-  onDelete,
 }: {
   objects: LearningObject[];
   loading: boolean;
   onRefresh: () => void;
-  onStatusChange: (id: string, status: ObjectStatus) => void;
-  onDelete: (id: string) => void;
 }) {
 
   return (
@@ -64,7 +57,7 @@ function ObjectList({
             <div className="empty-state">
               <div className="empty-state-icon">Sin resultados</div>
               <p className="empty-state-title">No se encontraron objetos</p>
-              <p className="empty-state-text">Intenta con otros filtros o palabras clave</p>
+              <p className="empty-state-text">Intenta con otros filtros o revisa recursos publicados desde administracion</p>
               <button className="empty-state-btn" onClick={onRefresh}>
                  Ver todos los objetos
               </button>
@@ -143,26 +136,6 @@ function ObjectList({
                   )}
                 </div>
 
-                <div className="card-actions" aria-label={`Acciones de ${obj.title}`}>
-                  {obj.status !== 'published' && (
-                    <button className="btn-action btn-action-primary" onClick={() => onStatusChange(obj.id, 'published')}>
-                      Publicar
-                    </button>
-                  )}
-                  {obj.status !== 'draft' && (
-                    <button className="btn-action" onClick={() => onStatusChange(obj.id, 'draft')}>
-                      Borrador
-                    </button>
-                  )}
-                  {obj.status !== 'archived' && (
-                    <button className="btn-action" onClick={() => onStatusChange(obj.id, 'archived')}>
-                      Archivar
-                    </button>
-                  )}
-                  <button className="btn-action btn-action-danger" onClick={() => onDelete(obj.id)}>
-                    Eliminar
-                  </button>
-                </div>
               </div>
             ))
           )}
@@ -197,18 +170,15 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [showStats, setShowStats] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchObjects = useCallback(() => {
     setLoading(true);
     setErrorMessage('');
-    setSuccessMessage('');
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
     if (difficultyFilter) params.append('difficulty', difficultyFilter);
@@ -223,7 +193,7 @@ function HomeContent() {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          setObjects(data);
+          setObjects(data.filter((object: LearningObject) => object.status === 'published'));
         } else {
           console.error("Received non-array data from API:", data);
           setErrorMessage('La API devolvio una respuesta inesperada.');
@@ -238,47 +208,6 @@ function HomeContent() {
         setLoading(false);
       });
   }, [difficultyFilter, searchTerm, typeFilter]);
-
-  const updateObjectStatus = async (id: string, status: ObjectStatus) => {
-    setErrorMessage('');
-    setSuccessMessage('');
-    try {
-      const res = await fetch(`${API_URL}/learning-objects/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      setSuccessMessage(`Estado actualizado a ${getStatusLabel(status)}.`);
-      fetchObjects();
-    } catch (error) {
-      console.error('Error updating object status:', error);
-      setErrorMessage('No se pudo actualizar el estado del objeto.');
-    }
-  };
-
-  const deleteObject = async (id: string) => {
-    const confirmed = window.confirm('Esta accion eliminara el objeto. Deseas continuar?');
-    if (!confirmed) return;
-
-    setErrorMessage('');
-    setSuccessMessage('');
-    try {
-      const res = await fetch(`${API_URL}/learning-objects/${id}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      setSuccessMessage('Objeto eliminado.');
-      fetchObjects();
-    } catch (error) {
-      console.error('Error deleting object:', error);
-      setErrorMessage('No se pudo eliminar el objeto.');
-    }
-  };
 
   // Calcular estadisticas
   const getStats = () => {
@@ -302,14 +231,10 @@ function HomeContent() {
           <div className="logo-section">
             <div>
               <h1 className="title">Repositorio de Objetos de Aprendizaje</h1>
-              <p className="subtitle">Gestion inteligente de Recursos Educativos</p>
+              <p className="subtitle">Catalogo de recursos educativos publicados</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-              <span className="btn-icon">+</span>
-              Nuevo Objeto
-            </button>
             <Link href="/admin" className="btn-admin">
               Administrar
             </Link>
@@ -437,26 +362,11 @@ function HomeContent() {
         </div>
       )}
 
-      {successMessage && (
-        <div className="success-banner">
-          {successMessage}
-        </div>
-      )}
-
       <ObjectList 
         objects={objects} 
         loading={loading}
         onRefresh={fetchObjects} 
-        onStatusChange={updateObjectStatus}
-        onDelete={deleteObject}
       />
-
-      {isModalOpen && (
-        <UploadModal 
-          onClose={() => setIsModalOpen(false)} 
-          onSuccess={fetchObjects} 
-        />
-      )}
 
       <style jsx>{`
         /* Variables y estilos mejorados */
@@ -615,17 +525,6 @@ function HomeContent() {
           font-weight: 600;
         }
 
-        .success-banner {
-          background: #f0fdf4;
-          border: 1px solid #bbf7d0;
-          color: #166534;
-          border-radius: 0.5rem;
-          padding: 0.75rem 1rem;
-          margin-bottom: 1rem;
-          font-size: 0.875rem;
-          font-weight: 600;
-        }
-
         .filters-header {
           display: flex;
           justify-content: space-between;
@@ -726,26 +625,6 @@ function HomeContent() {
         .btn-search:hover {
           transform: translateY(-1px);
           box-shadow: var(--shadow-md);
-        }
-
-        .btn-primary {
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          padding: 0.75rem 1.5rem;
-          border-radius: 0.5rem;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          transition: all 0.2s;
-        }
-
-        .btn-primary:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateY(-2px);
         }
 
         .btn-admin {
@@ -1000,52 +879,6 @@ function HomeContent() {
 
         .btn-download:hover {
           background: #e2e8f0;
-        }
-
-        .card-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          padding-top: 0.75rem;
-          border-top: 1px solid #e2e8f0;
-        }
-
-        .btn-action {
-          background: white;
-          border: 1px solid #cbd5e1;
-          color: #334155;
-          border-radius: 0.375rem;
-          padding: 0.45rem 0.65rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-action:hover {
-          background: #f8fafc;
-          border-color: #94a3b8;
-        }
-
-        .btn-action-primary {
-          background: #2563eb;
-          border-color: #2563eb;
-          color: white;
-        }
-
-        .btn-action-primary:hover {
-          background: #1d4ed8;
-          border-color: #1d4ed8;
-        }
-
-        .btn-action-danger {
-          border-color: #fecaca;
-          color: #991b1b;
-        }
-
-        .btn-action-danger:hover {
-          background: #fef2f2;
-          border-color: #fca5a5;
         }
 
         /* Empty state */

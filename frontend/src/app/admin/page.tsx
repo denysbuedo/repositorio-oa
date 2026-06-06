@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import UploadModal from '../components/UploadModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -40,6 +41,7 @@ export default function AdminPage() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -147,6 +149,7 @@ export default function AdminPage() {
         </div>
         <nav className="header-actions">
           <Link href="/" className="secondary-link">Catalogo</Link>
+          <button className="secondary-button" onClick={() => setIsUploadOpen(true)}>Nuevo recurso</button>
           <button className="primary-button" onClick={fetchObjects}>Actualizar</button>
         </nav>
       </header>
@@ -264,6 +267,13 @@ export default function AdminPage() {
         </aside>
       </section>
 
+      {isUploadOpen && (
+        <UploadModal
+          onClose={() => setIsUploadOpen(false)}
+          onSuccess={fetchObjects}
+        />
+      )}
+
       <style jsx>{`
         .admin-shell {
           max-width: 1500px;
@@ -309,6 +319,7 @@ export default function AdminPage() {
         }
 
         .secondary-link,
+        .secondary-button,
         .primary-button {
           border-radius: 0.375rem;
           padding: 0.65rem 0.85rem;
@@ -318,7 +329,8 @@ export default function AdminPage() {
           cursor: pointer;
         }
 
-        .secondary-link {
+        .secondary-link,
+        .secondary-button {
           color: #334155;
           border: 1px solid #cbd5e1;
           background: white;
