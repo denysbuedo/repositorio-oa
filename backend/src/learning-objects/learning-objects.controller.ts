@@ -11,6 +11,7 @@ import {
   UploadedFile,
   ParseUUIDPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { LearningObjectsService } from './learning-objects.service';
@@ -21,6 +22,7 @@ import {
 } from './dto/learning-object.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { AuthGuard } from '../auth/auth.guard';
 
 const allowedMimeTypes = new Set([
   'application/pdf',
@@ -35,6 +37,7 @@ export class LearningObjectsController {
   ) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   create(@Body() createDto: CreateLearningObjectDto) {
     return this.service.create(createDto);
   }
@@ -54,6 +57,7 @@ export class LearningObjectsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateLearningObjectDto,
@@ -62,6 +66,7 @@ export class LearningObjectsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.remove(id);
   }
@@ -78,6 +83,7 @@ export class LearningObjectsController {
    * Tras la subida, se dispara el análisis de IA.
    */
   @Post(':id/upload')
+  @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

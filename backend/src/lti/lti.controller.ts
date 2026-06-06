@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Query, Res, Body } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  Body,
+} from '@nestjs/common';
 import { LtiService } from './lti.service';
 import type { OidcLoginParams } from './lti.service';
 import type { Response } from 'express';
@@ -36,9 +44,12 @@ export class LtiController {
   launch(@Body() body: LtiLaunchBody, @Res() res: Response) {
     // Extraemos el ID del objeto que el "LMS" nos pide mostrar
     const objectId = body.custom_object_id;
+    if (!objectId) {
+      throw new BadRequestException('custom_object_id is required');
+    }
 
     // En un flujo real, aquí validaríamos el JWT del LMS.
     // Redirigimos al visor específico en el frontend.
-    return res.redirect(`http://localhost:3000/lti/view?objectId=${objectId}`);
+    return res.redirect(this.ltiService.buildLaunchRedirectUrl(objectId));
   }
 }

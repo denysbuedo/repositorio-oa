@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import UploadModal from './components/UploadModal';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -55,11 +55,11 @@ function ObjectList({
         <div className="grid">
           {objects.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">🔍</div>
+              <div className="empty-state-icon">Sin resultados</div>
               <p className="empty-state-title">No se encontraron objetos</p>
-              <p className="empty-state-text">Intenta con otros filtros o palabras clave</p>
+              <p className="empty-state-text">Intenta con otros filtros o revisa recursos publicados desde administracion</p>
               <button className="empty-state-btn" onClick={onRefresh}>
-                🔄 Ver todos los objetos
+                 Ver todos los objetos
               </button>
             </div>
           ) : (
@@ -67,12 +67,12 @@ function ObjectList({
               <div key={obj.id} className="card">
                 <div className="card-header">
                   <div className="badge-group">
-                    <span className={`badge ${obj.status === 'published' ? 'badge-published' : 'badge-draft'}`}>
-                      {obj.status === 'published' ? '✓ Publicado' : '📝 Borrador'}
+                    <span className={`badge badge-${obj.status}`}>
+                      {getStatusLabel(obj.status)}
                     </span>
                     {obj.lomMetadata && (
                       <span className="badge badge-ai">
-                        🤖 IA Verificado
+                        IA verificado
                       </span>
                     )}
                     {obj.lomMetadata?.educational?.difficulty && (
@@ -94,15 +94,15 @@ function ObjectList({
                     }}
                     className="id-copy-btn"
                   >
-                    📋 Copiar
+                    Copiar
                   </button>
                 </div>
 
-                <p className="card-description">{obj.description || 'Sin descripción'}</p>
+                <p className="card-description">{obj.description || 'Sin descripcion'}</p>
 
                 {obj.lomMetadata?.educational?.learningResourceType && (
                   <div className="resource-type-tag">
-                    <span className="resource-type-icon">🎯</span>
+                    <span className="resource-type-icon">Tipo</span>
                     <span>{obj.lomMetadata.educational.learningResourceType}</span>
                   </div>
                 )}
@@ -111,7 +111,7 @@ function ObjectList({
                   <div className="lom-box">
                     <details>
                       <summary className="lom-summary">
-                        📊 Metadatos IEEE LOM
+                        Metadatos IEEE LOM
                       </summary>
                       <pre className="lom-data">
                         {JSON.stringify(obj.lomMetadata, null, 2)}
@@ -122,7 +122,7 @@ function ObjectList({
 
                 <div className="card-footer">
                   <div className="author-info">
-                    <span className="author-icon">👤</span>
+                    <span className="author-icon"></span>
                     <span className="author-name">{obj.author}</span>
                   </div>
                   {obj.fileUrl && (
@@ -131,10 +131,11 @@ function ObjectList({
                       download 
                       className="btn-download"
                     >
-                      ⬇️ Descargar
+                      Descargar
                     </a>
                   )}
                 </div>
+
               </div>
             ))
           )}
@@ -144,13 +145,24 @@ function ObjectList({
   );
 }
 
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'published':
+      return 'Publicado';
+    case 'archived':
+      return 'Archivado';
+    default:
+      return 'Borrador';
+  }
+}
+
 function getDifficultyIcon(difficulty: string) {
   switch(difficulty.toLowerCase()) {
-    case 'very easy': return '🌟';
-    case 'easy': return '✅';
-    case 'normal': return '📘';
-    case 'difficult': return '⚡';
-    default: return '📊';
+    case 'very easy': return 'Muy facil';
+    case 'easy': return 'Facil';
+    case 'normal': return 'Medio';
+    case 'difficult': return 'Dificil';
+    default: return 'Nivel';
   }
 }
 
@@ -158,14 +170,15 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [showStats, setShowStats] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const fetchObjects = useCallback(() => {
     setLoading(true);
+    setErrorMessage('');
     const params = new URLSearchParams();
     if (searchTerm) params.append('q', searchTerm);
     if (difficultyFilter) params.append('difficulty', difficultyFilter);
@@ -180,21 +193,23 @@ function HomeContent() {
       })
       .then((data) => {
         if (Array.isArray(data)) {
-          setObjects(data);
+          setObjects(data.filter((object: LearningObject) => object.status === 'published'));
         } else {
           console.error("Received non-array data from API:", data);
+          setErrorMessage('La API devolvio una respuesta inesperada.');
           setObjects([]);
         }
         setLoading(false);
       })
       .catch((err) => {
         console.error("Error fetching objects:", err);
+        setErrorMessage('No se pudieron cargar los objetos. Revisa que el backend este activo.');
         setObjects([]);
         setLoading(false);
       });
   }, [difficultyFilter, searchTerm, typeFilter]);
 
-  // Calcular estadísticas
+  // Calcular estadisticas
   const getStats = () => {
     const published = objects.filter(o => o.status === 'published').length;
     const withMetadata = objects.filter(o => o.lomMetadata).length;
@@ -214,25 +229,25 @@ function HomeContent() {
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
-            <div className="logo-icon">📚</div>
             <div>
               <h1 className="title">Repositorio de Objetos de Aprendizaje</h1>
-              <p className="subtitle">Gestión inteligente de Recursos Educativos</p>
+              <p className="subtitle">Catalogo de recursos educativos publicados</p>
             </div>
           </div>
-          <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-            <span className="btn-icon">+</span>
-            Nuevo Objeto
-          </button>
+          <div className="header-actions">
+            <Link href="/admin" className="btn-admin">
+              Administrar
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Panel de Estadísticas */}
+      {/* Panel de Estadisticas */}
       {showStats && objects.length > 0 && !loading && (
         <div className="stats-panel">
           <div className="stats-header">
-            <h3 className="stats-title">📊 Estadística del Repositorio</h3>
-            <button className="stats-close" onClick={() => setShowStats(false)}>✕</button>
+            <h3 className="stats-title">Estadistica del Repositorio</h3>
+            <button className="stats-close" onClick={() => setShowStats(false)}>x</button>
           </div>
           <div className="stats-grid">
             <div className="stat-card">
@@ -259,23 +274,22 @@ function HomeContent() {
 
       <div className="filters-card">
         <div className="filters-header">
-          <h3 className="filters-title">🔍 Filtros de búsqueda</h3>
+          <h3 className="filters-title">Filtros de busqueda</h3>
           <button className="filters-reset" onClick={() => {
             setSearchTerm('');
             setDifficultyFilter('');
             setTypeFilter('');
-            fetchObjects();
           }}>
-            ⟳ Limpiar filtros
+            Limpiar filtros
           </button>
         </div>
         
         <div className="filters-grid">
           <div className="filter-group">
-            <label className="filter-label">🔎 Búsqueda por texto</label>
+            <label className="filter-label">Busqueda por texto</label>
             <input 
               type="text" 
-              placeholder="Título, descripción o autor..." 
+              placeholder="Titulo, descripcion o autor..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="filter-input"
@@ -283,41 +297,43 @@ function HomeContent() {
           </div>
           
           <div className="filter-group">
-            <label className="filter-label">📊 Nivel de dificultad</label>
+            <label className="filter-label">Nivel de dificultad</label>
             <select 
               value={difficultyFilter}
               onChange={(e) => setDifficultyFilter(e.target.value)}
               className="filter-select"
+              aria-label="Nivel de dificultad"
             >
               <option value="">Todos los niveles</option>
-              <option value="Very easy">🌟 Muy Fácil</option>
-              <option value="Easy">✅ Fácil</option>
-              <option value="Normal">📘 Medio</option>
-              <option value="Difficult">⚡ Difícil</option>
+              <option value="Very easy">Muy facil</option>
+              <option value="Easy">Facil</option>
+              <option value="Normal">Medio</option>
+              <option value="Difficult">Dificil</option>
             </select>
           </div>
 
           <div className="filter-group">
-            <label className="filter-label">🎯 Tipo de recurso educativo</label>
+            <label className="filter-label">Tipo de recurso educativo</label>
             <select 
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="filter-select"
+              aria-label="Tipo de recurso educativo"
             >
               <option value="">Todos los tipos</option>
-              <option value="Narrative Text">📖 Texto Narrativo</option>
-              <option value="Lecture">🎓 Conferencia</option>
-              <option value="Exercise">✍️ Ejercicio</option>
-              <option value="Exam">📝 Examen</option>
-              <option value="Simulation">🎮 Simulación</option>
-              <option value="Image">🖼️ Imagen</option>
-              <option value="Diagram">📐 Diagrama</option>
-              <option value="Questionnaire">📋 Cuestionario</option>
-              <option value="Self Assessment">⭐ Autoevaluación</option>
-              <option value="Experiment">🧪 Experimento</option>
-              <option value="Problem Statement">❓ Enunciado de problema</option>
-              <option value="Slide">📽️ Diapositiva</option>
-              <option value="Table">📊 Tabla</option>
+              <option value="Narrative Text">Texto narrativo</option>
+              <option value="Lecture">Conferencia</option>
+              <option value="Exercise">Ejercicio</option>
+              <option value="Exam">Examen</option>
+              <option value="Simulation">Simulacion</option>
+              <option value="Image">Imagen</option>
+              <option value="Diagram">Diagrama</option>
+              <option value="Questionnaire">Cuestionario</option>
+              <option value="Self Assessment">Autoevaluacion</option>
+              <option value="Experiment">Experimento</option>
+              <option value="Problem Statement">Enunciado de problema</option>
+              <option value="Slide">Diapositiva</option>
+              <option value="Table">Tabla</option>
             </select>
           </div>
 
@@ -325,33 +341,32 @@ function HomeContent() {
             onClick={() => fetchObjects()} 
             className="btn-search"
           >
-            🔍 Aplicar filtros
+            Aplicar filtros
           </button>
         </div>
       </div>
 
       <div className="results-header">
         <h3 className="results-title">
-          📚 Resultados encontrados
+          Resultados encontrados
           {!loading && <span className="results-count">({objects.length} objetos)</span>}
         </h3>
         <button className="results-refresh" onClick={fetchObjects}>
-          🔄 Refrescar
+          Refrescar
         </button>
       </div>
+
+      {errorMessage && (
+        <div className="error-banner">
+          {errorMessage}
+        </div>
+      )}
 
       <ObjectList 
         objects={objects} 
         loading={loading}
         onRefresh={fetchObjects} 
       />
-
-      {isModalOpen && (
-        <UploadModal 
-          onClose={() => setIsModalOpen(false)} 
-          onSuccess={fetchObjects} 
-        />
-      )}
 
       <style jsx>{`
         /* Variables y estilos mejorados */
@@ -396,16 +411,11 @@ function HomeContent() {
           gap: 1rem;
         }
 
-        .logo-icon {
-          font-size: 2.5rem;
-          background: rgba(255, 255, 255, 0.2);
-          width: 60px;
-          height: 60px;
+        .header-actions {
           display: flex;
+          gap: 0.75rem;
           align-items: center;
-          justify-content: center;
-          border-radius: 1rem;
-          backdrop-filter: blur(10px);
+          flex-wrap: wrap;
         }
 
         .title {
@@ -421,7 +431,7 @@ function HomeContent() {
           margin: 0.25rem 0 0 0;
         }
 
-        /* Panel de estadísticas */
+        /* Panel de estadsticas */
         .stats-panel {
           background: white;
           border-radius: 1rem;
@@ -504,6 +514,17 @@ function HomeContent() {
           border: 1px solid #e2e8f0;
         }
 
+        .error-banner {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #991b1b;
+          border-radius: 0.5rem;
+          padding: 0.75rem 1rem;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+
         .filters-header {
           display: flex;
           justify-content: space-between;
@@ -550,6 +571,7 @@ function HomeContent() {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+          min-width: 0;
         }
 
         .filter-label {
@@ -562,12 +584,24 @@ function HomeContent() {
 
         .filter-input,
         .filter-select {
+          width: 100%;
+          min-width: 220px;
           padding: 0.75rem;
           border: 1px solid #cbd5e1;
           border-radius: 0.5rem;
           font-size: 0.875rem;
           transition: all 0.2s;
           background: white;
+          color: #0f172a;
+        }
+
+        .filter-select {
+          cursor: pointer;
+        }
+
+        .filter-select option {
+          background: white;
+          color: #0f172a;
         }
 
         .filter-input:focus,
@@ -593,23 +627,19 @@ function HomeContent() {
           box-shadow: var(--shadow-md);
         }
 
-        .btn-primary {
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+        .btn-admin {
+          background: white;
+          color: #1e293b;
+          border: 1px solid rgba(255, 255, 255, 0.45);
           padding: 0.75rem 1.5rem;
           border-radius: 0.5rem;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
+          font-weight: 700;
+          text-decoration: none;
           transition: all 0.2s;
         }
 
-        .btn-primary:hover {
-          background: rgba(255, 255, 255, 0.3);
+        .btn-admin:hover {
+          background: #f8fafc;
           transform: translateY(-2px);
         }
 
@@ -703,6 +733,11 @@ function HomeContent() {
         .badge-draft {
           background: #fee2e2;
           color: #991b1b;
+        }
+
+        .badge-archived {
+          background: #f1f5f9;
+          color: #475569;
         }
 
         .badge-ai {
@@ -924,3 +959,4 @@ export default function Home() {
     </Suspense>
   );
 }
+

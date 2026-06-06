@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LearningObjectsController } from './learning-objects.controller';
 import { LearningObjectsService } from './learning-objects.service';
 import { AiService } from '../ai/ai.service';
+import { AuthGuard } from '../auth/auth.guard';
 
 describe('LearningObjectsController', () => {
   let controller: LearningObjectsController;
@@ -32,7 +33,10 @@ describe('LearningObjectsController', () => {
           useValue: aiServiceMock,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<LearningObjectsController>(
       LearningObjectsController,

@@ -9,6 +9,7 @@ import { LearningObjectsModule } from './learning-objects/learning-objects.modul
 import { LearningObject } from './learning-objects/entities/learning-object.entity';
 import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { LtiModule } from './lti/lti.module';
       }),
       inject: [ConfigService],
     }),
+    AuthModule,
     LearningObjectsModule,
     LtiModule,
   ],
