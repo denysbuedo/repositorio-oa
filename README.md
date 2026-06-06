@@ -33,6 +33,8 @@ Variables principales:
 - `DB_SYNC`: usar `true` solo en desarrollo local.
 - `OLLAMA_URL`, `OLLAMA_MODEL`: configuracion de IA local.
 - `LTI_CLIENT_ID`: client id usado en el login OIDC LTI.
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD`: credenciales del administrador local.
+- `JWT_SECRET`, `JWT_EXPIRES_IN`: firma y duracion del token admin.
 
 Frontend:
 
@@ -63,6 +65,7 @@ URLs locales:
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
 - Simulador LTI: http://localhost:3000/simulator
+- Admin: http://localhost:3000/admin
 
 Logs generados por `npm run dev`:
 
@@ -95,3 +98,4 @@ Este comando ejecuta lint, tests y build del backend, y lint/build del frontend.
 - No subir `node_modules`, `dist`, `.next` ni `uploads`.
 - `DB_SYNC=true` es solo para desarrollo local; en despliegue deben usarse migraciones.
 - El flujo LTI actual es prototipo: todavia falta validar `id_token`, `issuer`, `audience`, `state` y `nonce`.
+- Los endpoints de gestion de recursos requieren token admin. Cambia `ADMIN_PASSWORD` y `JWT_SECRET` antes de exponer el sistema.

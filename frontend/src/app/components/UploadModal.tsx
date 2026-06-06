@@ -5,11 +5,12 @@ import { useState } from 'react';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 interface UploadModalProps {
+  authToken?: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
+export default function UploadModal({ authToken, onClose, onSuccess }: UploadModalProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,7 +28,10 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     try {
       const res = await fetch(`${API_URL}/learning-objects`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
@@ -56,6 +60,7 @@ export default function UploadModal({ onClose, onSuccess }: UploadModalProps) {
     try {
       const res = await fetch(`${API_URL}/learning-objects/${createdId}/upload`, {
         method: 'POST',
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
         body: formDataUpload,
       });
       if (!res.ok) {

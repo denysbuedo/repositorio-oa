@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import UploadModal from '../components/UploadModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const ADMIN_TOKEN_KEY = 'roa_admin_token';
 
 type ObjectStatus = 'draft' | 'published' | 'archived';
 
@@ -36,14 +38,25 @@ const statusOptions: Array<{ value: ObjectStatus; label: string }> = [
 ];
 
 export default function AdminPage() {
+  const router = useRouter();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authToken] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
+  });
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    if (!authToken) {
+      router.replace('/admin/login');
+    }
+  }, [authToken, router]);
 
   const fetchObjects = useCallback(() => {
     setLoading(true);
@@ -103,7 +116,10 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API_URL}/learning-objects/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) {
@@ -126,6 +142,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API_URL}/learning-objects/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
@@ -139,6 +158,15 @@ export default function AdminPage() {
     }
   };
 
+  const logout = () => {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    router.replace('/admin/login');
+  };
+
+  if (!authToken) {
+    return <main className="admin-shell">Validando sesion...</main>;
+  }
+
   return (
     <main className="admin-shell">
       <header className="admin-header">
@@ -151,6 +179,7 @@ export default function AdminPage() {
           <Link href="/" className="secondary-link">Catalogo</Link>
           <button className="secondary-button" onClick={() => setIsUploadOpen(true)}>Nuevo recurso</button>
           <button className="primary-button" onClick={fetchObjects}>Actualizar</button>
+          <button className="secondary-button" onClick={logout}>Salir</button>
         </nav>
       </header>
 
@@ -269,6 +298,7 @@ export default function AdminPage() {
 
       {isUploadOpen && (
         <UploadModal
+          authToken={authToken}
           onClose={() => setIsUploadOpen(false)}
           onSuccess={fetchObjects}
         />
