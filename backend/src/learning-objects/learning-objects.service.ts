@@ -11,6 +11,7 @@ import * as mammoth from 'mammoth';
 import {
   LearningObject,
   ObjectStatus,
+  ProcessingStatus,
 } from './entities/learning-object.entity';
 import {
   CreateLearningObjectDto,
@@ -106,10 +107,45 @@ export class LearningObjectsService {
     id: string,
     fileUrl: string,
     mimeType: string,
+    originalFilename: string,
+    fileSize: number,
   ): Promise<LearningObject> {
     const object = await this.findOne(id);
     object.fileUrl = fileUrl;
     object.fileMimeType = mimeType;
+    object.originalFilename = originalFilename;
+    object.fileSize = fileSize;
+    object.uploadedAt = new Date();
+    object.processingStatus = ProcessingStatus.PENDING;
+    object.processingError = null;
+    return await this.repository.save(object);
+  }
+
+  async markProcessing(id: string): Promise<LearningObject> {
+    const object = await this.findOne(id);
+    object.processingStatus = ProcessingStatus.PROCESSING;
+    object.processingError = null;
+    return await this.repository.save(object);
+  }
+
+  async markProcessingReady(
+    id: string,
+    lomMetadata: unknown,
+  ): Promise<LearningObject> {
+    const object = await this.findOne(id);
+    object.lomMetadata = lomMetadata;
+    object.processingStatus = ProcessingStatus.READY;
+    object.processingError = null;
+    return await this.repository.save(object);
+  }
+
+  async markProcessingFailed(
+    id: string,
+    error: string,
+  ): Promise<LearningObject> {
+    const object = await this.findOne(id);
+    object.processingStatus = ProcessingStatus.FAILED;
+    object.processingError = error;
     return await this.repository.save(object);
   }
 

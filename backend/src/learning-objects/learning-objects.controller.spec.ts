@@ -15,6 +15,9 @@ describe('LearningObjectsController', () => {
     remove: jest.fn(),
     update: jest.fn(),
     updateFileReference: jest.fn(),
+    markProcessing: jest.fn(),
+    markProcessingReady: jest.fn(),
+    markProcessingFailed: jest.fn(),
   };
   const aiServiceMock = {
     extractText: jest.fn(),

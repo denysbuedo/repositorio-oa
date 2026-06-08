@@ -9,6 +9,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const ADMIN_TOKEN_KEY = 'roa_admin_token';
 
 type ObjectStatus = 'draft' | 'published' | 'archived';
+type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
 interface LearningObject {
   id: string;
@@ -18,6 +19,11 @@ interface LearningObject {
   status: ObjectStatus;
   fileUrl?: string;
   fileMimeType?: string;
+  originalFilename?: string | null;
+  fileSize?: number | null;
+  uploadedAt?: string | null;
+  processingStatus?: ProcessingStatus;
+  processingError?: string | null;
   createdAt?: string;
   updatedAt?: string;
   lomMetadata?: {
@@ -116,7 +122,10 @@ export default function AdminPage() {
     const draft = objects.filter((object) => object.status === 'draft').length;
     const archived = objects.filter((object) => object.status === 'archived').length;
     const withMetadata = objects.filter((object) => object.lomMetadata).length;
-    return { total, published, draft, archived, withMetadata };
+    const processing = objects.filter((object) =>
+      object.fileUrl && (object.processingStatus === 'pending' || object.processingStatus === 'processing')
+    ).length;
+    return { total, published, draft, archived, withMetadata, processing };
   }, [objects]);
 
   const updateStatus = async (id: string, status: ObjectStatus) => {
@@ -198,6 +207,7 @@ export default function AdminPage() {
         <Metric label="Borradores" value={stats.draft} />
         <Metric label="Archivados" value={stats.archived} />
         <Metric label="Con metadatos" value={stats.withMetadata} />
+        <Metric label="Procesando" value={stats.processing} />
       </section>
 
       <section className="toolbar" aria-label="Filtros de administracion">
@@ -235,6 +245,7 @@ export default function AdminPage() {
                 <tr>
                   <th>Recurso</th>
                   <th>Estado</th>
+                  <th>IA</th>
                   <th>Autor</th>
                   <th>Tipo</th>
                   <th>Dificultad</th>
@@ -244,9 +255,9 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={7} className="empty-row">Cargando recursos...</td></tr>
+                  <tr><td colSpan={8} className="empty-row">Cargando recursos...</td></tr>
                 ) : filteredObjects.length === 0 ? (
-                  <tr><td colSpan={7} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
+                  <tr><td colSpan={8} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
                 ) : (
                   filteredObjects.map((object) => (
                     <tr key={object.id} className={selectedObject?.id === object.id ? 'selected-row' : ''}>
@@ -257,6 +268,11 @@ export default function AdminPage() {
                         <div className="resource-id">{object.id}</div>
                       </td>
                       <td><span className={`status-pill status-${object.status}`}>{getStatusLabel(object.status)}</span></td>
+                      <td>
+                        <span className={`processing-pill processing-${getProcessingClass(object)}`}>
+                          {getProcessingLabel(object.processingStatus, Boolean(object.fileUrl))}
+                        </span>
+                      </td>
                       <td>{object.author}</td>
                       <td>{object.lomMetadata?.educational?.learningResourceType ?? 'Sin tipo'}</td>
                       <td>{object.lomMetadata?.educational?.difficulty ?? 'Sin nivel'}</td>
@@ -286,8 +302,21 @@ export default function AdminPage() {
                 <div><dt>ID</dt><dd>{selectedObject.id}</dd></div>
                 <div><dt>Estado</dt><dd>{getStatusLabel(selectedObject.status)}</dd></div>
                 <div><dt>Autor</dt><dd>{selectedObject.author}</dd></div>
-                <div><dt>Archivo</dt><dd>{selectedObject.fileUrl ? 'Disponible' : 'Pendiente'}</dd></div>
+                <div><dt>Archivo</dt><dd>{selectedObject.originalFilename ?? (selectedObject.fileUrl ? 'Disponible' : 'Pendiente')}</dd></div>
+                <div><dt>Tamano</dt><dd>{formatFileSize(selectedObject.fileSize)}</dd></div>
+                <div><dt>Subido</dt><dd>{formatDate(selectedObject.uploadedAt)}</dd></div>
+                <div>
+                  <dt>Procesamiento IA</dt>
+                  <dd>
+                    <span className={`processing-pill processing-${getProcessingClass(selectedObject)}`}>
+                      {getProcessingLabel(selectedObject.processingStatus, Boolean(selectedObject.fileUrl))}
+                    </span>
+                  </dd>
+                </div>
               </dl>
+              {selectedObject.processingError && (
+                <p className="processing-error">{selectedObject.processingError}</p>
+              )}
               <p className="description">{selectedObject.description || 'Sin descripcion.'}</p>
               {selectedObject.fileUrl && (
                 <a className="download-link" href={`${API_URL}/${selectedObject.fileUrl}`} download>
@@ -383,7 +412,7 @@ export default function AdminPage() {
 
         .metrics {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+          grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 0.75rem;
           margin-bottom: 1rem;
         }
@@ -507,7 +536,7 @@ export default function AdminPage() {
         table {
           width: 100%;
           border-collapse: collapse;
-          min-width: 1080px;
+          min-width: 1180px;
         }
 
         th,
@@ -547,7 +576,8 @@ export default function AdminPage() {
           margin-top: 0.2rem;
         }
 
-        .status-pill {
+        .status-pill,
+        .processing-pill {
           display: inline-flex;
           border-radius: 999px;
           padding: 0.25rem 0.55rem;
@@ -566,6 +596,31 @@ export default function AdminPage() {
         }
 
         .status-archived {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
+        .processing-pending {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
+        .processing-processing {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+
+        .processing-ready {
+          background: #dcfce7;
+          color: #166534;
+        }
+
+        .processing-failed {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .processing-none {
           background: #f1f5f9;
           color: #475569;
         }
@@ -633,10 +688,19 @@ export default function AdminPage() {
         }
 
         .description,
-        .empty-detail {
+        .empty-detail,
+        .processing-error {
           color: #475569;
           margin: 1rem 0;
           font-size: 0.875rem;
+        }
+
+        .processing-error {
+          border: 1px solid #fecaca;
+          border-radius: 0.375rem;
+          background: #fef2f2;
+          color: #991b1b;
+          padding: 0.75rem;
         }
 
         .download-link {
@@ -718,7 +782,33 @@ function getStatusLabel(status: ObjectStatus) {
   }
 }
 
-function formatDate(value?: string) {
+function getProcessingClass(object: LearningObject) {
+  if (!object.fileUrl) return 'none';
+  return object.processingStatus ?? 'pending';
+}
+
+function getProcessingLabel(status?: ProcessingStatus, hasFile = true) {
+  if (!hasFile) return 'Sin archivo';
+
+  switch (status) {
+    case 'processing':
+      return 'Procesando';
+    case 'ready':
+      return 'Listo';
+    case 'failed':
+      return 'Fallido';
+    default:
+      return 'Pendiente';
+  }
+}
+
+function formatFileSize(value?: number | null) {
+  if (!value) return 'Sin archivo';
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(value?: string | null) {
   if (!value) return 'Sin fecha';
   return new Intl.DateTimeFormat('es', {
     day: '2-digit',

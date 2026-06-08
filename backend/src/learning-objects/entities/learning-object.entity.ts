@@ -12,6 +12,13 @@ export enum ObjectStatus {
   ARCHIVED = 'archived',
 }
 
+export enum ProcessingStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  READY = 'ready',
+  FAILED = 'failed',
+}
+
 @Entity('learning_objects')
 export class LearningObject {
   @PrimaryGeneratedColumn('uuid')
@@ -46,6 +53,25 @@ export class LearningObject {
 
   @Column({ nullable: true })
   fileMimeType: string;
+
+  @Column({ nullable: true })
+  originalFilename: string | null;
+
+  @Column({ nullable: true })
+  fileSize: number | null;
+
+  @Column({ nullable: true })
+  uploadedAt: Date | null;
+
+  @Column({
+    type: 'enum',
+    enum: ProcessingStatus,
+    default: ProcessingStatus.PENDING,
+  })
+  processingStatus: ProcessingStatus;
+
+  @Column({ type: 'text', nullable: true })
+  processingError: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

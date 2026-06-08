@@ -133,25 +133,47 @@ export class LearningObjectsController {
       throw new BadRequestException('No se recibio ningun archivo valido');
     }
 
-    // 1. Actualizar referencia del archivo
     const fileUrl = `uploads/${file.filename}`;
     const updatedObject = await this.service.updateFileReference(
       id,
       fileUrl,
       file.mimetype,
+      file.originalname,
+      file.size,
     );
 
-    // 2. IA: Extraer texto y generar metadatos LOM automáticamente
-    try {
-      const text = await this.aiService.extractText(file.path, file.mimetype);
-      if (text) {
-        const generatedLom = await this.aiService.generateMetadata(text);
-        await this.service.update(id, { lomMetadata: generatedLom });
-      }
-    } catch (error) {
-      console.error('Error en el procesamiento de IA:', error);
-    }
+    void this.processUploadedFile(id, file.path, file.mimetype);
 
     return updatedObject;
+  }
+
+  private async processUploadedFile(
+    id: string,
+    filePath: string,
+    mimeType: string,
+  ) {
+    try {
+      await this.service.markProcessing(id);
+      const text = await this.aiService.extractText(filePath, mimeType);
+
+      if (!text) {
+        await this.service.markProcessingFailed(
+          id,
+          'No se pudo extraer texto del archivo',
+        );
+        return;
+      }
+
+      const generatedLom = await this.aiService.generateMetadata(text);
+      await this.service.markProcessingReady(id, generatedLom);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      try {
+        await this.service.markProcessingFailed(id, message);
+      } catch (statusError) {
+        console.error('Error actualizando el estado de IA:', statusError);
+      }
+      console.error('Error en el procesamiento de IA:', error);
+    }
   }
 }
