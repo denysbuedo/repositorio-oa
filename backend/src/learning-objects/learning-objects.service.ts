@@ -8,7 +8,10 @@ import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mammoth from 'mammoth';
-import { LearningObject } from './entities/learning-object.entity';
+import {
+  LearningObject,
+  ObjectStatus,
+} from './entities/learning-object.entity';
 import {
   CreateLearningObjectDto,
   UpdateLearningObjectDto,
@@ -30,8 +33,13 @@ export class LearningObjectsService {
     query?: string,
     difficulty?: string,
     type?: string,
+    includeUnpublished = false,
   ): Promise<LearningObject[]> {
     const qb = this.repository.createQueryBuilder('lo');
+
+    if (!includeUnpublished) {
+      qb.andWhere('lo.status = :status', { status: ObjectStatus.PUBLISHED });
+    }
 
     if (query) {
       qb.andWhere('(lo.title ILIKE :query OR lo.description ILIKE :query)', {
@@ -68,6 +76,18 @@ export class LearningObjectsService {
     return object;
   }
 
+  async findPublishedOne(id: string): Promise<LearningObject> {
+    const object = await this.repository.findOne({
+      where: { id, status: ObjectStatus.PUBLISHED },
+    });
+    if (!object) {
+      throw new NotFoundException(
+        `Objeto de aprendizaje publicado con ID ${id} no encontrado`,
+      );
+    }
+    return object;
+  }
+
   async update(
     id: string,
     updateDto: UpdateLearningObjectDto,
@@ -93,8 +113,10 @@ export class LearningObjectsService {
     return await this.repository.save(object);
   }
 
-  async getObjectHtml(id: string): Promise<string> {
-    const object = await this.findOne(id);
+  async getObjectHtml(id: string, publishedOnly = false): Promise<string> {
+    const object = publishedOnly
+      ? await this.findPublishedOne(id)
+      : await this.findOne(id);
     if (
       object.fileMimeType !==
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

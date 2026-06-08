@@ -59,9 +59,18 @@ export default function AdminPage() {
   }, [authToken, router]);
 
   const fetchObjects = useCallback(() => {
+    if (!authToken) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setErrorMessage('');
-    fetch(`${API_URL}/learning-objects`)
+    fetch(`${API_URL}/learning-objects?scope=admin`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -81,7 +90,7 @@ export default function AdminPage() {
         setErrorMessage('No se pudieron cargar los recursos. Verifica que el backend este activo.');
         setLoading(false);
       });
-  }, []);
+  }, [authToken]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

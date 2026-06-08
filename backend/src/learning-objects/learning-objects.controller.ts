@@ -12,7 +12,9 @@ import {
   ParseUUIDPipe,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { LearningObjectsService } from './learning-objects.service';
 import { AiService } from '../ai/ai.service';
@@ -23,6 +25,8 @@ import {
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { AuthGuard } from '../auth/auth.guard';
+import { Public } from '../auth/public.decorator';
+import { AuthService } from '../auth/auth.service';
 
 const allowedMimeTypes = new Set([
   'application/pdf',
@@ -30,34 +34,45 @@ const allowedMimeTypes = new Set([
 ]);
 
 @Controller('learning-objects')
+@UseGuards(AuthGuard)
 export class LearningObjectsController {
   constructor(
     private readonly service: LearningObjectsService,
     private readonly aiService: AiService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post()
-  @UseGuards(AuthGuard)
   create(@Body() createDto: CreateLearningObjectDto) {
     return this.service.create(createDto);
   }
 
   @Get()
-  findAll(
+  @Public()
+  async findAll(
     @Query('q') query?: string,
     @Query('difficulty') difficulty?: string,
     @Query('type') type?: string,
+    @Query('scope') scope?: string,
+    @Req() request?: Request,
   ) {
-    return this.service.findAll(query, difficulty, type);
+    const isAdminScope = scope === 'admin';
+    if (isAdminScope) {
+      await this.authService.validateBearerToken(
+        request?.headers.authorization,
+      );
+    }
+
+    return this.service.findAll(query, difficulty, type, isAdminScope);
   }
 
   @Get(':id')
+  @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findOne(id);
+    return this.service.findPublishedOne(id);
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateDto: UpdateLearningObjectDto,
@@ -66,14 +81,14 @@ export class LearningObjectsController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.remove(id);
   }
 
   @Get(':id/html')
+  @Public()
   async getHtml(@Param('id', ParseUUIDPipe) id: string) {
-    const html = await this.service.getObjectHtml(id);
+    const html = await this.service.getObjectHtml(id, true);
     return { html };
   }
 
@@ -83,7 +98,6 @@ export class LearningObjectsController {
    * Tras la subida, se dispara el análisis de IA.
    */
   @Post(':id/upload')
-  @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

@@ -41,4 +41,19 @@ export class AuthService {
       },
     };
   }
+
+  async validateBearerToken(authorization?: string): Promise<void> {
+    const [type, token] = authorization?.split(' ') ?? [];
+    if (type !== 'Bearer' || !token) {
+      throw new UnauthorizedException('Token requerido');
+    }
+
+    try {
+      const secret =
+        this.configService.get<string>('JWT_SECRET') ?? 'dev-secret-change-me';
+      await this.jwtService.verifyAsync(token, { secret });
+    } catch {
+      throw new UnauthorizedException('Token invalido');
+    }
+  }
 }

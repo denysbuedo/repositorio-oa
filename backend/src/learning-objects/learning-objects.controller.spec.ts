@@ -3,6 +3,7 @@ import { LearningObjectsController } from './learning-objects.controller';
 import { LearningObjectsService } from './learning-objects.service';
 import { AiService } from '../ai/ai.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { AuthService } from '../auth/auth.service';
 
 describe('LearningObjectsController', () => {
   let controller: LearningObjectsController;
@@ -19,6 +20,9 @@ describe('LearningObjectsController', () => {
     extractText: jest.fn(),
     generateMetadata: jest.fn(),
   };
+  const authServiceMock = {
+    validateBearerToken: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,6 +35,10 @@ describe('LearningObjectsController', () => {
         {
           provide: AiService,
           useValue: aiServiceMock,
+        },
+        {
+          provide: AuthService,
+          useValue: authServiceMock,
         },
       ],
     })
