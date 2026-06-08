@@ -67,6 +67,50 @@ export class LearningObjectsService {
     return await qb.getMany();
   }
 
+  async getFilterFacets(includeUnpublished = false): Promise<{
+    difficulties: string[];
+    types: string[];
+  }> {
+    const baseQuery = this.repository
+      .createQueryBuilder('lo')
+      .select("DISTINCT lo.lomMetadata->'educational'->>'difficulty'", 'value')
+      .where("lo.lomMetadata->'educational'->>'difficulty' IS NOT NULL")
+      .andWhere("lo.lomMetadata->'educational'->>'difficulty' <> ''");
+
+    if (!includeUnpublished) {
+      baseQuery.andWhere('lo.status = :status', {
+        status: ObjectStatus.PUBLISHED,
+      });
+    }
+
+    const typeQuery = this.repository
+      .createQueryBuilder('lo')
+      .select(
+        "DISTINCT lo.lomMetadata->'educational'->>'learningResourceType'",
+        'value',
+      )
+      .where(
+        "lo.lomMetadata->'educational'->>'learningResourceType' IS NOT NULL",
+      )
+      .andWhere("lo.lomMetadata->'educational'->>'learningResourceType' <> ''");
+
+    if (!includeUnpublished) {
+      typeQuery.andWhere('lo.status = :status', {
+        status: ObjectStatus.PUBLISHED,
+      });
+    }
+
+    const [difficultyRows, typeRows] = await Promise.all([
+      baseQuery.orderBy('value', 'ASC').getRawMany<{ value: string }>(),
+      typeQuery.orderBy('value', 'ASC').getRawMany<{ value: string }>(),
+    ]);
+
+    return {
+      difficulties: difficultyRows.map((row) => row.value),
+      types: typeRows.map((row) => row.value),
+    };
+  }
+
   async findOne(id: string): Promise<LearningObject> {
     const object = await this.repository.findOne({ where: { id } });
     if (!object) {

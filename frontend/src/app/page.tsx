@@ -28,6 +28,67 @@ interface LearningObject {
   };
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface FilterFacets {
+  difficulties: string[];
+  types: string[];
+}
+
+const DEFAULT_DIFFICULTY_OPTIONS: FilterOption[] = [
+  { value: 'very easy', label: 'Muy facil' },
+  { value: 'easy', label: 'Facil' },
+  { value: 'normal', label: 'Medio' },
+  { value: 'difficult', label: 'Dificil' },
+];
+
+const DEFAULT_TYPE_OPTIONS: FilterOption[] = [
+  { value: 'Narrative Text', label: 'Texto narrativo' },
+  { value: 'Lecture', label: 'Conferencia' },
+  { value: 'Exercise', label: 'Ejercicio' },
+  { value: 'Exam', label: 'Examen' },
+  { value: 'Simulation', label: 'Simulacion' },
+  { value: 'Image', label: 'Imagen' },
+  { value: 'Diagram', label: 'Diagrama' },
+  { value: 'Questionnaire', label: 'Cuestionario' },
+  { value: 'Self Assessment', label: 'Autoevaluacion' },
+  { value: 'Experiment', label: 'Experimento' },
+  { value: 'Problem Statement', label: 'Enunciado de problema' },
+  { value: 'Slide', label: 'Diapositiva' },
+  { value: 'Table', label: 'Tabla' },
+];
+
+const DIFFICULTY_LABELS: Record<string, string> = {
+  'very easy': 'Muy facil',
+  easy: 'Facil',
+  normal: 'Medio',
+  difficult: 'Dificil',
+  'muy facil': 'Muy facil',
+  facil: 'Facil',
+  medio: 'Medio',
+  dificil: 'Dificil',
+  'muy dificil': 'Muy dificil',
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  'narrative text': 'Texto narrativo',
+  lecture: 'Conferencia',
+  exercise: 'Ejercicio',
+  exam: 'Examen',
+  simulation: 'Simulacion',
+  image: 'Imagen',
+  diagram: 'Diagrama',
+  questionnaire: 'Cuestionario',
+  'self assessment': 'Autoevaluacion',
+  experiment: 'Experimento',
+  'problem statement': 'Enunciado de problema',
+  slide: 'Diapositiva',
+  table: 'Tabla',
+};
+
 function ObjectList({
   objects,
   loading,
@@ -76,8 +137,8 @@ function ObjectList({
                       </span>
                     )}
                     {obj.lomMetadata?.educational?.difficulty && (
-                      <span className={`badge badge-difficulty-${obj.lomMetadata.educational.difficulty.toLowerCase().replace(' ', '')}`}>
-                        {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {obj.lomMetadata.educational.difficulty}
+                      <span className={`badge badge-difficulty-${getDifficultyBadgeKey(obj.lomMetadata.educational.difficulty)}`}>
+                        {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
                       </span>
                     )}
                   </div>
@@ -157,18 +218,68 @@ function getStatusLabel(status: string) {
 }
 
 function getDifficultyIcon(difficulty: string) {
-  switch(difficulty.toLowerCase()) {
-    case 'very easy': return 'Muy facil';
-    case 'easy': return 'Facil';
-    case 'normal': return 'Medio';
-    case 'difficult': return 'Dificil';
-    default: return 'Nivel';
+  switch(normalizeOptionKey(difficulty)) {
+    case 'very easy':
+    case 'muy facil':
+      return 'Muy facil';
+    case 'easy':
+    case 'facil':
+      return 'Facil';
+    case 'normal':
+    case 'medio':
+      return 'Medio';
+    case 'difficult':
+    case 'dificil':
+      return 'Dificil';
+    default:
+      return 'Nivel';
   }
+}
+
+function getDifficultyLabel(difficulty: string) {
+  return DIFFICULTY_LABELS[normalizeOptionKey(difficulty)] ?? difficulty;
+}
+
+function getDifficultyBadgeKey(difficulty: string) {
+  return normalizeOptionKey(difficulty).replace(/\s+/g, '');
+}
+
+function normalizeOptionKey(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function buildFilterOptions(
+  values: string[],
+  defaults: FilterOption[],
+  labels: Record<string, string>,
+): FilterOption[] {
+  const seen = new Set<string>();
+  const options: FilterOption[] = [];
+
+  for (const option of defaults) {
+    const key = normalizeOptionKey(option.value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push(option);
+  }
+
+  for (const value of values) {
+    const key = normalizeOptionKey(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push({
+      value,
+      label: labels[key] ?? value,
+    });
+  }
+
+  return options;
 }
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const [objects, setObjects] = useState<LearningObject[]>([]);
+  const [facets, setFacets] = useState<FilterFacets>({ difficulties: [], types: [] });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
@@ -209,6 +320,34 @@ function HomeContent() {
       });
   }, [difficultyFilter, searchTerm, typeFilter]);
 
+  useEffect(() => {
+    fetch(`${API_URL}/learning-objects/facets`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data || typeof data !== 'object') {
+          throw new Error('Unexpected facets payload');
+        }
+
+        setFacets({
+          difficulties: Array.isArray((data as FilterFacets).difficulties)
+            ? (data as FilterFacets).difficulties
+            : [],
+          types: Array.isArray((data as FilterFacets).types)
+            ? (data as FilterFacets).types
+            : [],
+        });
+      })
+      .catch((err) => {
+        console.error('Error fetching facets:', err);
+        setFacets({ difficulties: [], types: [] });
+      });
+  }, []);
+
   // Calcular estadisticas
   const getStats = () => {
     const published = objects.filter(o => o.status === 'published').length;
@@ -218,6 +357,16 @@ function HomeContent() {
   };
 
   const stats = getStats();
+  const difficultyOptions = buildFilterOptions(
+    facets.difficulties,
+    DEFAULT_DIFFICULTY_OPTIONS,
+    DIFFICULTY_LABELS,
+  );
+  const typeOptions = buildFilterOptions(
+    facets.types,
+    DEFAULT_TYPE_OPTIONS,
+    TYPE_LABELS,
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -305,10 +454,9 @@ function HomeContent() {
               aria-label="Nivel de dificultad"
             >
               <option value="">Todos los niveles</option>
-              <option value="Very easy">Muy facil</option>
-              <option value="Easy">Facil</option>
-              <option value="Normal">Medio</option>
-              <option value="Difficult">Dificil</option>
+              {difficultyOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
 
@@ -321,19 +469,9 @@ function HomeContent() {
               aria-label="Tipo de recurso educativo"
             >
               <option value="">Todos los tipos</option>
-              <option value="Narrative Text">Texto narrativo</option>
-              <option value="Lecture">Conferencia</option>
-              <option value="Exercise">Ejercicio</option>
-              <option value="Exam">Examen</option>
-              <option value="Simulation">Simulacion</option>
-              <option value="Image">Imagen</option>
-              <option value="Diagram">Diagrama</option>
-              <option value="Questionnaire">Cuestionario</option>
-              <option value="Self Assessment">Autoevaluacion</option>
-              <option value="Experiment">Experimento</option>
-              <option value="Problem Statement">Enunciado de problema</option>
-              <option value="Slide">Diapositiva</option>
-              <option value="Table">Tabla</option>
+              {typeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
 

@@ -66,6 +66,19 @@ export class LearningObjectsController {
     return this.service.findAll(query, difficulty, type, isAdminScope);
   }
 
+  @Get('facets')
+  @Public()
+  async getFacets(@Query('scope') scope?: string, @Req() request?: Request) {
+    const isAdminScope = scope === 'admin';
+    if (isAdminScope) {
+      await this.authService.validateBearerToken(
+        request?.headers.authorization,
+      );
+    }
+
+    return this.service.getFilterFacets(isAdminScope);
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
