@@ -66,7 +66,7 @@ export class LearningObjectsController {
     return this.service.findAll(query, difficulty, type, isAdminScope);
   }
 
-  @Get('facets')
+  @Get('filter-facets')
   @Public()
   async getFacets(@Query('scope') scope?: string, @Req() request?: Request) {
     const isAdminScope = scope === 'admin';
