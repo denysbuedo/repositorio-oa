@@ -36,6 +36,10 @@ export class UpdateLearningObjectDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  author?: string;
+
+  @IsOptional()
   @IsEnum(ObjectStatus)
   status?: ObjectStatus;
 

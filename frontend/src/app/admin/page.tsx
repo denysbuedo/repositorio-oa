@@ -37,11 +37,33 @@ interface LearningObject {
   };
 }
 
+interface ReviewForm {
+  title: string;
+  description: string;
+  author: string;
+  learningResourceType: string;
+  difficulty: string;
+  keywords: string;
+}
+
 const statusOptions: Array<{ value: ObjectStatus; label: string }> = [
   { value: 'draft', label: 'Borrador' },
   { value: 'published', label: 'Publicado' },
   { value: 'archived', label: 'Archivado' },
 ];
+
+const resourceTypeOptions = [
+  'Articulo',
+  'Caso de estudio',
+  'Ejercicio',
+  'Guia',
+  'Leccion',
+  'Presentacion',
+  'Simulacion',
+  'Video',
+];
+
+const difficultyOptions = ['Muy facil', 'Facil', 'Medio', 'Dificil', 'Muy dificil'];
 
 export default function AdminPage() {
   const router = useRouter();
@@ -54,6 +76,8 @@ export default function AdminPage() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
+  const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
+  const [savingReview, setSavingReview] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -87,7 +111,11 @@ export default function AdminPage() {
         if (!Array.isArray(data)) {
           throw new Error('Unexpected API response');
         }
-        setObjects(data as LearningObject[]);
+        const loadedObjects = data as LearningObject[];
+        setObjects(loadedObjects);
+        setSelectedObject((current) =>
+          current ? loadedObjects.find((object) => object.id === current.id) ?? null : current
+        );
         setLoading(false);
       })
       .catch((error) => {
@@ -128,7 +156,56 @@ export default function AdminPage() {
     return { total, published, draft, archived, withMetadata, processing };
   }, [objects]);
 
+  const selectObject = (object: LearningObject) => {
+    setSelectedObject(object);
+    setReviewForm(createReviewForm(object));
+  };
+
+  const saveReview = async () => {
+    if (!selectedObject) return;
+
+    setSavingReview(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${selectedObject.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(buildReviewPayload(selectedObject, reviewForm)),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const updatedObject = await res.json() as LearningObject;
+      setObjects((current) =>
+        current.map((object) => object.id === updatedObject.id ? updatedObject : object)
+      );
+      setSelectedObject(updatedObject);
+      setReviewForm(createReviewForm(updatedObject));
+      setSuccessMessage('Revision guardada.');
+    } catch (error) {
+      console.error('Error saving review:', error);
+      setErrorMessage('No se pudo guardar la revision del recurso.');
+    } finally {
+      setSavingReview(false);
+    }
+  };
+
   const updateStatus = async (id: string, status: ObjectStatus) => {
+    const targetObject = objects.find((object) => object.id === id);
+    if (status === 'published' && targetObject) {
+      const blockers = getPublishBlockers(targetObject);
+      if (blockers.length > 0) {
+        const confirmed = window.confirm(
+          `El recurso tiene advertencias antes de publicar:\n\n${blockers.join('\n')}\n\nPublicar de todos modos?`
+        );
+        if (!confirmed) return;
+      }
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
     try {
@@ -143,8 +220,15 @@ export default function AdminPage() {
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
+      const updatedObject = await res.json() as LearningObject;
+      setObjects((current) =>
+        current.map((object) => object.id === updatedObject.id ? updatedObject : object)
+      );
+      setSelectedObject((current) => current?.id === updatedObject.id ? updatedObject : current);
+      if (selectedObject?.id === updatedObject.id) {
+        setReviewForm(createReviewForm(updatedObject));
+      }
       setSuccessMessage(`Recurso marcado como ${getStatusLabel(status)}.`);
-      fetchObjects();
     } catch (error) {
       console.error('Error updating status:', error);
       setErrorMessage('No se pudo actualizar el estado del recurso.');
@@ -262,7 +346,7 @@ export default function AdminPage() {
                   filteredObjects.map((object) => (
                     <tr key={object.id} className={selectedObject?.id === object.id ? 'selected-row' : ''}>
                       <td>
-                        <button className="resource-title" onClick={() => setSelectedObject(object)}>
+                        <button className="resource-title" onClick={() => selectObject(object)}>
                           {object.title}
                         </button>
                         <div className="resource-id">{object.id}</div>
@@ -297,11 +381,91 @@ export default function AdminPage() {
           <h2>Revision</h2>
           {selectedObject ? (
             <>
-              <h3>{selectedObject.title}</h3>
-              <dl>
+              <div className="review-header">
+                <h3>{selectedObject.title}</h3>
+                <span className={`status-pill status-${selectedObject.status}`}>{getStatusLabel(selectedObject.status)}</span>
+              </div>
+
+              <div className="review-actions">
+                <button className="primary-button" onClick={() => updateStatus(selectedObject.id, 'published')} disabled={selectedObject.status === 'published'}>
+                  Aprobar y publicar
+                </button>
+                <button className="secondary-button" onClick={() => updateStatus(selectedObject.id, 'draft')} disabled={selectedObject.status === 'draft'}>
+                  Enviar a borrador
+                </button>
+                <button className="secondary-button" onClick={() => updateStatus(selectedObject.id, 'archived')} disabled={selectedObject.status === 'archived'}>
+                  Archivar
+                </button>
+              </div>
+
+              <section className="review-section">
+                <h4>Datos del recurso</h4>
+                <label className="field">
+                  <span>Titulo</span>
+                  <input
+                    value={reviewForm.title}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, title: event.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Autor</span>
+                  <input
+                    value={reviewForm.author}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, author: event.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Descripcion</span>
+                  <textarea
+                    value={reviewForm.description}
+                    rows={4}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, description: event.target.value }))}
+                  />
+                </label>
+              </section>
+
+              <section className="review-section">
+                <h4>Metadatos educativos</h4>
+                <label className="field">
+                  <span>Tipo de recurso</span>
+                  <select
+                    value={reviewForm.learningResourceType}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, learningResourceType: event.target.value }))}
+                  >
+                    <option value="">Sin tipo</option>
+                    {resourceTypeOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Nivel de dificultad</span>
+                  <select
+                    value={reviewForm.difficulty}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, difficulty: event.target.value }))}
+                  >
+                    <option value="">Sin nivel</option>
+                    {difficultyOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Palabras clave</span>
+                  <input
+                    value={reviewForm.keywords}
+                    placeholder="Separadas por coma"
+                    onChange={(event) => setReviewForm((current) => ({ ...current, keywords: event.target.value }))}
+                  />
+                </label>
+              </section>
+
+              <button className="save-review-button" onClick={saveReview} disabled={savingReview}>
+                {savingReview ? 'Guardando...' : 'Guardar revision'}
+              </button>
+
+              <dl className="file-summary">
                 <div><dt>ID</dt><dd>{selectedObject.id}</dd></div>
-                <div><dt>Estado</dt><dd>{getStatusLabel(selectedObject.status)}</dd></div>
-                <div><dt>Autor</dt><dd>{selectedObject.author}</dd></div>
                 <div><dt>Archivo</dt><dd>{selectedObject.originalFilename ?? (selectedObject.fileUrl ? 'Disponible' : 'Pendiente')}</dd></div>
                 <div><dt>Tamano</dt><dd>{formatFileSize(selectedObject.fileSize)}</dd></div>
                 <div><dt>Subido</dt><dd>{formatDate(selectedObject.uploadedAt)}</dd></div>
@@ -317,7 +481,6 @@ export default function AdminPage() {
               {selectedObject.processingError && (
                 <p className="processing-error">{selectedObject.processingError}</p>
               )}
-              <p className="description">{selectedObject.description || 'Sin descripcion.'}</p>
               {selectedObject.fileUrl && (
                 <a className="download-link" href={`${API_URL}/${selectedObject.fileUrl}`} download>
                   Descargar archivo
@@ -466,7 +629,8 @@ export default function AdminPage() {
         }
 
         input,
-        select {
+        select,
+        textarea {
           width: 100%;
           border: 1px solid #cbd5e1;
           border-radius: 0.375rem;
@@ -474,6 +638,11 @@ export default function AdminPage() {
           color: #0f172a;
           background: white;
           font: inherit;
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 96px;
         }
 
         .message {
@@ -498,7 +667,7 @@ export default function AdminPage() {
 
         .admin-workspace {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 360px;
+          grid-template-columns: minmax(0, 1fr) 440px;
           gap: 1rem;
           align-items: start;
         }
@@ -666,12 +835,71 @@ export default function AdminPage() {
 
         .detail-panel h3 {
           font-size: 1rem;
+          margin: 0;
+        }
+
+        .review-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 0.75rem;
           margin: 1rem 0;
+        }
+
+        .review-actions {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .review-actions button,
+        .save-review-button {
+          width: 100%;
+          text-align: center;
+        }
+
+        .review-actions button:disabled,
+        .save-review-button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+
+        .review-section {
+          display: grid;
+          gap: 0.75rem;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 1rem;
+          margin-top: 1rem;
+        }
+
+        .review-section h4 {
+          font-size: 0.875rem;
+          margin: 0;
+        }
+
+        .save-review-button {
+          border: 1px solid #2563eb;
+          border-radius: 0.375rem;
+          background: #2563eb;
+          color: white;
+          cursor: pointer;
+          font: inherit;
+          font-size: 0.875rem;
+          font-weight: 800;
+          margin-top: 1rem;
+          padding: 0.75rem;
         }
 
         dl {
           display: grid;
           gap: 0.65rem;
+        }
+
+        .file-summary {
+          border-top: 1px solid #e2e8f0;
+          margin-top: 1rem;
+          padding-top: 1rem;
         }
 
         dt {
@@ -769,6 +997,70 @@ function Metric({ label, value }: { label: string; value: number }) {
       <div className="metric-label">{label}</div>
     </div>
   );
+}
+
+function createReviewForm(object: LearningObject | null): ReviewForm {
+  return {
+    title: object?.title ?? '',
+    description: object?.description ?? '',
+    author: object?.author ?? '',
+    learningResourceType: object?.lomMetadata?.educational?.learningResourceType ?? '',
+    difficulty: object?.lomMetadata?.educational?.difficulty ?? '',
+    keywords: object?.lomMetadata?.general?.keyword?.join(', ') ?? '',
+  };
+}
+
+function buildReviewPayload(object: LearningObject, form: ReviewForm) {
+  const keywords = form.keywords
+    .split(',')
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+
+  return {
+    title: form.title.trim(),
+    description: form.description.trim(),
+    author: form.author.trim(),
+    lomMetadata: {
+      ...(object.lomMetadata ?? {}),
+      general: {
+        ...(object.lomMetadata?.general ?? {}),
+        title: form.title.trim(),
+        description: form.description.trim(),
+        keyword: keywords,
+      },
+      educational: {
+        ...(object.lomMetadata?.educational ?? {}),
+        learningResourceType: form.learningResourceType,
+        difficulty: form.difficulty,
+      },
+    },
+  };
+}
+
+function getPublishBlockers(object: LearningObject) {
+  const blockers: string[] = [];
+
+  if (!object.fileUrl) {
+    blockers.push('- No tiene archivo cargado.');
+  }
+
+  if (object.processingStatus === 'pending' || object.processingStatus === 'processing') {
+    blockers.push('- La IA todavia no termino de procesar el archivo.');
+  }
+
+  if (object.processingStatus === 'failed') {
+    blockers.push('- El procesamiento de IA fallo.');
+  }
+
+  if (!object.lomMetadata?.educational?.learningResourceType) {
+    blockers.push('- Falta el tipo de recurso.');
+  }
+
+  if (!object.lomMetadata?.educational?.difficulty) {
+    blockers.push('- Falta el nivel de dificultad.');
+  }
+
+  return blockers;
 }
 
 function getStatusLabel(status: ObjectStatus) {
