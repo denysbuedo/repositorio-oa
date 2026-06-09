@@ -321,7 +321,7 @@ function HomeContent() {
   }, [difficultyFilter, searchTerm, typeFilter]);
 
   useEffect(() => {
-    fetch(`${API_URL}/learning-objects/filter-facets`)
+    fetch(`${API_URL}/learning-object-filters`)
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);

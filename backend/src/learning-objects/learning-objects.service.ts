@@ -18,6 +18,10 @@ import {
   UpdateLearningObjectDto,
 } from './dto/learning-object.dto';
 
+const difficultyExpression = "lo.lomMetadata->'educational'->>'difficulty'";
+const resourceTypeExpression =
+  "COALESCE(lo.lomMetadata->'educational'->>'learningResourceType', lo.lomMetadata->'educational'->>'learning-resource-type')";
+
 @Injectable()
 export class LearningObjectsService {
   constructor(
@@ -50,17 +54,11 @@ export class LearningObjectsService {
 
     if (difficulty) {
       // Búsqueda dentro del JSONB de LOM
-      qb.andWhere(
-        "lo.lomMetadata->'educational'->>'difficulty' = :difficulty",
-        { difficulty },
-      );
+      qb.andWhere(`${difficultyExpression} = :difficulty`, { difficulty });
     }
 
     if (type) {
-      qb.andWhere(
-        "lo.lomMetadata->'educational'->>'learningResourceType' = :type",
-        { type },
-      );
+      qb.andWhere(`${resourceTypeExpression} = :type`, { type });
     }
 
     qb.orderBy('lo.createdAt', 'DESC');
@@ -73,9 +71,9 @@ export class LearningObjectsService {
   }> {
     const baseQuery = this.repository
       .createQueryBuilder('lo')
-      .select("DISTINCT lo.lomMetadata->'educational'->>'difficulty'", 'value')
-      .where("lo.lomMetadata->'educational'->>'difficulty' IS NOT NULL")
-      .andWhere("lo.lomMetadata->'educational'->>'difficulty' <> ''");
+      .select(`DISTINCT ${difficultyExpression}`, 'value')
+      .where(`${difficultyExpression} IS NOT NULL`)
+      .andWhere(`${difficultyExpression} <> ''`);
 
     if (!includeUnpublished) {
       baseQuery.andWhere('lo.status = :status', {
@@ -85,14 +83,9 @@ export class LearningObjectsService {
 
     const typeQuery = this.repository
       .createQueryBuilder('lo')
-      .select(
-        "DISTINCT lo.lomMetadata->'educational'->>'learningResourceType'",
-        'value',
-      )
-      .where(
-        "lo.lomMetadata->'educational'->>'learningResourceType' IS NOT NULL",
-      )
-      .andWhere("lo.lomMetadata->'educational'->>'learningResourceType' <> ''");
+      .select(`DISTINCT ${resourceTypeExpression}`, 'value')
+      .where(`${resourceTypeExpression} IS NOT NULL`)
+      .andWhere(`${resourceTypeExpression} <> ''`);
 
     if (!includeUnpublished) {
       typeQuery.andWhere('lo.status = :status', {
