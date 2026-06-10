@@ -134,7 +134,7 @@ function ObjectList({
 
                 {getResourceType(obj) && (
                   <div className="resource-type-tag">
-                    <span className="resource-type-icon">Tipo</span>
+                    <span className="resource-type-icon">Tipo:</span>
                     <span>{getTypeLabel(getResourceType(obj))}</span>
                   </div>
                 )}
@@ -158,7 +158,7 @@ function ObjectList({
 
                 <div className="card-footer">
                   <div className="author-info">
-                    <span className="author-label">Autor</span>
+                    <span className="author-label">Autor:</span>
                     <span className="author-name">{obj.author}</span>
                   </div>
                   <div className="card-actions">
@@ -1035,13 +1035,15 @@ function HomeContent() {
           gap: 1rem;
           padding-top: 0.75rem;
           border-top: 1px solid #e0e0e0;
+          flex-wrap: wrap;
         }
 
         .author-info {
           display: flex;
-          flex-direction: column;
-          gap: 0.15rem;
+          align-items: baseline;
+          gap: 0.35rem;
           min-width: 0;
+          flex: 1 1 12rem;
         }
 
         .author-label {
@@ -1056,6 +1058,7 @@ function HomeContent() {
           color: #1a1a1a;
           font-weight: 700;
           overflow-wrap: anywhere;
+          min-width: 0;
         }
 
         .card-actions {
@@ -1064,6 +1067,7 @@ function HomeContent() {
           align-items: center;
           flex-wrap: wrap;
           justify-content: flex-end;
+          margin-left: auto;
         }
 
         .btn-download {
