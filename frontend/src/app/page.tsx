@@ -509,8 +509,8 @@ function HomeContent() {
       <style jsx>{`
         /* Variables y estilos mejorados */
         :root {
-          --gradient-primary: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
-          --gradient-secondary: linear-gradient(135deg, #333333 0%, #666666 100%);
+          --gradient-primary: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
+          --gradient-secondary: linear-gradient(135deg, #174a96 0%, #123a75 100%);
           --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
           --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
           --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -527,12 +527,13 @@ function HomeContent() {
 
         /* Header con fondo de color */
         .header {
-          background: white;
+          background: var(--gradient-primary);
           border-radius: 0.5rem;
-          padding: 1.5rem 2rem;
-          margin-bottom: 1.5rem;
+          padding: 3rem 2.5rem;
+          margin-bottom: 2rem;
           box-shadow: var(--shadow-md);
-          border: 1px solid #e0e0e0;
+          border: 1px solid #174a96;
+          min-height: 190px;
         }
 
         .header-content {
@@ -557,16 +558,18 @@ function HomeContent() {
         }
 
         .title {
-          font-size: 1.5rem;
+          font-size: 2.4rem;
           font-weight: 700;
-          color: #1a1a1a;
+          color: white;
+          line-height: 1.1;
+          max-width: 760px;
           margin: 0;
         }
 
         .subtitle {
-          color: #666666;
-          font-size: 0.875rem;
-          margin: 0.25rem 0 0 0;
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 1rem;
+          margin: 0.65rem 0 0 0;
         }
 
         /* Panel de estadsticas */
@@ -638,7 +641,7 @@ function HomeContent() {
 
         .stat-trend {
           font-size: 0.7rem;
-          color: #333333;
+          color: #1f5fbf;
           margin-top: 0.5rem;
         }
 
@@ -703,6 +706,15 @@ function HomeContent() {
           .filters-grid {
             grid-template-columns: 1fr;
           }
+
+          .header {
+            min-height: auto;
+            padding: 2rem 1.5rem;
+          }
+
+          .title {
+            font-size: 1.9rem;
+          }
         }
 
         .filter-group {
@@ -745,8 +757,8 @@ function HomeContent() {
         .filter-input:focus,
         .filter-select:focus {
           outline: none;
-          border-color: #333333;
-          box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
+          border-color: #1f5fbf;
+          box-shadow: 0 0 0 3px rgba(31, 95, 191, 0.12);
         }
 
         .btn-search {
@@ -767,8 +779,8 @@ function HomeContent() {
 
         .btn-admin {
           background: white;
-          color: #1a1a1a;
-          border: 1px solid #e0e0e0;
+          color: #174a96;
+          border: 1px solid rgba(255, 255, 255, 0.75);
           padding: 0.75rem 1.5rem;
           border-radius: 0.5rem;
           font-weight: 700;
@@ -971,7 +983,7 @@ function HomeContent() {
           cursor: pointer;
           font-size: 0.8rem;
           font-weight: 600;
-          color: #333333;
+          color: #1f5fbf;
         }
 
         .lom-data {

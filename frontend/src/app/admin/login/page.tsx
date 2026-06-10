@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
         }
 
         .eyebrow {
-          color: #333333;
+          color: #1f5fbf;
           font-size: 0.75rem;
           font-weight: 800;
           text-transform: uppercase;
@@ -127,9 +127,9 @@ export default function AdminLoginPage() {
         }
 
         button {
-          border: 1px solid #1a1a1a;
+          border: 1px solid #1f5fbf;
           border-radius: 0.375rem;
-          background: #1a1a1a;
+          background: #1f5fbf;
           color: white;
           padding: 0.75rem;
           font-weight: 800;

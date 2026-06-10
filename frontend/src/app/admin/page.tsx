@@ -522,13 +522,17 @@ export default function AdminPage() {
           justify-content: space-between;
           align-items: flex-start;
           gap: 1rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid #e0e0e0;
+          padding: 2.25rem 2rem;
+          border: 1px solid #174a96;
+          border-radius: 0.5rem;
           margin-bottom: 1rem;
+          background: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
+          color: white;
+          min-height: 170px;
         }
 
         .eyebrow {
-          color: #333333;
+          color: rgba(255, 255, 255, 0.82);
           font-size: 0.75rem;
           font-weight: 800;
           text-transform: uppercase;
@@ -536,13 +540,13 @@ export default function AdminPage() {
         }
 
         h1 {
-          font-size: 1.75rem;
+          font-size: 2.15rem;
           margin: 0;
         }
 
         .subtitle {
-          color: #666666;
-          margin-top: 0.25rem;
+          color: rgba(255, 255, 255, 0.86);
+          margin-top: 0.45rem;
           max-width: 760px;
         }
 
@@ -572,8 +576,20 @@ export default function AdminPage() {
 
         .primary-button {
           color: white;
-          border: 1px solid #1a1a1a;
-          background: #1a1a1a;
+          border: 1px solid #1f5fbf;
+          background: #1f5fbf;
+        }
+
+        .admin-header .secondary-link,
+        .admin-header .secondary-button {
+          color: #174a96;
+          border-color: rgba(255, 255, 255, 0.75);
+        }
+
+        .admin-header .primary-button {
+          color: #174a96;
+          border-color: rgba(255, 255, 255, 0.75);
+          background: white;
         }
 
         .metrics {
@@ -882,9 +898,9 @@ export default function AdminPage() {
         }
 
         .save-review-button {
-          border: 1px solid #1a1a1a;
+          border: 1px solid #1f5fbf;
           border-radius: 0.375rem;
-          background: #1a1a1a;
+          background: #1f5fbf;
           color: white;
           cursor: pointer;
           font: inherit;
@@ -978,6 +994,15 @@ export default function AdminPage() {
           .toolbar {
             flex-direction: column;
             align-items: stretch;
+          }
+
+          .admin-header {
+            min-height: auto;
+            padding: 1.5rem;
+          }
+
+          h1 {
+            font-size: 1.65rem;
           }
 
           .field.compact {
