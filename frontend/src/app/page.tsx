@@ -509,8 +509,6 @@ function HomeContent() {
       <style jsx>{`
         /* Variables y estilos mejorados */
         :root {
-          --gradient-primary: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
-          --gradient-secondary: linear-gradient(135deg, #174a96 0%, #123a75 100%);
           --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
           --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
           --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -527,7 +525,7 @@ function HomeContent() {
 
         /* Header con fondo de color */
         .header {
-          background: var(--gradient-primary);
+          background: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
           border-radius: 0.5rem;
           padding: 3rem 2.5rem;
           margin-bottom: 2rem;
@@ -762,7 +760,7 @@ function HomeContent() {
         }
 
         .btn-search {
-          background: var(--gradient-primary);
+          background: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
           color: white;
           border: none;
           padding: 0.75rem 1.5rem;
@@ -1058,7 +1056,7 @@ function HomeContent() {
         }
 
         .empty-state-btn {
-          background: var(--gradient-primary);
+          background: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
           color: white;
           border: none;
           padding: 0.5rem 1rem;
