@@ -69,10 +69,8 @@ export default function AdminPage() {
   const router = useRouter();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authToken] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
-  });
+  const [authToken, setAuthToken] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
@@ -83,13 +81,18 @@ export default function AdminPage() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    if (!authToken) {
+    const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY) ?? '';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAuthToken(storedToken);
+    setAuthChecked(true);
+
+    if (!storedToken) {
       router.replace('/admin/login');
     }
-  }, [authToken, router]);
+  }, [router]);
 
   const fetchObjects = useCallback(() => {
-    if (!authToken) {
+    if (!authChecked || !authToken) {
       setLoading(false);
       return;
     }
@@ -124,7 +127,7 @@ export default function AdminPage() {
         setErrorMessage('No se pudieron cargar los recursos. Verifica que el backend este activo.');
         setLoading(false);
       });
-  }, [authToken]);
+  }, [authChecked, authToken]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -265,7 +268,7 @@ export default function AdminPage() {
     router.replace('/admin/login');
   };
 
-  if (!authToken) {
+  if (!authChecked || !authToken) {
     return <main className="admin-shell">Validando sesion...</main>;
   }
 
