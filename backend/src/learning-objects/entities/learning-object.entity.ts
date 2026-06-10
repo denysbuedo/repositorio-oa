@@ -54,13 +54,13 @@ export class LearningObject {
   @Column({ nullable: true })
   fileMimeType: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   originalFilename: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'integer', nullable: true })
   fileSize: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   uploadedAt: Date | null;
 
   @Column({

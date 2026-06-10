@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LearningObjectFiltersController } from './learning-object-filters.controller';
 import { LearningObjectsController } from './learning-objects.controller';
@@ -8,7 +9,7 @@ import { AiService } from '../ai/ai.service';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LearningObject]), AuthModule],
+  imports: [TypeOrmModule.forFeature([LearningObject]), AuthModule, JwtModule],
   controllers: [LearningObjectsController, LearningObjectFiltersController],
   providers: [LearningObjectsService, AiService],
   exports: [LearningObjectsService],

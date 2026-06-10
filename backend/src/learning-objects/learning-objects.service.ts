@@ -18,9 +18,9 @@ import {
   UpdateLearningObjectDto,
 } from './dto/learning-object.dto';
 
-const difficultyExpression = "lo.lomMetadata->'educational'->>'difficulty'";
+const difficultyExpression = "lo.\"lomMetadata\"->'educational'->>'difficulty'";
 const resourceTypeExpression =
-  "COALESCE(lo.lomMetadata->'educational'->>'learningResourceType', lo.lomMetadata->'educational'->>'learning-resource-type')";
+  "COALESCE(lo.\"lomMetadata\"->'educational'->>'learningResourceType', lo.\"lomMetadata\"->'educational'->>'learning-resource-type')";
 
 @Injectable()
 export class LearningObjectsService {
