@@ -161,8 +161,8 @@ export default function UploadModal({ authToken, onClose, onSuccess }: UploadMod
         }
         .modal-error {
           background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #991b1b;
+          border: 1px solid #e0e0e0;
+          color: #1a1a1a;
           border-radius: 8px;
           padding: 0.75rem;
           margin-bottom: 1rem;

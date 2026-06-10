@@ -514,7 +514,7 @@ export default function AdminPage() {
           margin: 0 auto;
           padding: 1.5rem;
           min-height: 100vh;
-          color: #0f172a;
+          color: #1a1a1a;
         }
 
         .admin-header {
@@ -523,12 +523,12 @@ export default function AdminPage() {
           align-items: flex-start;
           gap: 1rem;
           padding-bottom: 1rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e0e0e0;
           margin-bottom: 1rem;
         }
 
         .eyebrow {
-          color: #2563eb;
+          color: #333333;
           font-size: 0.75rem;
           font-weight: 800;
           text-transform: uppercase;
@@ -541,7 +541,7 @@ export default function AdminPage() {
         }
 
         .subtitle {
-          color: #64748b;
+          color: #666666;
           margin-top: 0.25rem;
           max-width: 760px;
         }
@@ -565,15 +565,15 @@ export default function AdminPage() {
 
         .secondary-link,
         .secondary-button {
-          color: #334155;
-          border: 1px solid #cbd5e1;
+          color: #1a1a1a;
+          border: 1px solid #e0e0e0;
           background: white;
         }
 
         .primary-button {
           color: white;
-          border: 1px solid #2563eb;
-          background: #2563eb;
+          border: 1px solid #1a1a1a;
+          background: #1a1a1a;
         }
 
         .metrics {
@@ -585,7 +585,7 @@ export default function AdminPage() {
 
         .metric {
           background: white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
           padding: 0.9rem;
         }
@@ -596,7 +596,7 @@ export default function AdminPage() {
         }
 
         .metric-label {
-          color: #64748b;
+          color: #666666;
           font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
@@ -607,7 +607,7 @@ export default function AdminPage() {
           gap: 0.75rem;
           align-items: end;
           background: white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
           padding: 1rem;
           margin-bottom: 1rem;
@@ -625,7 +625,7 @@ export default function AdminPage() {
         }
 
         .field span {
-          color: #475569;
+          color: #666666;
           font-size: 0.75rem;
           font-weight: 800;
           text-transform: uppercase;
@@ -635,10 +635,10 @@ export default function AdminPage() {
         select,
         textarea {
           width: 100%;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #e0e0e0;
           border-radius: 0.375rem;
           padding: 0.65rem;
-          color: #0f172a;
+          color: #1a1a1a;
           background: white;
           font: inherit;
         }
@@ -658,14 +658,14 @@ export default function AdminPage() {
 
         .message.error {
           background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #991b1b;
+          border: 1px solid #e0e0e0;
+          color: #1a1a1a;
         }
 
         .message.success {
           background: #f0fdf4;
-          border: 1px solid #bbf7d0;
-          color: #166534;
+          border: 1px solid #e0e0e0;
+          color: #1a1a1a;
         }
 
         .admin-workspace {
@@ -678,7 +678,7 @@ export default function AdminPage() {
         .table-panel,
         .detail-panel {
           background: white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
         }
 
@@ -687,7 +687,7 @@ export default function AdminPage() {
           justify-content: space-between;
           align-items: center;
           padding: 1rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e0e0e0;
         }
 
         .table-header h2,
@@ -697,7 +697,7 @@ export default function AdminPage() {
         }
 
         .table-header span {
-          color: #64748b;
+          color: #666666;
           font-size: 0.875rem;
         }
 
@@ -714,28 +714,28 @@ export default function AdminPage() {
         th,
         td {
           text-align: left;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e0e0e0;
           padding: 0.75rem;
           vertical-align: top;
           font-size: 0.875rem;
         }
 
         th {
-          color: #475569;
-          background: #f8fafc;
+          color: #666666;
+          background: #f5f5f5;
           font-size: 0.75rem;
           text-transform: uppercase;
         }
 
         .selected-row {
-          background: #eff6ff;
+          background: #f5f5f5;
         }
 
         .resource-title {
           border: none;
           background: none;
           padding: 0;
-          color: #1d4ed8;
+          color: #1a1a1a;
           font: inherit;
           font-weight: 800;
           cursor: pointer;
@@ -743,7 +743,7 @@ export default function AdminPage() {
         }
 
         .resource-id {
-          color: #64748b;
+          color: #666666;
           font-size: 0.7rem;
           margin-top: 0.2rem;
         }
@@ -758,43 +758,43 @@ export default function AdminPage() {
         }
 
         .status-published {
-          background: #dcfce7;
-          color: #166534;
+          background: #eeeeee;
+          color: #1a1a1a;
         }
 
         .status-draft {
-          background: #fef3c7;
-          color: #92400e;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .status-archived {
-          background: #f1f5f9;
-          color: #475569;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .processing-pending {
-          background: #fef3c7;
-          color: #92400e;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .processing-processing {
-          background: #dbeafe;
-          color: #1e40af;
+          background: #eeeeee;
+          color: #333333;
         }
 
         .processing-ready {
-          background: #dcfce7;
-          color: #166534;
+          background: #eeeeee;
+          color: #1a1a1a;
         }
 
         .processing-failed {
-          background: #fee2e2;
-          color: #991b1b;
+          background: #f5f5f5;
+          color: #333333;
         }
 
         .processing-none {
-          background: #f1f5f9;
-          color: #475569;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .row-actions {
@@ -804,10 +804,10 @@ export default function AdminPage() {
         }
 
         .row-actions button {
-          border: 1px solid #cbd5e1;
+          border: 1px solid #e0e0e0;
           border-radius: 0.375rem;
           background: white;
-          color: #334155;
+          color: #1a1a1a;
           padding: 0.4rem 0.55rem;
           font-size: 0.75rem;
           font-weight: 700;
@@ -820,12 +820,12 @@ export default function AdminPage() {
         }
 
         .row-actions .danger {
-          color: #991b1b;
-          border-color: #fecaca;
+          color: #1a1a1a;
+          border-color: #e0e0e0;
         }
 
         .empty-row {
-          color: #64748b;
+          color: #666666;
           text-align: center;
           padding: 2rem;
         }
@@ -871,7 +871,7 @@ export default function AdminPage() {
         .review-section {
           display: grid;
           gap: 0.75rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #e0e0e0;
           padding-top: 1rem;
           margin-top: 1rem;
         }
@@ -882,9 +882,9 @@ export default function AdminPage() {
         }
 
         .save-review-button {
-          border: 1px solid #2563eb;
+          border: 1px solid #1a1a1a;
           border-radius: 0.375rem;
-          background: #2563eb;
+          background: #1a1a1a;
           color: white;
           cursor: pointer;
           font: inherit;
@@ -900,20 +900,20 @@ export default function AdminPage() {
         }
 
         .file-summary {
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #e0e0e0;
           margin-top: 1rem;
           padding-top: 1rem;
         }
 
         dt {
-          color: #64748b;
+          color: #666666;
           font-size: 0.7rem;
           font-weight: 800;
           text-transform: uppercase;
         }
 
         dd {
-          color: #0f172a;
+          color: #1a1a1a;
           font-size: 0.875rem;
           overflow-wrap: anywhere;
         }
@@ -921,23 +921,23 @@ export default function AdminPage() {
         .description,
         .empty-detail,
         .processing-error {
-          color: #475569;
+          color: #666666;
           margin: 1rem 0;
           font-size: 0.875rem;
         }
 
         .processing-error {
-          border: 1px solid #fecaca;
+          border: 1px solid #e0e0e0;
           border-radius: 0.375rem;
-          background: #fef2f2;
-          color: #991b1b;
+          background: #f5f5f5;
+          color: #1a1a1a;
           padding: 0.75rem;
         }
 
         .download-link {
           display: inline-flex;
           margin-bottom: 1rem;
-          color: #1d4ed8;
+          color: #1a1a1a;
           font-weight: 800;
           text-decoration: none;
         }
@@ -945,15 +945,15 @@ export default function AdminPage() {
         .metadata summary {
           cursor: pointer;
           font-weight: 800;
-          color: #334155;
+          color: #333333;
         }
 
         .metadata pre {
           margin-top: 0.75rem;
           max-height: 320px;
           overflow: auto;
-          background: #0f172a;
-          color: #e2e8f0;
+          background: #1a1a1a;
+          color: #f5f5f5;
           border-radius: 0.375rem;
           padding: 0.75rem;
           font-size: 0.75rem;

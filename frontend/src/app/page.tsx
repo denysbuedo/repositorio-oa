@@ -509,8 +509,8 @@ function HomeContent() {
       <style jsx>{`
         /* Variables y estilos mejorados */
         :root {
-          --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          --gradient-primary: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+          --gradient-secondary: linear-gradient(135deg, #333333 0%, #666666 100%);
           --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
           --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
           --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -521,18 +521,18 @@ function HomeContent() {
           max-width: 1400px;
           margin: 0 auto;
           padding: 2rem;
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          background: #f5f5f5;
           min-height: 100vh;
         }
 
         /* Header con fondo de color */
         .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 1rem;
+          background: white;
+          border-radius: 0.5rem;
           padding: 1.5rem 2rem;
           margin-bottom: 1.5rem;
           box-shadow: var(--shadow-md);
-          border: none;
+          border: 1px solid #e0e0e0;
         }
 
         .header-content {
@@ -559,12 +559,12 @@ function HomeContent() {
         .title {
           font-size: 1.5rem;
           font-weight: 700;
-          color: white;
+          color: #1a1a1a;
           margin: 0;
         }
 
         .subtitle {
-          color: rgba(255, 255, 255, 0.9);
+          color: #666666;
           font-size: 0.875rem;
           margin: 0.25rem 0 0 0;
         }
@@ -576,7 +576,7 @@ function HomeContent() {
           padding: 1.5rem;
           margin-bottom: 1.5rem;
           box-shadow: var(--shadow-md);
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           position: relative;
         }
 
@@ -590,7 +590,7 @@ function HomeContent() {
         .stats-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #0f172a;
+          color: #1a1a1a;
           margin: 0;
         }
 
@@ -599,7 +599,7 @@ function HomeContent() {
           border: none;
           font-size: 1.25rem;
           cursor: pointer;
-          color: #94a3b8;
+          color: #666666;
           padding: 0 0.5rem;
         }
 
@@ -610,7 +610,7 @@ function HomeContent() {
         }
 
         .stat-card {
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          background: #f5f5f5;
           padding: 1.5rem;
           border-radius: 0.75rem;
           text-align: center;
@@ -624,21 +624,21 @@ function HomeContent() {
         .stat-value {
           font-size: 3rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #1a1a1a;
           margin-bottom: 0.5rem;
           line-height: 1;
         }
 
         .stat-label {
           font-size: 0.875rem;
-          color: #475569;
+          color: #666666;
           margin-top: 0.25rem;
           font-weight: 500;
         }
 
         .stat-trend {
           font-size: 0.7rem;
-          color: #667eea;
+          color: #333333;
           margin-top: 0.5rem;
         }
 
@@ -649,13 +649,13 @@ function HomeContent() {
           padding: 1.5rem;
           margin-bottom: 1.5rem;
           box-shadow: var(--shadow-md);
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
         }
 
         .error-banner {
           background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #991b1b;
+          border: 1px solid #e0e0e0;
+          color: #1a1a1a;
           border-radius: 0.5rem;
           padding: 0.75rem 1rem;
           margin-bottom: 1rem;
@@ -673,23 +673,23 @@ function HomeContent() {
         .filters-title {
           font-size: 1rem;
           font-weight: 600;
-          color: #0f172a;
+          color: #1a1a1a;
           margin: 0;
         }
 
         .filters-reset {
           background: none;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           padding: 0.5rem 1rem;
           border-radius: 0.5rem;
           cursor: pointer;
           font-size: 0.875rem;
-          color: #475569;
+          color: #666666;
           transition: all 0.2s;
         }
 
         .filters-reset:hover {
-          background: #f1f5f9;
+          background: #f5f5f5;
         }
 
         .filters-grid {
@@ -715,7 +715,7 @@ function HomeContent() {
         .filter-label {
           font-size: 0.75rem;
           font-weight: 600;
-          color: #475569;
+          color: #666666;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -725,12 +725,12 @@ function HomeContent() {
           width: 100%;
           min-width: 220px;
           padding: 0.75rem;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
           font-size: 0.875rem;
           transition: all 0.2s;
           background: white;
-          color: #0f172a;
+          color: #1a1a1a;
         }
 
         .filter-select {
@@ -739,14 +739,14 @@ function HomeContent() {
 
         .filter-select option {
           background: white;
-          color: #0f172a;
+          color: #1a1a1a;
         }
 
         .filter-input:focus,
         .filter-select:focus {
           outline: none;
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          border-color: #333333;
+          box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
         }
 
         .btn-search {
@@ -767,8 +767,8 @@ function HomeContent() {
 
         .btn-admin {
           background: white;
-          color: #1e293b;
-          border: 1px solid rgba(255, 255, 255, 0.45);
+          color: #1a1a1a;
+          border: 1px solid #e0e0e0;
           padding: 0.75rem 1.5rem;
           border-radius: 0.5rem;
           font-weight: 700;
@@ -777,7 +777,7 @@ function HomeContent() {
         }
 
         .btn-admin:hover {
-          background: #f8fafc;
+          background: #f5f5f5;
           transform: translateY(-2px);
         }
 
@@ -792,29 +792,29 @@ function HomeContent() {
         .results-title {
           font-size: 1.125rem;
           font-weight: 600;
-          color: #0f172a;
+          color: #1a1a1a;
           margin: 0;
         }
 
         .results-count {
           font-size: 0.875rem;
-          color: #64748b;
+          color: #666666;
           margin-left: 0.5rem;
         }
 
         .results-refresh {
           background: white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           padding: 0.5rem 1rem;
           border-radius: 0.5rem;
           cursor: pointer;
           font-size: 0.875rem;
-          color: #475569;
+          color: #666666;
           transition: all 0.2s;
         }
 
         .results-refresh:hover {
-          background: #f1f5f9;
+          background: #f5f5f5;
         }
 
         /* Grid y tarjetas */
@@ -830,7 +830,7 @@ function HomeContent() {
           padding: 1.5rem;
           box-shadow: var(--shadow-sm);
           transition: all 0.3s;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           display: flex;
           flex-direction: column;
           gap: 1rem;
@@ -864,49 +864,49 @@ function HomeContent() {
         }
 
         .badge-published {
-          background: #dcfce7;
-          color: #15803d;
+          background: #eeeeee;
+          color: #1a1a1a;
         }
 
         .badge-draft {
-          background: #fee2e2;
-          color: #991b1b;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .badge-archived {
-          background: #f1f5f9;
-          color: #475569;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .badge-ai {
-          background: #e0f2fe;
-          color: #0369a1;
+          background: #eeeeee;
+          color: #333333;
         }
 
         .badge-difficulty-veryeasy {
-          background: #fef9c3;
-          color: #854d0e;
+          background: #f5f5f5;
+          color: #666666;
         }
 
         .badge-difficultyeasy {
-          background: #dcfce7;
-          color: #15803d;
+          background: #eeeeee;
+          color: #1a1a1a;
         }
 
         .badge-difficultynormal {
-          background: #e0f2fe;
-          color: #0369a1;
+          background: #eeeeee;
+          color: #333333;
         }
 
         .badge-difficultydifficult {
-          background: #fee2e2;
-          color: #991b1b;
+          background: #f5f5f5;
+          color: #333333;
         }
 
         .card-title {
           font-size: 1.25rem;
           font-weight: 700;
-          color: #0f172a;
+          color: #1a1a1a;
           margin: 0;
         }
 
@@ -914,15 +914,15 @@ function HomeContent() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          background: #f1f5f9;
+          background: #f5f5f5;
           padding: 0.5rem;
           border-radius: 0.5rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
         }
 
         .id-code {
           font-size: 0.7rem;
-          color: #475569;
+          color: #666666;
           overflow: hidden;
           text-overflow: ellipsis;
           flex: 1;
@@ -933,37 +933,37 @@ function HomeContent() {
           padding: 0.25rem 0.5rem;
           cursor: pointer;
           background: white;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #e0e0e0;
           border-radius: 0.25rem;
           transition: all 0.2s;
         }
 
         .id-copy-btn:hover {
-          background: #e2e8f0;
+          background: #e0e0e0;
         }
 
         .card-description {
-          color: #475569;
+          color: #666666;
           font-size: 0.875rem;
           line-height: 1.5;
           margin: 0;
         }
 
         .resource-type-tag {
-          background: #f1f5f9;
+          background: #eeeeee;
           padding: 0.5rem;
           border-radius: 0.5rem;
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           font-size: 0.8rem;
-          color: #475569;
+          color: #666666;
           width: fit-content;
         }
 
         .lom-box {
           margin-top: 0.5rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #e0e0e0;
           padding-top: 0.75rem;
         }
 
@@ -971,12 +971,12 @@ function HomeContent() {
           cursor: pointer;
           font-size: 0.8rem;
           font-weight: 600;
-          color: #667eea;
+          color: #333333;
         }
 
         .lom-data {
-          background: #1e293b;
-          color: #e2e8f0;
+          background: #1a1a1a;
+          color: #f5f5f5;
           padding: 0.75rem;
           border-radius: 0.5rem;
           font-size: 0.7rem;
@@ -990,7 +990,7 @@ function HomeContent() {
           justify-content: space-between;
           align-items: center;
           padding-top: 0.75rem;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid #e0e0e0;
         }
 
         .author-info {
@@ -1001,22 +1001,22 @@ function HomeContent() {
 
         .author-name {
           font-size: 0.875rem;
-          color: #475569;
+          color: #666666;
         }
 
         .btn-download {
-          background: #f1f5f9;
+          background: #f5f5f5;
           padding: 0.5rem 0.75rem;
           border-radius: 0.5rem;
           text-decoration: none;
-          color: #0f172a;
+          color: #1a1a1a;
           font-size: 0.8rem;
           font-weight: 500;
           transition: all 0.2s;
         }
 
         .btn-download:hover {
-          background: #e2e8f0;
+          background: #e0e0e0;
         }
 
         /* Empty state */
@@ -1036,12 +1036,12 @@ function HomeContent() {
         .empty-state-title {
           font-size: 1.25rem;
           font-weight: 600;
-          color: #0f172a;
+          color: #1a1a1a;
           margin: 0 0 0.5rem 0;
         }
 
         .empty-state-text {
-          color: #64748b;
+          color: #666666;
           margin: 0 0 1rem 0;
         }
 
@@ -1065,12 +1065,12 @@ function HomeContent() {
           background: white;
           border-radius: 1rem;
           padding: 1.5rem;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
         }
 
         .skeleton-line {
           height: 1rem;
-          background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+          background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 50%, #e0e0e0 75%);
           background-size: 200% 100%;
           animation: loading 1.5s infinite;
           border-radius: 0.25rem;

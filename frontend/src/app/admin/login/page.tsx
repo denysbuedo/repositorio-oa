@@ -75,21 +75,21 @@ export default function AdminLoginPage() {
           display: grid;
           place-items: center;
           padding: 1.5rem;
-          background: #f8fafc;
+          background: #f5f5f5;
         }
 
         .login-panel {
           width: 100%;
           max-width: 420px;
           background: white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
           padding: 1.5rem;
           box-shadow: 0 10px 30px rgb(15 23 42 / 0.08);
         }
 
         .eyebrow {
-          color: #2563eb;
+          color: #333333;
           font-size: 0.75rem;
           font-weight: 800;
           text-transform: uppercase;
@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
         }
 
         .subtitle {
-          color: #64748b;
+          color: #666666;
           margin: 0.35rem 0 1.25rem;
         }
 
@@ -114,22 +114,22 @@ export default function AdminLoginPage() {
         label {
           display: grid;
           gap: 0.4rem;
-          color: #334155;
+          color: #1a1a1a;
           font-size: 0.875rem;
           font-weight: 700;
         }
 
         input {
-          border: 1px solid #cbd5e1;
+          border: 1px solid #e0e0e0;
           border-radius: 0.375rem;
           padding: 0.75rem;
           font: inherit;
         }
 
         button {
-          border: 1px solid #2563eb;
+          border: 1px solid #1a1a1a;
           border-radius: 0.375rem;
-          background: #2563eb;
+          background: #1a1a1a;
           color: white;
           padding: 0.75rem;
           font-weight: 800;
@@ -143,8 +143,8 @@ export default function AdminLoginPage() {
 
         .error {
           background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #991b1b;
+          border: 1px solid #e0e0e0;
+          color: #1a1a1a;
           border-radius: 0.375rem;
           padding: 0.7rem;
           margin-bottom: 1rem;
