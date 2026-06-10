@@ -21,6 +21,7 @@ interface LearningObject {
     };
     educational?: {
       learningResourceType?: string;
+      'learning-resource-type'?: string;
       difficulty?: string;
       context?: string;
       intendedEndUserRole?: string;
@@ -43,22 +44,6 @@ const DEFAULT_DIFFICULTY_OPTIONS: FilterOption[] = [
   { value: 'easy', label: 'Facil' },
   { value: 'normal', label: 'Medio' },
   { value: 'difficult', label: 'Dificil' },
-];
-
-const DEFAULT_TYPE_OPTIONS: FilterOption[] = [
-  { value: 'Narrative Text', label: 'Texto narrativo' },
-  { value: 'Lecture', label: 'Conferencia' },
-  { value: 'Exercise', label: 'Ejercicio' },
-  { value: 'Exam', label: 'Examen' },
-  { value: 'Simulation', label: 'Simulacion' },
-  { value: 'Image', label: 'Imagen' },
-  { value: 'Diagram', label: 'Diagrama' },
-  { value: 'Questionnaire', label: 'Cuestionario' },
-  { value: 'Self Assessment', label: 'Autoevaluacion' },
-  { value: 'Experiment', label: 'Experimento' },
-  { value: 'Problem Statement', label: 'Enunciado de problema' },
-  { value: 'Slide', label: 'Diapositiva' },
-  { value: 'Table', label: 'Tabla' },
 ];
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -87,6 +72,8 @@ const TYPE_LABELS: Record<string, string> = {
   'problem statement': 'Enunciado de problema',
   slide: 'Diapositiva',
   table: 'Tabla',
+  course: 'Curso',
+  document: 'Documento',
 };
 
 function ObjectList({
@@ -116,8 +103,9 @@ function ObjectList({
         <div className="grid">
           {objects.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-icon">Sin resultados</div>
-              <p className="empty-state-title">No se encontraron objetos</p>
+              <div className="empty-state-icon">0</div>
+              <p className="empty-state-kicker">Sin resultados</p>
+              <p className="empty-state-title">No hay objetos para esta busqueda</p>
               <p className="empty-state-text">Intenta con otros filtros o revisa recursos publicados desde administracion</p>
               <button className="empty-state-btn" onClick={onRefresh}>
                  Ver todos los objetos
@@ -143,30 +131,17 @@ function ObjectList({
                     )}
                   </div>
                 </div>
-                
-                <h3 className="card-title">{obj.title}</h3>
-                
-                <div className="id-copy">
-                  <code className="id-code">ID: {obj.id}</code>
-                  <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(obj.id);
-                      alert('ID Copiado al portapapeles');
-                    }}
-                    className="id-copy-btn"
-                  >
-                    Copiar
-                  </button>
-                </div>
 
-                <p className="card-description">{obj.description || 'Sin descripcion'}</p>
-
-                {obj.lomMetadata?.educational?.learningResourceType && (
+                {getResourceType(obj) && (
                   <div className="resource-type-tag">
                     <span className="resource-type-icon">Tipo</span>
-                    <span>{obj.lomMetadata.educational.learningResourceType}</span>
+                    <span>{getTypeLabel(getResourceType(obj))}</span>
                   </div>
                 )}
+                
+                <h3 className="card-title">{obj.title}</h3>
+
+                <p className="card-description">{obj.description || 'Sin descripcion'}</p>
 
                 {obj.lomMetadata && (
                   <div className="lom-box">
@@ -183,18 +158,29 @@ function ObjectList({
 
                 <div className="card-footer">
                   <div className="author-info">
-                    <span className="author-icon"></span>
+                    <span className="author-label">Autor</span>
                     <span className="author-name">{obj.author}</span>
                   </div>
-                  {obj.fileUrl && (
-                    <a 
-                      href={`${API_URL}/${obj.fileUrl}`} 
-                      download 
-                      className="btn-download"
+                  <div className="card-actions">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(obj.id);
+                        alert('ID Copiado al portapapeles');
+                      }}
+                      className="id-copy-btn"
                     >
-                      Descargar
-                    </a>
-                  )}
+                      Copiar ID
+                    </button>
+                    {obj.fileUrl && (
+                      <a 
+                        href={`${API_URL}/${obj.fileUrl}`} 
+                        download 
+                        className="btn-download"
+                      >
+                        Descargar
+                      </a>
+                    )}
+                  </div>
                 </div>
 
               </div>
@@ -240,6 +226,16 @@ function getDifficultyLabel(difficulty: string) {
   return DIFFICULTY_LABELS[normalizeOptionKey(difficulty)] ?? difficulty;
 }
 
+function getResourceType(object: LearningObject) {
+  return object.lomMetadata?.educational?.learningResourceType
+    ?? object.lomMetadata?.educational?.['learning-resource-type']
+    ?? '';
+}
+
+function getTypeLabel(type: string) {
+  return TYPE_LABELS[normalizeOptionKey(type)] ?? type;
+}
+
 function getDifficultyBadgeKey(difficulty: string) {
   return normalizeOptionKey(difficulty).replace(/\s+/g, '');
 }
@@ -274,6 +270,24 @@ function buildFilterOptions(
   }
 
   return options;
+}
+
+function buildFacetOptions(
+  values: string[],
+  labels: Record<string, string>,
+): FilterOption[] {
+  const seen = new Set<string>();
+
+  return values.reduce<FilterOption[]>((options, value) => {
+    const key = normalizeOptionKey(value);
+    if (!key || seen.has(key)) return options;
+    seen.add(key);
+    options.push({
+      value,
+      label: labels[key] ?? value,
+    });
+    return options;
+  }, []);
 }
 
 function HomeContent() {
@@ -352,7 +366,7 @@ function HomeContent() {
   const getStats = () => {
     const published = objects.filter(o => o.status === 'published').length;
     const withMetadata = objects.filter(o => o.lomMetadata).length;
-    const uniqueTypes = new Set(objects.map(o => o.lomMetadata?.educational?.learningResourceType).filter(Boolean)).size;
+    const uniqueTypes = new Set(objects.map(getResourceType).filter(Boolean)).size;
     return { published, withMetadata, uniqueTypes, total: objects.length };
   };
 
@@ -362,9 +376,8 @@ function HomeContent() {
     DEFAULT_DIFFICULTY_OPTIONS,
     DIFFICULTY_LABELS,
   );
-  const typeOptions = buildFilterOptions(
+  const typeOptions = buildFacetOptions(
     facets.types,
-    DEFAULT_TYPE_OPTIONS,
     TYPE_LABELS,
   );
 
@@ -830,25 +843,38 @@ function HomeContent() {
         /* Grid y tarjetas */
         .grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
           gap: 1.5rem;
         }
 
         .card {
+          position: relative;
           background: white;
-          border-radius: 1rem;
-          padding: 1.5rem;
+          border-radius: 0.5rem;
+          padding: 1.35rem;
           box-shadow: var(--shadow-sm);
           transition: all 0.3s;
           border: 1px solid #e0e0e0;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 0.85rem;
+          overflow: hidden;
+        }
+
+        .card::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: #1f5fbf;
         }
 
         .card:hover {
-          transform: translateY(-4px);
+          transform: translateY(-3px);
           box-shadow: var(--shadow-xl);
+          border-color: #c9d7ee;
         }
 
         .card-header {
@@ -865,12 +891,13 @@ function HomeContent() {
 
         .badge {
           font-size: 0.7rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.25rem;
+          padding: 0.28rem 0.5rem;
+          border-radius: 999px;
           font-weight: 600;
           display: inline-flex;
           align-items: center;
           gap: 0.25rem;
+          border: 1px solid #e0e0e0;
         }
 
         .badge-published {
@@ -914,10 +941,11 @@ function HomeContent() {
         }
 
         .card-title {
-          font-size: 1.25rem;
+          font-size: 1.2rem;
           font-weight: 700;
           color: #1a1a1a;
           margin: 0;
+          line-height: 1.25;
         }
 
         .id-copy {
@@ -940,12 +968,14 @@ function HomeContent() {
 
         .id-copy-btn {
           font-size: 0.7rem;
-          padding: 0.25rem 0.5rem;
+          padding: 0.45rem 0.65rem;
           cursor: pointer;
           background: white;
           border: 1px solid #e0e0e0;
-          border-radius: 0.25rem;
+          border-radius: 0.375rem;
           transition: all 0.2s;
+          color: #1a1a1a;
+          font-weight: 700;
         }
 
         .id-copy-btn:hover {
@@ -955,20 +985,23 @@ function HomeContent() {
         .card-description {
           color: #666666;
           font-size: 0.875rem;
-          line-height: 1.5;
+          line-height: 1.55;
           margin: 0;
+          min-height: 4.1rem;
         }
 
         .resource-type-tag {
-          background: #eeeeee;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
+          background: #f5f8fd;
+          border: 1px solid #d6e3f5;
+          padding: 0.45rem 0.6rem;
+          border-radius: 999px;
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           font-size: 0.8rem;
-          color: #666666;
+          color: #174a96;
           width: fit-content;
+          font-weight: 700;
         }
 
         .lom-box {
@@ -998,49 +1031,88 @@ function HomeContent() {
           margin-top: auto;
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-end;
+          gap: 1rem;
           padding-top: 0.75rem;
           border-top: 1px solid #e0e0e0;
         }
 
         .author-info {
           display: flex;
-          align-items: center;
-          gap: 0.5rem;
+          flex-direction: column;
+          gap: 0.15rem;
+          min-width: 0;
+        }
+
+        .author-label {
+          color: #666666;
+          font-size: 0.68rem;
+          font-weight: 800;
+          text-transform: uppercase;
         }
 
         .author-name {
           font-size: 0.875rem;
-          color: #666666;
+          color: #1a1a1a;
+          font-weight: 700;
+          overflow-wrap: anywhere;
+        }
+
+        .card-actions {
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+          flex-wrap: wrap;
+          justify-content: flex-end;
         }
 
         .btn-download {
-          background: #f5f5f5;
-          padding: 0.5rem 0.75rem;
-          border-radius: 0.5rem;
+          background: #1f5fbf;
+          padding: 0.45rem 0.7rem;
+          border-radius: 0.375rem;
           text-decoration: none;
-          color: #1a1a1a;
+          color: white;
           font-size: 0.8rem;
-          font-weight: 500;
+          font-weight: 800;
           transition: all 0.2s;
         }
 
         .btn-download:hover {
-          background: #e0e0e0;
+          background: #174a96;
         }
 
         /* Empty state */
         .empty-state {
           text-align: center;
-          padding: 4rem;
-          background: white;
-          border-radius: 1rem;
+          padding: 3rem 2rem;
+          background: linear-gradient(180deg, #ffffff 0%, #f5f8fd 100%);
+          border-radius: 0.5rem;
+          border: 1px dashed #b8c9e3;
           grid-column: 1 / -1;
+          max-width: 760px;
+          margin: 0 auto;
+          width: 100%;
         }
 
         .empty-state-icon {
-          font-size: 4rem;
-          margin-bottom: 1rem;
+          width: 4rem;
+          height: 4rem;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          background: #1f5fbf;
+          color: white;
+          font-size: 1.7rem;
+          font-weight: 900;
+          margin: 0 auto 1rem;
+        }
+
+        .empty-state-kicker {
+          color: #1f5fbf;
+          font-size: 0.75rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          margin: 0 0 0.35rem;
         }
 
         .empty-state-title {
