@@ -861,12 +861,12 @@ function HomeContent() {
 
         .card {
           position: relative;
-          background: white;
-          border-radius: 0.75rem;
-          padding: 1.1rem 1.1rem 1rem;
-          box-shadow: 0 10px 28px rgba(26, 26, 26, 0.06);
+          background: linear-gradient(90deg, #1f5fbf 0 0.45rem, #ffffff 0.45rem 100%);
+          border-radius: 1rem;
+          padding: 1rem 1rem 1rem 1.15rem;
+          box-shadow: 0 12px 30px rgba(26, 26, 26, 0.07);
           transition: all 0.25s ease;
-          border: 1px solid #e0e0e0;
+          border: 1px solid #d7deea;
           display: flex;
           flex-direction: column;
           gap: 1rem;
@@ -884,15 +884,16 @@ function HomeContent() {
         }
 
         .card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 16px 34px rgba(26, 26, 26, 0.08);
-          border-color: #cad7ea;
+          transform: translateY(-3px);
+          box-shadow: 0 18px 38px rgba(26, 26, 26, 0.1);
+          border-color: #c7d4e7;
         }
 
         .card-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          gap: 0.75rem;
         }
 
         .badge-group {
@@ -955,38 +956,38 @@ function HomeContent() {
         .card-body {
           display: flex;
           flex-direction: column;
-          gap: 0.8rem;
+          gap: 0.9rem;
         }
 
         .card-title {
-          font-size: 1.12rem;
+          font-size: 1.35rem;
           font-weight: 700;
           color: #1a1a1a;
           margin: 0;
-          line-height: 1.28;
+          line-height: 1.15;
         }
 
         .card-description {
           color: #666666;
-          font-size: 0.875rem;
-          line-height: 1.55;
+          font-size: 0.92rem;
+          line-height: 1.62;
           margin: 0;
-          min-height: 3.5rem;
+          min-height: 3.9rem;
         }
 
         .resource-type-tag {
-          background: #f3f7fc;
-          border: 1px solid #d9e4f1;
-          padding: 0.3rem 0.55rem;
-          border-radius: 999px;
+          background: #eef5ff;
+          border: 1px solid #cfe0ff;
+          padding: 0.4rem 0.7rem;
+          border-radius: 0.7rem;
           display: inline-flex;
           align-items: center;
-          gap: 0.35rem;
-          font-size: 0.72rem;
-          color: #174a96;
+          gap: 0.4rem;
+          font-size: 0.78rem;
+          color: #0f3f8c;
           width: fit-content;
           font-weight: 800;
-          text-transform: uppercase;
+          text-transform: none;
         }
 
         .resource-type-label,
@@ -1039,20 +1040,20 @@ function HomeContent() {
         .card-footer {
           margin-top: auto;
           display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1rem;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.85rem;
           padding-top: 0.85rem;
-          border-top: 1px solid #edf1f5;
-          flex-wrap: wrap;
+          border-top: 1px solid #e9eef5;
         }
 
         .author-info {
-          display: inline-flex;
-          align-items: baseline;
-          gap: 0.35rem;
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
           min-width: 0;
           flex-wrap: wrap;
+          padding: 0.2rem 0 0;
         }
 
         .author-label {
@@ -1064,7 +1065,7 @@ function HomeContent() {
         }
 
         .author-name {
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           color: #1a1a1a;
           font-weight: 700;
           overflow-wrap: anywhere;
@@ -1078,35 +1079,36 @@ function HomeContent() {
         }
 
         .card-actions {
-          display: flex;
-          gap: 0.6rem;
-          align-items: center;
-          flex-wrap: wrap;
-          justify-content: flex-end;
-          margin-left: auto;
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.55rem;
+          align-items: stretch;
+          width: 100%;
         }
 
         .id-copy-btn,
         .btn-download {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
-          gap: 0.4rem;
-          min-height: 2.45rem;
-          padding: 0.48rem 0.85rem;
-          border-radius: 999px;
+          justify-content: flex-start;
+          gap: 0.55rem;
+          min-height: 2.7rem;
+          padding: 0.65rem 1rem;
+          border-radius: 0.8rem;
           text-decoration: none;
-          font-size: 0.78rem;
+          font-size: 0.82rem;
           font-weight: 800;
           transition: all 0.2s;
           white-space: nowrap;
           border: 1px solid transparent;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .id-copy-btn {
           cursor: pointer;
-          background: white;
-          border: 1px solid #d0d7e2;
+          background: #ffffff;
+          border: 1px solid #d8e0ea;
           color: #1a1a1a;
         }
 
