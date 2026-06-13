@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -114,39 +114,45 @@ function ObjectList({
           ) : (
             objects.map((obj) => (
               <div key={obj.id} className="card">
-                <div className="card-header">
-                  <div className="badge-group">
-                    <span className={`badge badge-${obj.status}`}>
-                      {getStatusLabel(obj.status)}
-                    </span>
-                    {obj.lomMetadata && (
-                      <span className="badge badge-ai">
-                        IA verificado
-                      </span>
-                    )}
-                    {obj.lomMetadata?.educational?.difficulty && (
-                      <span className={`badge badge-difficulty-${getDifficultyBadgeKey(obj.lomMetadata.educational.difficulty)}`}>
-                        {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
-                      </span>
-                    )}
+                <div className="card-rail" aria-hidden="true" />
+                <div className="card-content">
+                  <div className="card-header">
+                    <div className="card-avatar" aria-hidden="true">
+                      {getAuthorInitials(obj.author)}
+                    </div>
+                    <div className="card-head-content">
+                      <div className="badge-group">
+                        <span className={`badge badge-${obj.status}`}>
+                          {getStatusLabel(obj.status)}
+                        </span>
+                        {obj.lomMetadata && (
+                          <span className="badge badge-ai">
+                            IA verificado
+                          </span>
+                        )}
+                        {obj.lomMetadata?.educational?.difficulty && (
+                          <span className={`badge badge-difficulty-${getDifficultyBadgeKey(obj.lomMetadata.educational.difficulty)}`}>
+                            {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
+                          </span>
+                        )}
+                      </div>
+
+                      {getResourceType(obj) && (
+                        <div className="resource-type-tag">
+                          <span className="resource-type-label">Tipo</span>
+                          <span className="resource-type-separator" aria-hidden="true">:</span>
+                          <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {getResourceType(obj) && (
-                  <div className="resource-type-tag">
-                    <span className="resource-type-label">Tipo</span>
-                    <span className="resource-type-separator" aria-hidden="true">·</span>
-                    <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
-                  </div>
-                )}
-                
-                <h3 className="card-title">{obj.title}</h3>
+                  <h3 className="card-title">{obj.title}</h3>
 
-                <p className="card-description">{obj.description || 'Sin descripcion'}</p>
+                  <p className="card-description">{obj.description || 'Sin descripcion'}</p>
 
-                {obj.lomMetadata && (
-                  <div className="lom-box">
-                    <details>
+                  {obj.lomMetadata && (
+                    <details className="lom-box">
                       <summary className="lom-summary">
                         Metadatos IEEE LOM
                       </summary>
@@ -154,47 +160,45 @@ function ObjectList({
                         {JSON.stringify(obj.lomMetadata, null, 2)}
                       </pre>
                     </details>
-                  </div>
-                )}
+                  )}
 
-                <div className="card-footer">
-                  <div className="author-info">
-                    <span className="author-label">Autor</span>
-                    <span className="author-separator" aria-hidden="true">·</span>
-                    <span className="author-name">{obj.author}</span>
-                  </div>
-                  <div className="card-actions">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(obj.id);
-                        alert('ID Copiado al portapapeles');
-                      }}
-                      className="id-copy-btn"
-                    >
-                      <span className="action-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
-                          <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" fill="currentColor" />
-                        </svg>
-                      </span>
-                      <span className="action-text">Copiar ID</span>
-                    </button>
-                    {obj.fileUrl && (
-                      <a
-                        href={`${API_URL}/${obj.fileUrl}`}
-                        download
-                        className="btn-download"
+                  <div className="card-footer">
+                    <div className="author-info">
+                      <span className="author-label">Autor</span>
+                      <span className="author-name">{obj.author}</span>
+                    </div>
+                    <div className="card-actions">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(obj.id);
+                          alert('ID Copiado al portapapeles');
+                        }}
+                        className="id-copy-btn"
                       >
                         <span className="action-icon" aria-hidden="true">
                           <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
-                            <path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.42 1.42L11 6.84V16h2V6.84l3.08 3.08 1.42-1.42L12 2z" fill="currentColor" />
+                            <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" fill="currentColor" />
                           </svg>
                         </span>
-                        <span className="action-text">Descargar</span>
-                      </a>
-                    )}
+                        <span className="action-text">Copiar ID</span>
+                      </button>
+                      {obj.fileUrl && (
+                        <a
+                          href={`${API_URL}/${obj.fileUrl}`}
+                          download
+                          className="btn-download"
+                        >
+                          <span className="action-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
+                              <path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.42 1.42L11 6.84V16h2V6.84l3.08 3.08 1.42-1.42L12 2z" fill="currentColor" />
+                            </svg>
+                          </span>
+                          <span className="action-text">Descargar</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
-
               </div>
             ))
           )}
@@ -246,6 +250,15 @@ function getResourceType(object: LearningObject) {
 
 function getTypeLabel(type: string) {
   return TYPE_LABELS[normalizeOptionKey(type)] ?? type;
+}
+
+function getAuthorInitials(author: string) {
+  return author
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || 'OA';
 }
 
 function getDifficultyBadgeKey(difficulty: string) {
@@ -861,26 +874,18 @@ function HomeContent() {
 
         .card {
           position: relative;
-          background: linear-gradient(90deg, #1f5fbf 0 0.45rem, #ffffff 0.45rem 100%);
+          background: #ffffff;
           border-radius: 1rem;
-          padding: 1rem 1rem 1rem 1.15rem;
           box-shadow: 0 12px 30px rgba(26, 26, 26, 0.07);
           transition: all 0.25s ease;
           border: 1px solid #d7deea;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
+          display: grid;
+          grid-template-columns: 0.55rem minmax(0, 1fr);
           overflow: hidden;
         }
 
-        .card::before {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: #1f5fbf;
+        .card-rail {
+          background: linear-gradient(180deg, #1f5fbf 0%, #174a96 100%);
         }
 
         .card:hover {
@@ -889,11 +894,17 @@ function HomeContent() {
           border-color: #c7d4e7;
         }
 
+        .card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.95rem;
+          padding: 1rem 1rem 1rem 0.95rem;
+        }
+
         .card-header {
           display: flex;
-          justify-content: space-between;
           align-items: flex-start;
-          gap: 0.75rem;
+          gap: 0.85rem;
         }
 
         .badge-group {
@@ -957,6 +968,27 @@ function HomeContent() {
           display: flex;
           flex-direction: column;
           gap: 0.9rem;
+        }
+
+        .card-avatar {
+          width: 2.75rem;
+          height: 2.75rem;
+          border-radius: 0.8rem;
+          display: grid;
+          place-items: center;
+          background: #eef5ff;
+          color: #174a96;
+          font-weight: 900;
+          font-size: 0.95rem;
+          letter-spacing: 0.03em;
+          flex: 0 0 auto;
+        }
+
+        .card-head-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.55rem;
+          min-width: 0;
         }
 
         .card-title {
@@ -1043,7 +1075,7 @@ function HomeContent() {
           flex-direction: column;
           align-items: stretch;
           gap: 0.85rem;
-          padding-top: 0.85rem;
+          padding-top: 0.95rem;
           border-top: 1px solid #e9eef5;
         }
 
@@ -1237,4 +1269,5 @@ export default function Home() {
     </Suspense>
   );
 }
+
 
