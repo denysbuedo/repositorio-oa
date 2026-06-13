@@ -36,6 +36,7 @@ type LomMetadata = {
   };
   rights?: {
     license?: string;
+    description?: string;
   };
 };
 
@@ -159,6 +160,11 @@ export class LearningObjectsService {
       );
     }
     return object;
+  }
+
+  async getMetadataExport(id: string) {
+    const object = await this.findPublishedOne(id);
+    return buildMetadataExport(object);
   }
 
   async update(
@@ -317,4 +323,79 @@ function getPublishProfileMissingFields(object: LearningObject): string[] {
   if (!metadata.rights?.license?.trim()) missing.push('licencia');
 
   return missing;
+}
+
+function buildMetadataExport(object: LearningObject) {
+  const metadata = (object.lomMetadata ?? {}) as LomMetadata;
+  const keywords = metadata.general?.keyword ?? [];
+  const canonicalUrl = buildCanonicalUrl(object.id);
+  const fileUrl = object.fileUrl ? buildApiFileUrl(object.fileUrl) : null;
+  const license = metadata.rights?.license ?? null;
+
+  return {
+    identifier: object.id,
+    canonicalUrl,
+    formats: ['dublinCore', 'lrmi'],
+    dublinCore: {
+      identifier: canonicalUrl,
+      title: object.title,
+      creator: object.author,
+      description: object.description ?? '',
+      subject: keywords,
+      language: metadata.general?.language ?? null,
+      type: metadata.educational?.learningResourceType ?? null,
+      format: object.fileMimeType ?? null,
+      rights: license,
+      relation: object.collection?.name ?? null,
+      date: object.createdAt,
+      source: fileUrl,
+    },
+    lrmi: {
+      '@context': 'https://schema.org',
+      '@type': 'LearningResource',
+      '@id': canonicalUrl,
+      url: canonicalUrl,
+      name: object.title,
+      description: object.description ?? '',
+      author: {
+        '@type': 'Person',
+        name: object.author,
+      },
+      keywords,
+      inLanguage: metadata.general?.language ?? undefined,
+      learningResourceType:
+        metadata.educational?.learningResourceType ?? undefined,
+      educationalLevel: metadata.educational?.educationalLevel ?? undefined,
+      audience: metadata.educational?.intendedEndUserRole
+        ? {
+            '@type': 'EducationalAudience',
+            educationalRole: metadata.educational.intendedEndUserRole,
+          }
+        : undefined,
+      license: license ?? undefined,
+      isPartOf: object.collection
+        ? {
+            '@type': 'Collection',
+            name: object.collection.name,
+          }
+        : undefined,
+      encodingFormat: object.fileMimeType ?? undefined,
+      contentUrl: fileUrl ?? undefined,
+      dateCreated: object.createdAt,
+      dateModified: object.updatedAt,
+    },
+  };
+}
+
+function buildCanonicalUrl(id: string) {
+  const baseUrl =
+    process.env.FRONTEND_PUBLIC_URL ??
+    process.env.NEXT_PUBLIC_FRONTEND_URL ??
+    'http://localhost:3000';
+  return `${baseUrl.replace(/\/$/, '')}/objects/${id}`;
+}
+
+function buildApiFileUrl(filePath: string) {
+  const baseUrl = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
+  return `${baseUrl.replace(/\/$/, '')}/${filePath.replace(/\\/g, '/')}`;
 }

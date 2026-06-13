@@ -93,6 +93,12 @@ export default function ObjectDetailPage() {
 
   return (
     <main className="detail-shell">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildJsonLd(object, canonicalPath)),
+        }}
+      />
       <header className="detail-header">
         <div>
           <Link href="/" className="back-link">Catalogo</Link>
@@ -136,6 +142,11 @@ export default function ObjectDetailPage() {
             <strong>{object.lomMetadata?.rights?.license ?? 'Sin licencia declarada'}</strong>
           </div>
           <p>{object.lomMetadata?.rights?.description || 'No se han especificado notas adicionales de derechos.'}</p>
+
+          <h2>Interoperabilidad</h2>
+          <a href={`${API_URL}/learning-objects/${object.id}/metadata`} className="metadata-export-link">
+            Ver metadatos Dublin Core / LRMI
+          </a>
 
           <h2>Palabras clave</h2>
           {keywords.length > 0 ? (
@@ -311,6 +322,22 @@ export default function ObjectDetailPage() {
           margin: 0 0 1rem;
         }
 
+        .metadata-export-link {
+          display: inline-flex;
+          width: 100%;
+          justify-content: center;
+          align-items: center;
+          border-radius: 0.375rem;
+          border: 1px solid #1f5fbf;
+          color: #1f5fbf;
+          background: white;
+          font-size: 0.86rem;
+          font-weight: 800;
+          text-decoration: none;
+          min-height: 2.5rem;
+          margin-bottom: 1rem;
+        }
+
         .keywords {
           display: flex;
           flex-wrap: wrap;
@@ -362,6 +389,40 @@ function MetadataRow({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </div>
   );
+}
+
+function buildJsonLd(object: LearningObject, canonicalPath: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LearningResource',
+    '@id': canonicalPath,
+    url: canonicalPath,
+    name: object.title,
+    description: object.description ?? '',
+    author: {
+      '@type': 'Person',
+      name: object.author,
+    },
+    keywords: object.lomMetadata?.general?.keyword ?? [],
+    inLanguage: object.lomMetadata?.general?.language,
+    learningResourceType: object.lomMetadata?.educational?.learningResourceType,
+    educationalLevel: object.lomMetadata?.educational?.educationalLevel,
+    audience: object.lomMetadata?.educational?.intendedEndUserRole
+      ? {
+          '@type': 'EducationalAudience',
+          educationalRole: object.lomMetadata.educational.intendedEndUserRole,
+        }
+      : undefined,
+    license: object.lomMetadata?.rights?.license,
+    isPartOf: object.collection
+      ? {
+          '@type': 'Collection',
+          name: object.collection.name,
+        }
+      : undefined,
+    encodingFormat: object.fileMimeType,
+    contentUrl: object.fileUrl ? `${API_URL}/${object.fileUrl}` : undefined,
+  };
 }
 
 function getLanguageLabel(value?: string) {

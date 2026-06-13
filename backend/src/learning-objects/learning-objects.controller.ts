@@ -73,12 +73,6 @@ export class LearningObjectsController {
     );
   }
 
-  @Get(':id')
-  @Public()
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.findPublishedOne(id);
-  }
-
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,11 +86,23 @@ export class LearningObjectsController {
     return this.service.remove(id);
   }
 
+  @Get(':id/metadata')
+  @Public()
+  getMetadata(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getMetadataExport(id);
+  }
+
   @Get(':id/html')
   @Public()
   async getHtml(@Param('id', ParseUUIDPipe) id: string) {
     const html = await this.service.getObjectHtml(id, true);
     return { html };
+  }
+
+  @Get(':id')
+  @Public()
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findPublishedOne(id);
   }
 
   /**
