@@ -23,6 +23,22 @@ const difficultyExpression = "lo.\"lomMetadata\"->'educational'->>'difficulty'";
 const resourceTypeExpression =
   "COALESCE(lo.\"lomMetadata\"->'educational'->>'learningResourceType', lo.\"lomMetadata\"->'educational'->>'learning-resource-type')";
 
+type LomMetadata = {
+  general?: {
+    language?: string;
+    keyword?: string[];
+  };
+  educational?: {
+    learningResourceType?: string;
+    difficulty?: string;
+    educationalLevel?: string;
+    intendedEndUserRole?: string;
+  };
+  rights?: {
+    license?: string;
+  };
+};
+
 @Injectable()
 export class LearningObjectsService {
   constructor(
@@ -152,6 +168,11 @@ export class LearningObjectsService {
     const object = await this.findOne(id);
     await this.validateCollection(updateDto.collectionId);
     const updated = this.repository.merge(object, updateDto);
+
+    if (updateDto.status === ObjectStatus.PUBLISHED) {
+      this.validatePublishProfile(updated);
+    }
+
     return await this.repository.save(updated);
   }
 
@@ -254,4 +275,46 @@ export class LearningObjectsService {
       throw new BadRequestException('La coleccion seleccionada no existe');
     }
   }
+
+  private validatePublishProfile(object: LearningObject) {
+    const missing = getPublishProfileMissingFields(object);
+
+    if (missing.length > 0) {
+      throw new BadRequestException({
+        message: 'El recurso no cumple el perfil minimo para publicacion',
+        missingFields: missing,
+      });
+    }
+  }
+}
+
+function getPublishProfileMissingFields(object: LearningObject): string[] {
+  const metadata = (object.lomMetadata ?? {}) as LomMetadata;
+  const keywords = metadata.general?.keyword;
+  const missing: string[] = [];
+
+  if (!object.title?.trim()) missing.push('titulo');
+  if (!object.description?.trim()) missing.push('descripcion');
+  if (!object.author?.trim()) missing.push('autor');
+  if (!object.fileUrl) missing.push('archivo');
+  if (!object.collectionId) missing.push('coleccion');
+  if (!metadata.general?.language?.trim()) missing.push('idioma');
+  if (!Array.isArray(keywords) || keywords.length === 0) {
+    missing.push('palabras clave');
+  }
+  if (!metadata.educational?.learningResourceType?.trim()) {
+    missing.push('tipo de recurso');
+  }
+  if (!metadata.educational?.difficulty?.trim()) {
+    missing.push('nivel de dificultad');
+  }
+  if (!metadata.educational?.educationalLevel?.trim()) {
+    missing.push('nivel educativo');
+  }
+  if (!metadata.educational?.intendedEndUserRole?.trim()) {
+    missing.push('audiencia');
+  }
+  if (!metadata.rights?.license?.trim()) missing.push('licencia');
+
+  return missing;
 }

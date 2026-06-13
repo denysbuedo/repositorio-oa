@@ -38,9 +38,16 @@ interface LearningObject {
     educational?: {
       learningResourceType?: string;
       difficulty?: string;
+      educationalLevel?: string;
+      intendedEndUserRole?: string;
     };
     general?: {
+      language?: string;
       keyword?: string[];
+    };
+    rights?: {
+      license?: string;
+      description?: string;
     };
   };
 }
@@ -52,6 +59,11 @@ interface ReviewForm {
   collectionId: string;
   learningResourceType: string;
   difficulty: string;
+  language: string;
+  educationalLevel: string;
+  intendedEndUserRole: string;
+  license: string;
+  rightsDescription: string;
   keywords: string;
 }
 
@@ -73,6 +85,34 @@ const resourceTypeOptions = [
 ];
 
 const difficultyOptions = ['Muy facil', 'Facil', 'Medio', 'Dificil', 'Muy dificil'];
+const languageOptions = [
+  { value: 'es', label: 'Espanol' },
+  { value: 'en', label: 'Ingles' },
+  { value: 'pt', label: 'Portugues' },
+  { value: 'fr', label: 'Frances' },
+];
+const educationalLevelOptions = [
+  'Pregrado',
+  'Posgrado',
+  'Formacion tecnica',
+  'Educacion continua',
+  'Autoaprendizaje',
+];
+const audienceOptions = [
+  'Estudiante',
+  'Docente',
+  'Investigador',
+  'Administrador academico',
+];
+const licenseOptions = [
+  { value: 'CC BY', label: 'CC BY' },
+  { value: 'CC BY-SA', label: 'CC BY-SA' },
+  { value: 'CC BY-NC', label: 'CC BY-NC' },
+  { value: 'CC BY-NC-SA', label: 'CC BY-NC-SA' },
+  { value: 'Dominio publico', label: 'Dominio publico' },
+  { value: 'Uso institucional restringido', label: 'Uso institucional restringido' },
+  { value: 'Copyright reservado', label: 'Copyright reservado' },
+];
 
 export default function AdminPage() {
   const router = useRouter();
@@ -202,10 +242,11 @@ export default function AdminPage() {
     const archived = objects.filter((object) => object.status === 'archived').length;
     const withMetadata = objects.filter((object) => object.lomMetadata).length;
     const withCollection = objects.filter((object) => object.collectionId).length;
+    const completeProfile = objects.filter((object) => getProfileCompletion(object).missing.length === 0).length;
     const processing = objects.filter((object) =>
       object.fileUrl && (object.processingStatus === 'pending' || object.processingStatus === 'processing')
     ).length;
-    return { total, published, draft, archived, withMetadata, withCollection, processing };
+    return { total, published, draft, archived, withMetadata, withCollection, completeProfile, processing };
   }, [objects]);
 
   const selectObject = (object: LearningObject) => {
@@ -229,7 +270,7 @@ export default function AdminPage() {
         body: JSON.stringify(buildReviewPayload(selectedObject, reviewForm)),
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(await getApiErrorMessage(res, 'No se pudo guardar la revision del recurso.'));
       }
       const updatedObject = await res.json() as LearningObject;
       setObjects((current) =>
@@ -240,7 +281,7 @@ export default function AdminPage() {
       setSuccessMessage('Revision guardada.');
     } catch (error) {
       console.error('Error saving review:', error);
-      setErrorMessage('No se pudo guardar la revision del recurso.');
+      setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar la revision del recurso.');
     } finally {
       setSavingReview(false);
     }
@@ -269,7 +310,7 @@ export default function AdminPage() {
         }),
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(await getApiErrorMessage(res, 'No se pudo crear la coleccion.'));
       }
       const collection = await res.json() as Collection;
       setCollections((current) =>
@@ -280,7 +321,7 @@ export default function AdminPage() {
       setSuccessMessage('Coleccion creada.');
     } catch (error) {
       console.error('Error creating collection:', error);
-      setErrorMessage('No se pudo crear la coleccion. Revisa si ya existe una con ese nombre.');
+      setErrorMessage(error instanceof Error ? error.message : 'No se pudo crear la coleccion. Revisa si ya existe una con ese nombre.');
     } finally {
       setSavingCollection(false);
     }
@@ -310,7 +351,7 @@ export default function AdminPage() {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        throw new Error(await getApiErrorMessage(res, 'No se pudo actualizar el estado del recurso.'));
       }
       const updatedObject = await res.json() as LearningObject;
       setObjects((current) =>
@@ -323,7 +364,7 @@ export default function AdminPage() {
       setSuccessMessage(`Recurso marcado como ${getStatusLabel(status)}.`);
     } catch (error) {
       console.error('Error updating status:', error);
-      setErrorMessage('No se pudo actualizar el estado del recurso.');
+      setErrorMessage(error instanceof Error ? error.message : 'No se pudo actualizar el estado del recurso.');
     }
   };
 
@@ -382,7 +423,7 @@ export default function AdminPage() {
         <Metric label="Publicados" value={stats.published} />
         <Metric label="Borradores" value={stats.draft} />
         <Metric label="Archivados" value={stats.archived} />
-        <Metric label="Con metadatos" value={stats.withMetadata} />
+        <Metric label="Perfil completo" value={stats.completeProfile} />
         <Metric label="En coleccion" value={stats.withCollection} />
       </section>
 
@@ -465,15 +506,16 @@ export default function AdminPage() {
                   <th>Coleccion</th>
                   <th>Tipo</th>
                   <th>Dificultad</th>
+                  <th>Perfil</th>
                   <th>Actualizado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={9} className="empty-row">Cargando recursos...</td></tr>
+                  <tr><td colSpan={10} className="empty-row">Cargando recursos...</td></tr>
                 ) : filteredObjects.length === 0 ? (
-                  <tr><td colSpan={9} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
+                  <tr><td colSpan={10} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
                 ) : (
                   filteredObjects.map((object) => (
                     <tr key={object.id} className={selectedObject?.id === object.id ? 'selected-row' : ''}>
@@ -493,6 +535,11 @@ export default function AdminPage() {
                       <td>{object.collection?.name ?? 'Sin coleccion'}</td>
                       <td>{object.lomMetadata?.educational?.learningResourceType ?? 'Sin tipo'}</td>
                       <td>{object.lomMetadata?.educational?.difficulty ?? 'Sin nivel'}</td>
+                      <td>
+                        <span className={`profile-pill ${getProfileCompletion(object).missing.length === 0 ? 'profile-complete' : 'profile-incomplete'}`}>
+                          {getProfileCompletion(object).percent}%
+                        </span>
+                      </td>
                       <td>{formatDate(object.updatedAt ?? object.createdAt)}</td>
                       <td>
                         <div className="row-actions">
@@ -518,6 +565,8 @@ export default function AdminPage() {
                 <h3>{selectedObject.title}</h3>
                 <span className={`status-pill status-${selectedObject.status}`}>{getStatusLabel(selectedObject.status)}</span>
               </div>
+
+              <ProfileSummary object={selectedObject} />
 
               <div className="review-actions">
                 <button className="primary-button" onClick={() => updateStatus(selectedObject.id, 'published')} disabled={selectedObject.status === 'published'}>
@@ -554,6 +603,18 @@ export default function AdminPage() {
                     rows={4}
                     onChange={(event) => setReviewForm((current) => ({ ...current, description: event.target.value }))}
                   />
+                </label>
+                <label className="field">
+                  <span>Idioma</span>
+                  <select
+                    value={reviewForm.language}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, language: event.target.value }))}
+                  >
+                    <option value="">Sin idioma</option>
+                    {languageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </label>
               </section>
 
@@ -600,11 +661,60 @@ export default function AdminPage() {
                   </select>
                 </label>
                 <label className="field">
+                  <span>Nivel educativo</span>
+                  <select
+                    value={reviewForm.educationalLevel}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, educationalLevel: event.target.value }))}
+                  >
+                    <option value="">Sin nivel educativo</option>
+                    {educationalLevelOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Audiencia</span>
+                  <select
+                    value={reviewForm.intendedEndUserRole}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, intendedEndUserRole: event.target.value }))}
+                  >
+                    <option value="">Sin audiencia</option>
+                    {audienceOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
                   <span>Palabras clave</span>
                   <input
                     value={reviewForm.keywords}
                     placeholder="Separadas por coma"
                     onChange={(event) => setReviewForm((current) => ({ ...current, keywords: event.target.value }))}
+                  />
+                </label>
+              </section>
+
+              <section className="review-section">
+                <h4>Licencia y derechos</h4>
+                <label className="field">
+                  <span>Licencia</span>
+                  <select
+                    value={reviewForm.license}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, license: event.target.value }))}
+                  >
+                    <option value="">Sin licencia</option>
+                    {licenseOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Notas de derechos</span>
+                  <textarea
+                    value={reviewForm.rightsDescription}
+                    rows={3}
+                    placeholder="Condiciones de uso, atribucion o restricciones"
+                    onChange={(event) => setReviewForm((current) => ({ ...current, rightsDescription: event.target.value }))}
                   />
                 </label>
               </section>
@@ -953,7 +1063,8 @@ export default function AdminPage() {
         }
 
         .status-pill,
-        .processing-pill {
+        .processing-pill,
+        .profile-pill {
           display: inline-flex;
           border-radius: 999px;
           padding: 0.25rem 0.55rem;
@@ -997,6 +1108,16 @@ export default function AdminPage() {
         }
 
         .processing-none {
+          background: #f5f5f5;
+          color: #666666;
+        }
+
+        .profile-complete {
+          background: #eeeeee;
+          color: #1a1a1a;
+        }
+
+        .profile-incomplete {
           background: #f5f5f5;
           color: #666666;
         }
@@ -1058,6 +1179,46 @@ export default function AdminPage() {
           grid-template-columns: 1fr;
           gap: 0.5rem;
           margin-bottom: 1rem;
+        }
+
+        .profile-summary {
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          background: #f5f5f5;
+          padding: 0.85rem;
+          margin-bottom: 1rem;
+        }
+
+        .profile-summary-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #1a1a1a;
+          font-size: 0.82rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .profile-bar {
+          height: 0.45rem;
+          border-radius: 999px;
+          background: #e0e0e0;
+          overflow: hidden;
+          margin: 0.65rem 0;
+        }
+
+        .profile-bar span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: #1f5fbf;
+        }
+
+        .profile-summary p {
+          color: #666666;
+          font-size: 0.82rem;
+          line-height: 1.45;
+          margin: 0;
         }
 
         .review-actions button,
@@ -1222,6 +1383,27 @@ function Metric({ label, value }: { label: string; value: number }) {
   );
 }
 
+function ProfileSummary({ object }: { object: LearningObject }) {
+  const completion = getProfileCompletion(object);
+
+  return (
+    <section className="profile-summary" aria-label="Completitud del perfil ROA">
+      <div className="profile-summary-header">
+        <span>Perfil ROA</span>
+        <strong>{completion.percent}%</strong>
+      </div>
+      <div className="profile-bar" aria-hidden="true">
+        <span style={{ width: `${completion.percent}%` }}></span>
+      </div>
+      {completion.missing.length > 0 ? (
+        <p>Faltan: {completion.missing.join(', ')}.</p>
+      ) : (
+        <p>Listo para publicacion segun el perfil minimo.</p>
+      )}
+    </section>
+  );
+}
+
 function createReviewForm(object: LearningObject | null): ReviewForm {
   return {
     title: object?.title ?? '',
@@ -1230,6 +1412,11 @@ function createReviewForm(object: LearningObject | null): ReviewForm {
     collectionId: object?.collectionId ?? '',
     learningResourceType: object?.lomMetadata?.educational?.learningResourceType ?? '',
     difficulty: object?.lomMetadata?.educational?.difficulty ?? '',
+    language: object?.lomMetadata?.general?.language ?? '',
+    educationalLevel: object?.lomMetadata?.educational?.educationalLevel ?? '',
+    intendedEndUserRole: object?.lomMetadata?.educational?.intendedEndUserRole ?? '',
+    license: object?.lomMetadata?.rights?.license ?? '',
+    rightsDescription: object?.lomMetadata?.rights?.description ?? '',
     keywords: object?.lomMetadata?.general?.keyword?.join(', ') ?? '',
   };
 }
@@ -1251,41 +1438,70 @@ function buildReviewPayload(object: LearningObject, form: ReviewForm) {
         ...(object.lomMetadata?.general ?? {}),
         title: form.title.trim(),
         description: form.description.trim(),
+        language: form.language,
         keyword: keywords,
       },
       educational: {
         ...(object.lomMetadata?.educational ?? {}),
         learningResourceType: form.learningResourceType,
         difficulty: form.difficulty,
+        educationalLevel: form.educationalLevel,
+        intendedEndUserRole: form.intendedEndUserRole,
+      },
+      rights: {
+        ...(object.lomMetadata?.rights ?? {}),
+        license: form.license,
+        description: form.rightsDescription.trim(),
       },
     },
   };
 }
 
 function getPublishBlockers(object: LearningObject) {
-  const blockers: string[] = [];
+  const completion = getProfileCompletion(object);
+  return completion.missing.map((field) => `- Falta ${field}.`);
+}
 
-  if (!object.fileUrl) {
-    blockers.push('- No tiene archivo cargado.');
+function getProfileCompletion(object: LearningObject) {
+  const keywords = object.lomMetadata?.general?.keyword ?? [];
+  const requiredFields = [
+    { label: 'titulo', complete: Boolean(object.title?.trim()) },
+    { label: 'descripcion', complete: Boolean(object.description?.trim()) },
+    { label: 'autor', complete: Boolean(object.author?.trim()) },
+    { label: 'archivo', complete: Boolean(object.fileUrl) },
+    { label: 'coleccion', complete: Boolean(object.collectionId) },
+    { label: 'idioma', complete: Boolean(object.lomMetadata?.general?.language?.trim()) },
+    { label: 'palabras clave', complete: keywords.length > 0 },
+    { label: 'tipo de recurso', complete: Boolean(object.lomMetadata?.educational?.learningResourceType?.trim()) },
+    { label: 'nivel de dificultad', complete: Boolean(object.lomMetadata?.educational?.difficulty?.trim()) },
+    { label: 'nivel educativo', complete: Boolean(object.lomMetadata?.educational?.educationalLevel?.trim()) },
+    { label: 'audiencia', complete: Boolean(object.lomMetadata?.educational?.intendedEndUserRole?.trim()) },
+    { label: 'licencia', complete: Boolean(object.lomMetadata?.rights?.license?.trim()) },
+  ];
+  const completed = requiredFields.filter((field) => field.complete).length;
+  const missing = requiredFields.filter((field) => !field.complete).map((field) => field.label);
+
+  return {
+    percent: Math.round((completed / requiredFields.length) * 100),
+    missing,
+  };
+}
+
+async function getApiErrorMessage(response: Response, fallback: string) {
+  try {
+    const payload = await response.json() as { message?: string | string[]; missingFields?: string[] };
+    if (Array.isArray(payload.missingFields) && payload.missingFields.length > 0) {
+      return `${payload.message ?? fallback}: ${payload.missingFields.join(', ')}.`;
+    }
+
+    if (Array.isArray(payload.message)) {
+      return payload.message.join(' ');
+    }
+
+    return payload.message ?? fallback;
+  } catch {
+    return fallback;
   }
-
-  if (object.processingStatus === 'pending' || object.processingStatus === 'processing') {
-    blockers.push('- La IA todavia no termino de procesar el archivo.');
-  }
-
-  if (object.processingStatus === 'failed') {
-    blockers.push('- El procesamiento de IA fallo.');
-  }
-
-  if (!object.lomMetadata?.educational?.learningResourceType) {
-    blockers.push('- Falta el tipo de recurso.');
-  }
-
-  if (!object.lomMetadata?.educational?.difficulty) {
-    blockers.push('- Falta el nivel de dificultad.');
-  }
-
-  return blockers;
 }
 
 function getStatusLabel(status: ObjectStatus) {
