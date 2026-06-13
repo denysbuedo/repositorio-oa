@@ -10,6 +10,11 @@ interface LearningObject {
   title: string;
   fileUrl?: string;
   fileMimeType?: string;
+  lomMetadata?: {
+    rights?: {
+      license?: string;
+    };
+  };
 }
 
 interface HtmlResponse {
@@ -71,7 +76,10 @@ function LtiContent() {
       <header style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '1.2rem', margin: 0 }}>{object.title}</h1>
-          <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>Recurso entregado via LTI 1.3</p>
+          <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
+            Recurso entregado via LTI 1.3
+            {object.lomMetadata?.rights?.license ? ` - Licencia: ${object.lomMetadata.rights.license}` : ''}
+          </p>
         </div>
         <a 
           href={`${API_URL}/${object.fileUrl}`} 

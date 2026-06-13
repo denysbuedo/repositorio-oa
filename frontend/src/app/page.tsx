@@ -1,5 +1,6 @@
 ﻿'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
@@ -32,6 +33,10 @@ interface LearningObject {
       difficulty?: string;
       context?: string;
       intendedEndUserRole?: string;
+    };
+    rights?: {
+      license?: string;
+      description?: string;
     };
   };
 }
@@ -145,6 +150,12 @@ function ObjectList({
                       <span>{getTypeLabel(getResourceType(obj))}</span>
                     </div>
                   )}
+                  {obj.lomMetadata?.rights?.license && (
+                    <div className="resource-meta license-meta">
+                      <span className="meta-chip">Licencia</span>
+                      <span>{obj.lomMetadata.rights.license}</span>
+                    </div>
+                  )}
 
                   <p className="card-description">{obj.description || 'Sin descripción'}</p>
 
@@ -163,6 +174,9 @@ function ObjectList({
                       <span className="author-name">{obj.author}</span>
                     </div>
                     <div className="card-actions">
+                      <Link href={`/objects/${obj.id}`} className="details-btn">
+                        Ver ficha
+                      </Link>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(obj.id);
@@ -1008,7 +1022,8 @@ function HomeContent() {
         }
 
         .copy-btn,
-        .download-btn {
+        .download-btn,
+        .details-btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -1029,6 +1044,11 @@ function HomeContent() {
           color: #1a1a1a;
         }
 
+        .details-btn {
+          background: #ffffff;
+          color: #1f5fbf;
+        }
+
         .download-btn {
           background: #1f5fbf;
           border-color: #1f5fbf;
@@ -1038,6 +1058,11 @@ function HomeContent() {
         .copy-btn:hover {
           background: #f7f9fc;
           border-color: #c4ced8;
+        }
+
+        .details-btn:hover {
+          background: #f7f9fc;
+          border-color: #1f5fbf;
         }
 
         .download-btn:hover {
@@ -1057,6 +1082,7 @@ function HomeContent() {
 
           .card-actions,
           .copy-btn,
+          .details-btn,
           .download-btn {
             width: 100%;
           }
