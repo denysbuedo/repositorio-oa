@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -360,11 +359,6 @@ function HomeContent() {
               <p className="subtitle">Catalogo de recursos educativos publicados</p>
             </div>
           </div>
-          <div className="header-actions">
-            <Link href="/admin" className="btn-admin">
-              Administrar
-            </Link>
-          </div>
         </div>
       </header>
 
@@ -523,13 +517,6 @@ function HomeContent() {
           display: flex;
           align-items: center;
           gap: 1rem;
-        }
-
-        .header-actions {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-          flex-wrap: wrap;
         }
 
         .title {
@@ -750,22 +737,6 @@ function HomeContent() {
         .btn-search:hover {
           transform: translateY(-1px);
           box-shadow: var(--shadow-md);
-        }
-
-        .btn-admin {
-          background: white;
-          color: #174a96;
-          border: 1px solid rgba(255, 255, 255, 0.75);
-          padding: 0.75rem 1.5rem;
-          border-radius: 0.5rem;
-          font-weight: 700;
-          text-decoration: none;
-          transition: all 0.2s;
-        }
-
-        .btn-admin:hover {
-          background: #f5f5f5;
-          transform: translateY(-2px);
         }
 
         /* Resultados header */
