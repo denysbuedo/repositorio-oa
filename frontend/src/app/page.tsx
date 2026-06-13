@@ -113,50 +113,35 @@ function ObjectList({
             </div>
           ) : (
             objects.map((obj) => (
-              <div key={obj.id} className="card">
-                <div className="card-rail" aria-hidden="true" />
-                <div className="card-content">
-                  <div className="card-header">
-                    <div className="card-avatar" aria-hidden="true">
-                      {getAuthorInitials(obj.author)}
+              <div key={obj.id} className="object-card">
+                <aside className="card-aside">
+                  <span className={`status-badge status-${obj.status}`}>
+                    {getStatusLabel(obj.status)}
+                  </span>
+                  {obj.lomMetadata && (
+                    <span className="badge-ai">IA verificado</span>
+                  )}
+                  {obj.lomMetadata?.educational?.difficulty && (
+                    <span className="difficulty-badge">
+                      {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
+                    </span>
+                  )}
+                  {getResourceType(obj) && (
+                    <div className="type-tag">
+                      Tipo: {getTypeLabel(getResourceType(obj))}
                     </div>
-                    <div className="card-head-content">
-                      <div className="badge-group">
-                        <span className={`badge badge-${obj.status}`}>
-                          {getStatusLabel(obj.status)}
-                        </span>
-                        {obj.lomMetadata && (
-                          <span className="badge badge-ai">
-                            IA verificado
-                          </span>
-                        )}
-                        {obj.lomMetadata?.educational?.difficulty && (
-                          <span className={`badge badge-difficulty-${getDifficultyBadgeKey(obj.lomMetadata.educational.difficulty)}`}>
-                            {getDifficultyIcon(obj.lomMetadata.educational.difficulty)} {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
-                          </span>
-                        )}
-                      </div>
+                  )}
+                </aside>
 
-                      {getResourceType(obj) && (
-                        <div className="resource-type-tag">
-                          <span className="resource-type-label">Tipo</span>
-                          <span className="resource-type-separator" aria-hidden="true">:</span>
-                          <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
+                <div className="card-main">
                   <h3 className="card-title">{obj.title}</h3>
 
-                  <p className="card-description">{obj.description || 'Sin descripcion'}</p>
+                  <p className="card-description">{obj.description || 'Sin descripción'}</p>
 
                   {obj.lomMetadata && (
-                    <details className="lom-box">
-                      <summary className="lom-summary">
-                        Metadatos IEEE LOM
-                      </summary>
-                      <pre className="lom-data">
+                    <details className="metadata-details">
+                      <summary className="metadata-summary">Metadatos IEEE LOM</summary>
+                      <pre className="metadata-content">
                         {JSON.stringify(obj.lomMetadata, null, 2)}
                       </pre>
                     </details>
@@ -171,29 +156,15 @@ function ObjectList({
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(obj.id);
-                          alert('ID Copiado al portapapeles');
+                          alert('ID copiado al portapapeles');
                         }}
-                        className="id-copy-btn"
+                        className="copy-btn"
                       >
-                        <span className="action-icon" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
-                            <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" fill="currentColor" />
-                          </svg>
-                        </span>
-                        <span className="action-text">Copiar ID</span>
+                        Copiar ID
                       </button>
                       {obj.fileUrl && (
-                        <a
-                          href={`${API_URL}/${obj.fileUrl}`}
-                          download
-                          className="btn-download"
-                        >
-                          <span className="action-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
-                              <path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.42 1.42L11 6.84V16h2V6.84l3.08 3.08 1.42-1.42L12 2z" fill="currentColor" />
-                            </svg>
-                          </span>
-                          <span className="action-text">Descargar</span>
+                        <a href={`${API_URL}/${obj.fileUrl}`} download className="download-btn">
+                          Descargar
                         </a>
                       )}
                     </div>
@@ -219,25 +190,6 @@ function getStatusLabel(status: string) {
   }
 }
 
-function getDifficultyIcon(difficulty: string) {
-  switch(normalizeOptionKey(difficulty)) {
-    case 'very easy':
-    case 'muy facil':
-      return 'Muy facil';
-    case 'easy':
-    case 'facil':
-      return 'Facil';
-    case 'normal':
-    case 'medio':
-      return 'Medio';
-    case 'difficult':
-    case 'dificil':
-      return 'Dificil';
-    default:
-      return 'Nivel';
-  }
-}
-
 function getDifficultyLabel(difficulty: string) {
   return DIFFICULTY_LABELS[normalizeOptionKey(difficulty)] ?? difficulty;
 }
@@ -250,19 +202,6 @@ function getResourceType(object: LearningObject) {
 
 function getTypeLabel(type: string) {
   return TYPE_LABELS[normalizeOptionKey(type)] ?? type;
-}
-
-function getAuthorInitials(author: string) {
-  return author
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('') || 'OA';
-}
-
-function getDifficultyBadgeKey(difficulty: string) {
-  return normalizeOptionKey(difficulty).replace(/\s+/g, '');
 }
 
 function normalizeOptionKey(value: string) {
@@ -544,7 +483,7 @@ function HomeContent() {
         onRefresh={fetchObjects} 
       />
 
-      <style jsx>{`
+      <style jsx global>{`
         /* Variables y estilos mejorados */
         :root {
           --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -872,197 +811,130 @@ function HomeContent() {
           gap: 1.5rem;
         }
 
-        .card {
+        .object-card {
           position: relative;
           background: #ffffff;
-          border-radius: 1rem;
-          box-shadow: 0 12px 30px rgba(26, 26, 26, 0.07);
-          transition: all 0.25s ease;
-          border: 1px solid #d7deea;
-          display: grid;
-          grid-template-columns: 0.55rem minmax(0, 1fr);
-          overflow: hidden;
-        }
-
-        .card-rail {
-          background: linear-gradient(180deg, #1f5fbf 0%, #174a96 100%);
-        }
-
-        .card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 18px 38px rgba(26, 26, 26, 0.1);
-          border-color: #c7d4e7;
-        }
-
-        .card-content {
+          border-radius: 0.5rem;
+          border: 1px solid #dfe6ee;
+          box-shadow: 0 8px 18px rgba(26, 26, 26, 0.06);
           display: flex;
           flex-direction: column;
-          gap: 0.95rem;
-          padding: 1rem 1rem 1rem 0.95rem;
+          overflow: hidden;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
-        .card-header {
-          display: flex;
-          align-items: flex-start;
-          gap: 0.85rem;
+        .object-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 26px rgba(26, 26, 26, 0.09);
+          border-color: #b8c9e3;
         }
 
-        .badge-group {
+        .card-aside {
           display: flex;
-          gap: 0.5rem;
           flex-wrap: wrap;
+          gap: 0.5rem;
+          padding: 0.85rem 1rem;
+          background: linear-gradient(135deg, #1f5fbf 0%, #174a96 100%);
+          border-bottom: 1px solid #174a96;
         }
 
-        .badge {
-          font-size: 0.7rem;
-          padding: 0.28rem 0.5rem;
-          border-radius: 999px;
-          font-weight: 600;
+        .status-badge,
+        .badge-ai,
+        .difficulty-badge,
+        .type-tag {
           display: inline-flex;
           align-items: center;
-          gap: 0.25rem;
-          border: 1px solid #e0e0e0;
+          justify-content: center;
+          border-radius: 999px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          padding: 0.34rem 0.55rem;
+          border: 1px solid transparent;
+          white-space: nowrap;
+          width: fit-content;
         }
 
-        .badge-published {
-          background: #eeeeee;
-          color: #1a1a1a;
+        .status-badge {
+          background: rgba(255, 255, 255, 0.18);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.28);
         }
 
-        .badge-draft {
-          background: #f5f5f5;
-          color: #666666;
-        }
-
-        .badge-archived {
-          background: #f5f5f5;
-          color: #666666;
+        .status-published {
+          background: #ffffff;
+          color: #174a96;
+          border-color: #ffffff;
         }
 
         .badge-ai {
-          background: #eeeeee;
-          color: #333333;
+          background: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.28);
         }
 
-        .badge-difficulty-veryeasy {
-          background: #f5f5f5;
-          color: #666666;
+        .difficulty-badge {
+          background: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.28);
         }
 
-        .badge-difficultyeasy {
-          background: #eeeeee;
-          color: #1a1a1a;
+        .type-tag {
+          background: rgba(255, 255, 255, 0.96);
+          color: #174a96;
+          border-color: rgba(255, 255, 255, 0.96);
+          text-transform: capitalize;
+          line-height: 1.2;
         }
 
-        .badge-difficultynormal {
-          background: #eeeeee;
-          color: #333333;
-        }
-
-        .badge-difficultydifficult {
-          background: #f5f5f5;
-          color: #333333;
-        }
-
-        .card-body {
+        .card-main {
           display: flex;
           flex-direction: column;
           gap: 0.9rem;
-        }
-
-        .card-avatar {
-          width: 2.75rem;
-          height: 2.75rem;
-          border-radius: 0.8rem;
-          display: grid;
-          place-items: center;
-          background: #eef5ff;
-          color: #174a96;
-          font-weight: 900;
-          font-size: 0.95rem;
-          letter-spacing: 0.03em;
-          flex: 0 0 auto;
-        }
-
-        .card-head-content {
-          display: flex;
-          flex-direction: column;
-          gap: 0.55rem;
+          padding: 1rem;
           min-width: 0;
         }
 
         .card-title {
-          font-size: 1.35rem;
-          font-weight: 700;
+          font-size: 1.16rem;
+          font-weight: 800;
           color: #1a1a1a;
           margin: 0;
-          line-height: 1.15;
+          line-height: 1.28;
         }
 
         .card-description {
-          color: #666666;
+          color: #555d66;
           font-size: 0.92rem;
-          line-height: 1.62;
+          line-height: 1.6;
           margin: 0;
-          min-height: 3.9rem;
+          min-height: 3.5rem;
         }
 
-        .resource-type-tag {
-          background: #eef5ff;
-          border: 1px solid #cfe0ff;
-          padding: 0.4rem 0.7rem;
-          border-radius: 0.7rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.4rem;
-          font-size: 0.78rem;
-          color: #0f3f8c;
-          width: fit-content;
-          font-weight: 800;
-          text-transform: none;
+        .metadata-details {
+          margin-top: 0.1rem;
+          border: 1px solid #e3e8ef;
+          border-radius: 0.75rem;
+          background: #f8fafc;
+          padding: 0.8rem 0.85rem;
         }
 
-        .resource-type-label,
-        .resource-type-separator {
-          color: #6b7c93;
-          white-space: nowrap;
-        }
-
-        .resource-type-separator {
-          width: auto;
-          display: inline-block;
-        }
-
-        .resource-type-value {
-          color: #1a1a1a;
-          font-weight: 800;
-          white-space: nowrap;
-          text-transform: none;
-        }
-
-        .lom-box {
-          margin-top: 0.25rem;
-          border-top: 1px solid #edf1f5;
-          padding-top: 0.75rem;
-        }
-
-        .lom-summary {
+        .metadata-summary {
           cursor: pointer;
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           font-weight: 700;
           color: #1f5fbf;
           list-style: none;
         }
 
-        .lom-summary::-webkit-details-marker {
+        .metadata-summary::-webkit-details-marker {
           display: none;
         }
 
-        .lom-data {
-          background: #f8fafc;
+        .metadata-content {
+          background: #ffffff;
           color: #2f3a46;
           padding: 0.8rem;
-          border-radius: 0.5rem;
+          border-radius: 0.55rem;
           font-size: 0.7rem;
           overflow-x: auto;
           margin-top: 0.6rem;
@@ -1070,105 +942,100 @@ function HomeContent() {
         }
 
         .card-footer {
-          margin-top: auto;
           display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 0.85rem;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
           padding-top: 0.95rem;
-          border-top: 1px solid #e9eef5;
+          border-top: 1px solid #edf1f5;
+          margin-top: auto;
+          flex-wrap: wrap;
         }
 
         .author-info {
           display: flex;
           align-items: center;
-          gap: 0.45rem;
+          gap: 0.35rem;
           min-width: 0;
           flex-wrap: wrap;
-          padding: 0.2rem 0 0;
         }
 
         .author-label {
           color: #6b7280;
-          font-size: 0.68rem;
+          font-size: 0.7rem;
           font-weight: 800;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.03em;
         }
 
         .author-name {
-          font-size: 0.9rem;
+          font-size: 0.88rem;
           color: #1a1a1a;
           font-weight: 700;
           overflow-wrap: anywhere;
           min-width: 0;
         }
 
-        .author-separator,
-        .resource-type-separator {
-          color: #a8b3bf;
-          font-weight: 800;
-        }
-
         .card-actions {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 0.55rem;
-          align-items: stretch;
-          width: 100%;
+          display: flex;
+          gap: 0.6rem;
+          align-items: center;
+          flex-wrap: wrap;
         }
 
-        .id-copy-btn,
-        .btn-download {
+        .copy-btn,
+        .download-btn {
           display: inline-flex;
           align-items: center;
-          justify-content: flex-start;
-          gap: 0.55rem;
-          min-height: 2.7rem;
-          padding: 0.65rem 1rem;
-          border-radius: 0.8rem;
+          justify-content: center;
+          padding: 0.55rem 0.85rem;
+          border-radius: 0.5rem;
           text-decoration: none;
-          font-size: 0.82rem;
+          font-size: 0.8rem;
           font-weight: 800;
           transition: all 0.2s;
           white-space: nowrap;
-          border: 1px solid transparent;
-          width: 100%;
-          box-sizing: border-box;
+          min-height: 2.35rem;
+          border: 1px solid #d7dde5;
         }
 
-        .id-copy-btn {
+        .copy-btn {
           cursor: pointer;
           background: #ffffff;
-          border: 1px solid #d8e0ea;
           color: #1a1a1a;
         }
 
-        .btn-download {
+        .download-btn {
           background: #1f5fbf;
+          border-color: #1f5fbf;
           color: white;
-          border: 1px solid #1f5fbf;
         }
 
-        .id-copy-btn:hover {
+        .copy-btn:hover {
           background: #f7f9fc;
-          border-color: #bac7d8;
+          border-color: #c4ced8;
         }
 
-        .btn-download:hover {
+        .download-btn:hover {
           background: #174a96;
           border-color: #174a96;
         }
 
-        .action-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex: 0 0 auto;
-        }
+        @media (max-width: 640px) {
+          .grid {
+            grid-template-columns: 1fr;
+          }
 
-        .action-text {
-          line-height: 1;
+          .card-footer,
+          .card-actions {
+            align-items: stretch;
+          }
+
+          .card-actions,
+          .copy-btn,
+          .download-btn {
+            width: 100%;
+          }
         }
 
         /* Empty state */
