@@ -13,6 +13,7 @@ import {
   ObjectStatus,
   ProcessingStatus,
 } from './entities/learning-object.entity';
+import { Collection } from '../collections/entities/collection.entity';
 import {
   CreateLearningObjectDto,
   UpdateLearningObjectDto,
@@ -27,9 +28,12 @@ export class LearningObjectsService {
   constructor(
     @InjectRepository(LearningObject)
     private readonly repository: Repository<LearningObject>,
+    @InjectRepository(Collection)
+    private readonly collectionRepository: Repository<Collection>,
   ) {}
 
   async create(createDto: CreateLearningObjectDto): Promise<LearningObject> {
+    await this.validateCollection(createDto.collectionId);
     const learningObject = this.repository.create(createDto);
     return await this.repository.save(learningObject);
   }
@@ -38,9 +42,12 @@ export class LearningObjectsService {
     query?: string,
     difficulty?: string,
     type?: string,
+    collectionId?: string,
     includeUnpublished = false,
   ): Promise<LearningObject[]> {
-    const qb = this.repository.createQueryBuilder('lo');
+    const qb = this.repository
+      .createQueryBuilder('lo')
+      .leftJoinAndSelect('lo.collection', 'collection');
 
     if (!includeUnpublished) {
       qb.andWhere('lo.status = :status', { status: ObjectStatus.PUBLISHED });
@@ -59,6 +66,14 @@ export class LearningObjectsService {
 
     if (type) {
       qb.andWhere(`${resourceTypeExpression} = :type`, { type });
+    }
+
+    if (collectionId) {
+      if (collectionId === 'none') {
+        qb.andWhere('lo."collectionId" IS NULL');
+      } else {
+        qb.andWhere('lo."collectionId" = :collectionId', { collectionId });
+      }
     }
 
     qb.orderBy('lo.createdAt', 'DESC');
@@ -105,7 +120,10 @@ export class LearningObjectsService {
   }
 
   async findOne(id: string): Promise<LearningObject> {
-    const object = await this.repository.findOne({ where: { id } });
+    const object = await this.repository.findOne({
+      where: { id },
+      relations: ['collection'],
+    });
     if (!object) {
       throw new NotFoundException(
         `Objeto de aprendizaje con ID ${id} no encontrado`,
@@ -117,6 +135,7 @@ export class LearningObjectsService {
   async findPublishedOne(id: string): Promise<LearningObject> {
     const object = await this.repository.findOne({
       where: { id, status: ObjectStatus.PUBLISHED },
+      relations: ['collection'],
     });
     if (!object) {
       throw new NotFoundException(
@@ -131,6 +150,7 @@ export class LearningObjectsService {
     updateDto: UpdateLearningObjectDto,
   ): Promise<LearningObject> {
     const object = await this.findOne(id);
+    await this.validateCollection(updateDto.collectionId);
     const updated = this.repository.merge(object, updateDto);
     return await this.repository.save(updated);
   }
@@ -220,6 +240,18 @@ export class LearningObjectsService {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`Error en Mammoth: ${message}`);
       throw error;
+    }
+  }
+
+  private async validateCollection(collectionId?: string | null) {
+    if (!collectionId) return;
+
+    const collection = await this.collectionRepository.findOne({
+      where: { id: collectionId },
+    });
+
+    if (!collection) {
+      throw new BadRequestException('La coleccion seleccionada no existe');
     }
   }
 }

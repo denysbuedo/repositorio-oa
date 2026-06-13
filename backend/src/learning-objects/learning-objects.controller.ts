@@ -53,6 +53,7 @@ export class LearningObjectsController {
     @Query('q') query?: string,
     @Query('difficulty') difficulty?: string,
     @Query('type') type?: string,
+    @Query('collectionId') collectionId?: string,
     @Query('scope') scope?: string,
     @Req() request?: Request,
   ) {
@@ -63,7 +64,13 @@ export class LearningObjectsController {
       );
     }
 
-    return this.service.findAll(query, difficulty, type, isAdminScope);
+    return this.service.findAll(
+      query,
+      difficulty,
+      type,
+      collectionId,
+      isAdminScope,
+    );
   }
 
   @Get(':id')

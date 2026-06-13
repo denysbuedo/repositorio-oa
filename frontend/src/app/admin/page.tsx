@@ -11,6 +11,12 @@ const ADMIN_TOKEN_KEY = 'roa_admin_token';
 type ObjectStatus = 'draft' | 'published' | 'archived';
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
+interface Collection {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
 interface LearningObject {
   id: string;
   title: string;
@@ -24,6 +30,8 @@ interface LearningObject {
   uploadedAt?: string | null;
   processingStatus?: ProcessingStatus;
   processingError?: string | null;
+  collectionId?: string | null;
+  collection?: Collection | null;
   createdAt?: string;
   updatedAt?: string;
   lomMetadata?: {
@@ -41,6 +49,7 @@ interface ReviewForm {
   title: string;
   description: string;
   author: string;
+  collectionId: string;
   learningResourceType: string;
   difficulty: string;
   keywords: string;
@@ -68,13 +77,18 @@ const difficultyOptions = ['Muy facil', 'Facil', 'Medio', 'Dificil', 'Muy difici
 export default function AdminPage() {
   const router = useRouter();
   const [objects, setObjects] = useState<LearningObject[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
+  const [collectionFilter, setCollectionFilter] = useState('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
+  const [collectionName, setCollectionName] = useState('');
+  const [collectionDescription, setCollectionDescription] = useState('');
+  const [savingCollection, setSavingCollection] = useState(false);
   const [savingReview, setSavingReview] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -129,23 +143,57 @@ export default function AdminPage() {
       });
   }, [authChecked, authToken]);
 
+  const fetchCollections = useCallback(() => {
+    if (!authChecked || !authToken) {
+      return;
+    }
+
+    fetch(`${API_URL}/collections`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          throw new Error('Unexpected API response');
+        }
+        setCollections(data as Collection[]);
+      })
+      .catch((error) => {
+        console.error('Error loading collections:', error);
+        setCollections([]);
+        setErrorMessage('No se pudieron cargar las colecciones.');
+      });
+  }, [authChecked, authToken]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchObjects();
-  }, [fetchObjects]);
+    fetchCollections();
+  }, [fetchObjects, fetchCollections]);
 
   const filteredObjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return objects.filter((object) => {
       const matchesStatus = statusFilter === 'all' || object.status === statusFilter;
+      const matchesCollection =
+        collectionFilter === 'all' ||
+        (collectionFilter === 'none' && !object.collectionId) ||
+        object.collectionId === collectionFilter;
       const matchesQuery =
         !normalizedQuery ||
         object.title.toLowerCase().includes(normalizedQuery) ||
         object.author.toLowerCase().includes(normalizedQuery) ||
         object.id.toLowerCase().includes(normalizedQuery);
-      return matchesStatus && matchesQuery;
+      return matchesStatus && matchesCollection && matchesQuery;
     });
-  }, [objects, query, statusFilter]);
+  }, [collectionFilter, objects, query, statusFilter]);
 
   const stats = useMemo(() => {
     const total = objects.length;
@@ -153,10 +201,11 @@ export default function AdminPage() {
     const draft = objects.filter((object) => object.status === 'draft').length;
     const archived = objects.filter((object) => object.status === 'archived').length;
     const withMetadata = objects.filter((object) => object.lomMetadata).length;
+    const withCollection = objects.filter((object) => object.collectionId).length;
     const processing = objects.filter((object) =>
       object.fileUrl && (object.processingStatus === 'pending' || object.processingStatus === 'processing')
     ).length;
-    return { total, published, draft, archived, withMetadata, processing };
+    return { total, published, draft, archived, withMetadata, withCollection, processing };
   }, [objects]);
 
   const selectObject = (object: LearningObject) => {
@@ -194,6 +243,46 @@ export default function AdminPage() {
       setErrorMessage('No se pudo guardar la revision del recurso.');
     } finally {
       setSavingReview(false);
+    }
+  };
+
+  const createCollection = async () => {
+    const name = collectionName.trim();
+    if (!name) {
+      setErrorMessage('Escribe un nombre para la coleccion.');
+      return;
+    }
+
+    setSavingCollection(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`${API_URL}/collections`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name,
+          description: collectionDescription.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const collection = await res.json() as Collection;
+      setCollections((current) =>
+        [...current, collection].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      setCollectionName('');
+      setCollectionDescription('');
+      setSuccessMessage('Coleccion creada.');
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      setErrorMessage('No se pudo crear la coleccion. Revisa si ya existe una con ese nombre.');
+    } finally {
+      setSavingCollection(false);
     }
   };
 
@@ -294,7 +383,36 @@ export default function AdminPage() {
         <Metric label="Borradores" value={stats.draft} />
         <Metric label="Archivados" value={stats.archived} />
         <Metric label="Con metadatos" value={stats.withMetadata} />
-        <Metric label="Procesando" value={stats.processing} />
+        <Metric label="En coleccion" value={stats.withCollection} />
+      </section>
+
+      <section className="collections-panel" aria-label="Gestion de colecciones">
+        <div>
+          <p className="panel-kicker">Colecciones</p>
+          <h2>Organizacion del repositorio</h2>
+          <p>Crea agrupaciones tematicas y asigna cada OA desde el panel de revision.</p>
+        </div>
+        <div className="collection-form">
+          <label className="field">
+            <span>Nombre</span>
+            <input
+              value={collectionName}
+              onChange={(event) => setCollectionName(event.target.value)}
+              placeholder="Ej. Base de datos"
+            />
+          </label>
+          <label className="field">
+            <span>Descripcion</span>
+            <input
+              value={collectionDescription}
+              onChange={(event) => setCollectionDescription(event.target.value)}
+              placeholder="Uso o alcance de la coleccion"
+            />
+          </label>
+          <button className="primary-button" onClick={createCollection} disabled={savingCollection}>
+            {savingCollection ? 'Creando...' : 'Crear coleccion'}
+          </button>
+        </div>
       </section>
 
       <section className="toolbar" aria-label="Filtros de administracion">
@@ -312,6 +430,16 @@ export default function AdminPage() {
             <option value="all">Todos</option>
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="field compact">
+          <span>Coleccion</span>
+          <select value={collectionFilter} onChange={(event) => setCollectionFilter(event.target.value)}>
+            <option value="all">Todas</option>
+            <option value="none">Sin coleccion</option>
+            {collections.map((collection) => (
+              <option key={collection.id} value={collection.id}>{collection.name}</option>
             ))}
           </select>
         </label>
@@ -334,6 +462,7 @@ export default function AdminPage() {
                   <th>Estado</th>
                   <th>IA</th>
                   <th>Autor</th>
+                  <th>Coleccion</th>
                   <th>Tipo</th>
                   <th>Dificultad</th>
                   <th>Actualizado</th>
@@ -342,9 +471,9 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={8} className="empty-row">Cargando recursos...</td></tr>
+                  <tr><td colSpan={9} className="empty-row">Cargando recursos...</td></tr>
                 ) : filteredObjects.length === 0 ? (
-                  <tr><td colSpan={8} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
+                  <tr><td colSpan={9} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
                 ) : (
                   filteredObjects.map((object) => (
                     <tr key={object.id} className={selectedObject?.id === object.id ? 'selected-row' : ''}>
@@ -361,6 +490,7 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td>{object.author}</td>
+                      <td>{object.collection?.name ?? 'Sin coleccion'}</td>
                       <td>{object.lomMetadata?.educational?.learningResourceType ?? 'Sin tipo'}</td>
                       <td>{object.lomMetadata?.educational?.difficulty ?? 'Sin nivel'}</td>
                       <td>{formatDate(object.updatedAt ?? object.createdAt)}</td>
@@ -424,6 +554,22 @@ export default function AdminPage() {
                     rows={4}
                     onChange={(event) => setReviewForm((current) => ({ ...current, description: event.target.value }))}
                   />
+                </label>
+              </section>
+
+              <section className="review-section">
+                <h4>Organizacion</h4>
+                <label className="field">
+                  <span>Coleccion</span>
+                  <select
+                    value={reviewForm.collectionId}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, collectionId: event.target.value }))}
+                  >
+                    <option value="">Sin coleccion</option>
+                    {collections.map((collection) => (
+                      <option key={collection.id} value={collection.id}>{collection.name}</option>
+                    ))}
+                  </select>
                 </label>
               </section>
 
@@ -629,6 +775,43 @@ export default function AdminPage() {
           margin-bottom: 1rem;
         }
 
+        .collections-panel {
+          display: grid;
+          grid-template-columns: 320px minmax(0, 1fr);
+          gap: 1rem;
+          align-items: end;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .collections-panel h2 {
+          font-size: 1rem;
+          margin: 0;
+        }
+
+        .collections-panel p {
+          color: #666666;
+          margin: 0.35rem 0 0;
+          font-size: 0.875rem;
+        }
+
+        .panel-kicker {
+          color: #1f5fbf !important;
+          font-size: 0.75rem !important;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .collection-form {
+          display: grid;
+          grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) auto;
+          gap: 0.75rem;
+          align-items: end;
+        }
+
         .field {
           display: flex;
           flex-direction: column;
@@ -638,6 +821,11 @@ export default function AdminPage() {
 
         .field.compact {
           max-width: 220px;
+        }
+
+        button:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
 
         .field span {
@@ -991,9 +1179,16 @@ export default function AdminPage() {
 
         @media (max-width: 720px) {
           .admin-header,
-          .toolbar {
+          .toolbar,
+          .collections-panel,
+          .collection-form {
             flex-direction: column;
             align-items: stretch;
+          }
+
+          .collections-panel,
+          .collection-form {
+            display: flex;
           }
 
           .admin-header {
@@ -1032,6 +1227,7 @@ function createReviewForm(object: LearningObject | null): ReviewForm {
     title: object?.title ?? '',
     description: object?.description ?? '',
     author: object?.author ?? '',
+    collectionId: object?.collectionId ?? '',
     learningResourceType: object?.lomMetadata?.educational?.learningResourceType ?? '',
     difficulty: object?.lomMetadata?.educational?.difficulty ?? '',
     keywords: object?.lomMetadata?.general?.keyword?.join(', ') ?? '',
@@ -1048,6 +1244,7 @@ function buildReviewPayload(object: LearningObject, form: ReviewForm) {
     title: form.title.trim(),
     description: form.description.trim(),
     author: form.author.trim(),
+    collectionId: form.collectionId || null,
     lomMetadata: {
       ...(object.lomMetadata ?? {}),
       general: {

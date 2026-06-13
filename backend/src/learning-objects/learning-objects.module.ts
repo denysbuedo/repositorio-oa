@@ -7,9 +7,14 @@ import { LearningObjectsService } from './learning-objects.service';
 import { LearningObject } from './entities/learning-object.entity';
 import { AiService } from '../ai/ai.service';
 import { AuthModule } from '../auth/auth.module';
+import { Collection } from '../collections/entities/collection.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LearningObject]), AuthModule, JwtModule],
+  imports: [
+    TypeOrmModule.forFeature([LearningObject, Collection]),
+    AuthModule,
+    JwtModule,
+  ],
   controllers: [LearningObjectsController, LearningObjectFiltersController],
   providers: [LearningObjectsService, AiService],
   exports: [LearningObjectsService],

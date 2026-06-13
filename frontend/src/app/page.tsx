@@ -5,6 +5,12 @@ import { useSearchParams } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+interface Collection {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
 interface LearningObject {
   id: string;
   title: string;
@@ -12,6 +18,8 @@ interface LearningObject {
   author: string;
   status: string;
   fileUrl: string;
+  collectionId?: string | null;
+  collection?: Collection | null;
   lomMetadata?: {
     general?: {
       title?: { [key: string]: string };
@@ -128,6 +136,11 @@ function ObjectList({
                   {getResourceType(obj) && (
                     <div className="type-tag">
                       Tipo: {getTypeLabel(getResourceType(obj))}
+                    </div>
+                  )}
+                  {obj.collection?.name && (
+                    <div className="collection-tag">
+                      Coleccion: {obj.collection.name}
                     </div>
                   )}
                 </aside>
@@ -261,6 +274,8 @@ function HomeContent() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') ?? '');
   const [difficultyFilter, setDifficultyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [collectionFilter, setCollectionFilter] = useState('');
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [showStats, setShowStats] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -271,6 +286,7 @@ function HomeContent() {
     if (searchTerm) params.append('q', searchTerm);
     if (difficultyFilter) params.append('difficulty', difficultyFilter);
     if (typeFilter) params.append('type', typeFilter);
+    if (collectionFilter) params.append('collectionId', collectionFilter);
     
     fetch(`${API_URL}/learning-objects?${params.toString()}`)
       .then((res) => {
@@ -295,7 +311,7 @@ function HomeContent() {
         setObjects([]);
         setLoading(false);
       });
-  }, [difficultyFilter, searchTerm, typeFilter]);
+  }, [collectionFilter, difficultyFilter, searchTerm, typeFilter]);
 
   useEffect(() => {
     fetch(`${API_URL}/learning-object-filters`)
@@ -325,12 +341,30 @@ function HomeContent() {
       });
   }, []);
 
+  useEffect(() => {
+    fetch(`${API_URL}/collections`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setCollections(Array.isArray(data) ? data as Collection[] : []);
+      })
+      .catch((err) => {
+        console.error('Error fetching collections:', err);
+        setCollections([]);
+      });
+  }, []);
+
   // Calcular estadisticas
   const getStats = () => {
     const published = objects.filter(o => o.status === 'published').length;
     const withMetadata = objects.filter(o => o.lomMetadata).length;
     const uniqueTypes = new Set(objects.map(getResourceType).filter(Boolean)).size;
-    return { published, withMetadata, uniqueTypes, total: objects.length };
+    const uniqueCollections = new Set(objects.map((object) => object.collectionId).filter(Boolean)).size;
+    return { published, withMetadata, uniqueTypes, uniqueCollections, total: objects.length };
   };
 
   const stats = getStats();
@@ -388,6 +422,10 @@ function HomeContent() {
               <div className="stat-value">{stats.uniqueTypes}</div>
               <div className="stat-label">Tipos de recurso</div>
             </div>
+            <div className="stat-card">
+              <div className="stat-value">{stats.uniqueCollections}</div>
+              <div className="stat-label">Colecciones</div>
+            </div>
           </div>
         </div>
       )}
@@ -399,6 +437,7 @@ function HomeContent() {
             setSearchTerm('');
             setDifficultyFilter('');
             setTypeFilter('');
+            setCollectionFilter('');
           }}>
             Limpiar filtros
           </button>
@@ -442,6 +481,21 @@ function HomeContent() {
               <option value="">Todos los tipos</option>
               {typeOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Coleccion</label>
+            <select
+              value={collectionFilter}
+              onChange={(e) => setCollectionFilter(e.target.value)}
+              className="filter-select"
+              aria-label="Coleccion"
+            >
+              <option value="">Todas las colecciones</option>
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>{collection.name}</option>
               ))}
             </select>
           </div>
@@ -659,7 +713,7 @@ function HomeContent() {
 
         .filters-grid {
           display: grid;
-          grid-template-columns: 1fr auto auto auto;
+          grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(180px, auto)) auto;
           gap: 1rem;
           align-items: end;
         }
@@ -812,7 +866,8 @@ function HomeContent() {
         .status-badge,
         .badge-ai,
         .difficulty-badge,
-        .type-tag {
+        .type-tag,
+        .collection-tag {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -854,6 +909,13 @@ function HomeContent() {
           color: #174a96;
           border-color: rgba(255, 255, 255, 0.96);
           text-transform: capitalize;
+          line-height: 1.2;
+        }
+
+        .collection-tag {
+          background: rgba(255, 255, 255, 0.12);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.24);
           line-height: 1.2;
         }
 

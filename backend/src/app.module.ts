@@ -7,9 +7,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LearningObjectsModule } from './learning-objects/learning-objects.module';
 import { LearningObject } from './learning-objects/entities/learning-object.entity';
+import { Collection } from './collections/entities/collection.entity';
 import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
 import { AuthModule } from './auth/auth.module';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -28,12 +30,13 @@ import { AuthModule } from './auth/auth.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [LearningObject],
+        entities: [LearningObject, Collection],
         synchronize: configService.get<string>('DB_SYNC') === 'true',
       }),
       inject: [ConfigService],
     }),
     AuthModule,
+    CollectionsModule,
     LearningObjectsModule,
     LtiModule,
   ],

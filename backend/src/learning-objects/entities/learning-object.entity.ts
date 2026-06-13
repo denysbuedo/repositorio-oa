@@ -4,7 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Collection } from '../../collections/entities/collection.entity';
 
 export enum ObjectStatus {
   DRAFT = 'draft',
@@ -72,6 +75,16 @@ export class LearningObject {
 
   @Column({ type: 'text', nullable: true })
   processingError: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  collectionId: string | null;
+
+  @ManyToOne(() => Collection, (collection) => collection.learningObjects, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'collectionId' })
+  collection: Collection | null;
 
   @CreateDateColumn()
   createdAt: Date;

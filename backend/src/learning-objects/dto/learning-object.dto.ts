@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsEnum, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsObject,
+  IsUUID,
+} from 'class-validator';
 import { ObjectStatus } from '../entities/learning-object.entity';
 
 export class CreateLearningObjectDto {
@@ -24,6 +30,10 @@ export class CreateLearningObjectDto {
   @IsOptional()
   @IsObject()
   lomMetadata?: any;
+
+  @IsOptional()
+  @IsUUID()
+  collectionId?: string | null;
 }
 
 export class UpdateLearningObjectDto {
@@ -46,4 +56,8 @@ export class UpdateLearningObjectDto {
   @IsOptional()
   @IsObject()
   lomMetadata?: any;
+
+  @IsOptional()
+  @IsUUID()
+  collectionId?: string | null;
 }
