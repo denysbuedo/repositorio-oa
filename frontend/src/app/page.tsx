@@ -135,6 +135,7 @@ function ObjectList({
                 {getResourceType(obj) && (
                   <div className="resource-type-tag">
                     <span className="resource-type-icon">Tipo:</span>
+                    <span className="resource-type-separator" aria-hidden="true"> </span>
                     <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
                   </div>
                 )}
@@ -159,6 +160,7 @@ function ObjectList({
                 <div className="card-footer">
                   <div className="author-info">
                     <span className="author-label">Autor:</span>
+                    <span className="author-separator" aria-hidden="true"> </span>
                     <span className="author-name">{obj.author}</span>
                   </div>
                   <div className="card-actions">
@@ -169,7 +171,12 @@ function ObjectList({
                       }}
                       className="id-copy-btn"
                     >
-                      Copiar ID
+                      <span className="action-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
+                          <path d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z" fill="currentColor" />
+                        </svg>
+                      </span>
+                      <span className="action-text">Copiar ID</span>
                     </button>
                     {obj.fileUrl && (
                       <a
@@ -177,7 +184,12 @@ function ObjectList({
                         download
                         className="btn-download"
                       >
-                        Descargar
+                        <span className="action-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" width="14" height="14" focusable="false" aria-hidden="true">
+                            <path d="M5 20h14v-2H5v2zm7-18l-5.5 5.5 1.42 1.42L11 6.84V16h2V6.84l3.08 3.08 1.42-1.42L12 2z" fill="currentColor" />
+                          </svg>
+                        </span>
+                        <span className="action-text">Descargar</span>
                       </a>
                     )}
                   </div>
@@ -1044,20 +1056,20 @@ function HomeContent() {
         .card-footer {
           margin-top: auto;
           display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 1rem;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.75rem;
           padding-top: 0.75rem;
           border-top: 1px solid #e0e0e0;
-          flex-wrap: wrap;
         }
 
         .author-info {
           display: flex;
           align-items: baseline;
-          gap: 0.35rem;
+          gap: 0.25rem;
           min-width: 0;
-          flex: 1 1 12rem;
+          flex: 1 1 auto;
+          flex-wrap: wrap;
         }
 
         .author-label {
@@ -1075,33 +1087,75 @@ function HomeContent() {
           min-width: 0;
         }
 
+        .author-separator,
+        .resource-type-separator {
+          display: inline-block;
+          width: 0.25rem;
+          flex: 0 0 auto;
+        }
+
         .card-actions {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
           gap: 0.75rem;
           align-items: center;
-          flex-wrap: wrap;
-          justify-content: flex-end;
-          margin-left: auto;
-          padding-left: 0.25rem;
+          width: 100%;
+          padding: 0.7rem 0.8rem;
+          background: #f5f8fd;
+          border: 1px solid #d6e3f5;
+          border-radius: 0.5rem;
+        }
+
+        .id-copy-btn,
+        .btn-download {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
+          min-height: 2.7rem;
+          padding: 0.55rem 0.9rem;
+          border-radius: 0.45rem;
+          text-decoration: none;
+          font-size: 0.8rem;
+          font-weight: 800;
+          transition: all 0.2s;
+          white-space: nowrap;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .id-copy-btn {
+          cursor: pointer;
+          background: white;
+          border: 1px solid #d0d7e2;
+          color: #1a1a1a;
         }
 
         .btn-download {
           background: #1f5fbf;
-          padding: 0.45rem 0.8rem;
-          border-radius: 0.375rem;
-          text-decoration: none;
           color: white;
-          font-size: 0.8rem;
-          font-weight: 800;
-          transition: all 0.2s;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          white-space: nowrap;
+          border: 1px solid #1f5fbf;
+        }
+
+        .id-copy-btn:hover {
+          background: #f7f9fc;
+          border-color: #bac7d8;
         }
 
         .btn-download:hover {
           background: #174a96;
+          border-color: #174a96;
+        }
+
+        .action-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 auto;
+        }
+
+        .action-text {
+          line-height: 1;
         }
 
         /* Empty state */
