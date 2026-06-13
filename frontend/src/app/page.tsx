@@ -122,9 +122,6 @@ function ObjectList({
             objects.map((obj) => (
               <div key={obj.id} className="object-card">
                 <aside className="card-aside">
-                  <span className={`status-badge status-${obj.status}`}>
-                    {getStatusLabel(obj.status)}
-                  </span>
                   {obj.lomMetadata && (
                     <span className="badge-ai">IA verificado</span>
                   )}
@@ -132,11 +129,6 @@ function ObjectList({
                     <span className="difficulty-badge">
                       {getDifficultyLabel(obj.lomMetadata.educational.difficulty)}
                     </span>
-                  )}
-                  {getResourceType(obj) && (
-                    <div className="type-tag">
-                      Tipo: {getTypeLabel(getResourceType(obj))}
-                    </div>
                   )}
                   {obj.collection?.name && (
                     <div className="collection-tag">
@@ -147,6 +139,12 @@ function ObjectList({
 
                 <div className="card-main">
                   <h3 className="card-title">{obj.title}</h3>
+                  {getResourceType(obj) && (
+                    <div className="resource-meta">
+                      <span className="meta-chip">Tipo</span>
+                      <span>{getTypeLabel(getResourceType(obj))}</span>
+                    </div>
+                  )}
 
                   <p className="card-description">{obj.description || 'Sin descripción'}</p>
 
@@ -189,17 +187,6 @@ function ObjectList({
       )}
     </>
   );
-}
-
-function getStatusLabel(status: string) {
-  switch (status) {
-    case 'published':
-      return 'Publicado';
-    case 'archived':
-      return 'Archivado';
-    default:
-      return 'Borrador';
-  }
 }
 
 function getDifficultyLabel(difficulty: string) {
@@ -863,10 +850,8 @@ function HomeContent() {
           border-bottom: 1px solid #174a96;
         }
 
-        .status-badge,
         .badge-ai,
         .difficulty-badge,
-        .type-tag,
         .collection-tag {
           display: inline-flex;
           align-items: center;
@@ -880,22 +865,10 @@ function HomeContent() {
           width: fit-content;
         }
 
-        .status-badge {
-          background: rgba(255, 255, 255, 0.18);
-          color: #ffffff;
-          border-color: rgba(255, 255, 255, 0.28);
-        }
-
-        .status-published {
+        .badge-ai {
           background: #ffffff;
           color: #174a96;
           border-color: #ffffff;
-        }
-
-        .badge-ai {
-          background: rgba(255, 255, 255, 0.16);
-          color: #ffffff;
-          border-color: rgba(255, 255, 255, 0.28);
         }
 
         .difficulty-badge {
@@ -904,19 +877,37 @@ function HomeContent() {
           border-color: rgba(255, 255, 255, 0.28);
         }
 
-        .type-tag {
-          background: rgba(255, 255, 255, 0.96);
-          color: #174a96;
-          border-color: rgba(255, 255, 255, 0.96);
-          text-transform: capitalize;
+        .collection-tag {
+          background: rgba(255, 255, 255, 0.16);
+          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.28);
           line-height: 1.2;
         }
 
-        .collection-tag {
-          background: rgba(255, 255, 255, 0.12);
+        .resource-meta {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          width: fit-content;
+          max-width: 100%;
+          border: 1px solid #dbe4ef;
+          border-radius: 999px;
+          background: #f7f9fc;
+          color: #334155;
+          font-size: 0.78rem;
+          font-weight: 700;
+          padding: 0.38rem 0.62rem;
+        }
+
+        .meta-chip {
+          display: inline-flex;
+          border-radius: 999px;
+          background: #1f5fbf;
           color: #ffffff;
-          border-color: rgba(255, 255, 255, 0.24);
-          line-height: 1.2;
+          font-size: 0.68rem;
+          font-weight: 800;
+          padding: 0.18rem 0.42rem;
+          text-transform: uppercase;
         }
 
         .card-main {
