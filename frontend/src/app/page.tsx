@@ -134,8 +134,8 @@ function ObjectList({
 
                 {getResourceType(obj) && (
                   <div className="resource-type-tag">
-                    <span className="resource-type-icon">Tipo:</span>
-                    <span className="resource-type-separator" aria-hidden="true"> </span>
+                    <span className="resource-type-label">Tipo</span>
+                    <span className="resource-type-separator" aria-hidden="true">·</span>
                     <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
                   </div>
                 )}
@@ -159,8 +159,8 @@ function ObjectList({
 
                 <div className="card-footer">
                   <div className="author-info">
-                    <span className="author-label">Autor:</span>
-                    <span className="author-separator" aria-hidden="true"> </span>
+                    <span className="author-label">Autor</span>
+                    <span className="author-separator" aria-hidden="true">·</span>
                     <span className="author-name">{obj.author}</span>
                   </div>
                   <div className="card-actions">
@@ -862,14 +862,14 @@ function HomeContent() {
         .card {
           position: relative;
           background: white;
-          border-radius: 0.5rem;
-          padding: 1.35rem;
-          box-shadow: var(--shadow-sm);
-          transition: all 0.3s;
+          border-radius: 0.75rem;
+          padding: 1.1rem 1.1rem 1rem;
+          box-shadow: 0 10px 28px rgba(26, 26, 26, 0.06);
+          transition: all 0.25s ease;
           border: 1px solid #e0e0e0;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
+          gap: 1rem;
           overflow: hidden;
         }
 
@@ -884,9 +884,9 @@ function HomeContent() {
         }
 
         .card:hover {
-          transform: translateY(-3px);
-          box-shadow: var(--shadow-xl);
-          border-color: #c9d7ee;
+          transform: translateY(-2px);
+          box-shadow: 0 16px 34px rgba(26, 26, 26, 0.08);
+          border-color: #cad7ea;
         }
 
         .card-header {
@@ -952,50 +952,18 @@ function HomeContent() {
           color: #333333;
         }
 
+        .card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 0.8rem;
+        }
+
         .card-title {
-          font-size: 1.2rem;
+          font-size: 1.12rem;
           font-weight: 700;
           color: #1a1a1a;
           margin: 0;
-          line-height: 1.25;
-        }
-
-        .id-copy {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          background: #f5f5f5;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
-          border: 1px solid #e0e0e0;
-        }
-
-        .id-code {
-          font-size: 0.7rem;
-          color: #666666;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          flex: 1;
-        }
-
-        .id-copy-btn {
-          font-size: 0.7rem;
-          padding: 0.45rem 0.8rem;
-          cursor: pointer;
-          background: white;
-          border: 1px solid #e0e0e0;
-          border-radius: 0.375rem;
-          transition: all 0.2s;
-          color: #1a1a1a;
-          font-weight: 700;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          white-space: nowrap;
-        }
-
-        .id-copy-btn:hover {
-          background: #e0e0e0;
+          line-height: 1.28;
         }
 
         .card-description {
@@ -1003,84 +971,100 @@ function HomeContent() {
           font-size: 0.875rem;
           line-height: 1.55;
           margin: 0;
-          min-height: 4.1rem;
+          min-height: 3.5rem;
         }
 
         .resource-type-tag {
-          background: #f5f8fd;
-          border: 1px solid #d6e3f5;
-          padding: 0.45rem 0.75rem;
+          background: #f3f7fc;
+          border: 1px solid #d9e4f1;
+          padding: 0.3rem 0.55rem;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
-          gap: 0.4rem;
-          font-size: 0.8rem;
+          gap: 0.35rem;
+          font-size: 0.72rem;
           color: #174a96;
           width: fit-content;
-          font-weight: 700;
+          font-weight: 800;
+          text-transform: uppercase;
         }
 
-        .resource-type-icon {
+        .resource-type-label,
+        .resource-type-separator {
+          color: #6b7c93;
           white-space: nowrap;
+        }
+
+        .resource-type-separator {
+          width: auto;
+          display: inline-block;
         }
 
         .resource-type-value {
           color: #1a1a1a;
-          font-weight: 700;
+          font-weight: 800;
           white-space: nowrap;
+          text-transform: none;
         }
 
         .lom-box {
-          margin-top: 0.5rem;
-          border-top: 1px solid #e0e0e0;
+          margin-top: 0.25rem;
+          border-top: 1px solid #edf1f5;
           padding-top: 0.75rem;
         }
 
         .lom-summary {
           cursor: pointer;
-          font-size: 0.8rem;
-          font-weight: 600;
+          font-size: 0.78rem;
+          font-weight: 700;
           color: #1f5fbf;
+          list-style: none;
+        }
+
+        .lom-summary::-webkit-details-marker {
+          display: none;
         }
 
         .lom-data {
-          background: #1a1a1a;
-          color: #f5f5f5;
-          padding: 0.75rem;
+          background: #f8fafc;
+          color: #2f3a46;
+          padding: 0.8rem;
           border-radius: 0.5rem;
           font-size: 0.7rem;
           overflow-x: auto;
-          margin-top: 0.5rem;
+          margin-top: 0.6rem;
+          border: 1px solid #e3e8ef;
         }
 
         .card-footer {
           margin-top: auto;
           display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 0.75rem;
-          padding-top: 0.75rem;
-          border-top: 1px solid #e0e0e0;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          padding-top: 0.85rem;
+          border-top: 1px solid #edf1f5;
+          flex-wrap: wrap;
         }
 
         .author-info {
-          display: flex;
+          display: inline-flex;
           align-items: baseline;
-          gap: 0.25rem;
+          gap: 0.35rem;
           min-width: 0;
-          flex: 1 1 auto;
           flex-wrap: wrap;
         }
 
         .author-label {
-          color: #666666;
+          color: #6b7280;
           font-size: 0.68rem;
           font-weight: 800;
           text-transform: uppercase;
+          letter-spacing: 0.04em;
         }
 
         .author-name {
-          font-size: 0.875rem;
+          font-size: 0.88rem;
           color: #1a1a1a;
           font-weight: 700;
           overflow-wrap: anywhere;
@@ -1089,21 +1073,17 @@ function HomeContent() {
 
         .author-separator,
         .resource-type-separator {
-          display: inline-block;
-          width: 0.25rem;
-          flex: 0 0 auto;
+          color: #a8b3bf;
+          font-weight: 800;
         }
 
         .card-actions {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-          gap: 0.75rem;
+          display: flex;
+          gap: 0.6rem;
           align-items: center;
-          width: 100%;
-          padding: 0.7rem 0.8rem;
-          background: #f5f8fd;
-          border: 1px solid #d6e3f5;
-          border-radius: 0.5rem;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          margin-left: auto;
         }
 
         .id-copy-btn,
@@ -1111,17 +1091,16 @@ function HomeContent() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 0.45rem;
-          min-height: 2.7rem;
-          padding: 0.55rem 0.9rem;
-          border-radius: 0.45rem;
+          gap: 0.4rem;
+          min-height: 2.45rem;
+          padding: 0.48rem 0.85rem;
+          border-radius: 999px;
           text-decoration: none;
-          font-size: 0.8rem;
+          font-size: 0.78rem;
           font-weight: 800;
           transition: all 0.2s;
           white-space: nowrap;
-          width: 100%;
-          box-sizing: border-box;
+          border: 1px solid transparent;
         }
 
         .id-copy-btn {
