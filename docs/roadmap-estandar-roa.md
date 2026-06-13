@@ -16,6 +16,47 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Colecciones para agrupar OA.
 - Busqueda por texto, tipo, dificultad y coleccion.
 - Integracion LTI inicial.
+- Perfil ROA minimo con validacion editorial antes de publicar.
+- Licencia, derechos, idioma, nivel educativo y audiencia en el flujo admin.
+- URL publica estable por OA: `/objects/{id}`.
+- Ficha publica del OA con metadatos academicos, licencia, derechos y palabras clave.
+- Exportacion publica de metadatos por OA en JSON: Dublin Core y LRMI/schema.org.
+- JSON-LD LRMI/schema.org embebido en la ficha publica.
+
+## Estado al cierre del 13 de junio de 2026
+
+Ultimo commit registrado en `dev`:
+
+- `ae2e42e Add metadata export endpoint`
+
+Trabajo completado en esta sesion de estabilizacion:
+
+- `9669382 Add collections for learning objects`: se creo el modulo de colecciones, relacion con OA, filtro publico/admin y asignacion desde revision.
+- `56dd4a5 Add international ROA roadmap`: se creo esta hoja de ruta.
+- `33ee711 Add ROA profile publication validation`: se agrego el perfil ROA minimo y el bloqueo backend para impedir publicar recursos incompletos.
+- `b43352d Add public object detail pages`: se creo la ficha publica estable `/objects/{id}` y se hizo visible la licencia en catalogo/LTI.
+- `ae2e42e Add metadata export endpoint`: se agrego el endpoint publico de exportacion Dublin Core/LRMI y JSON-LD en la ficha publica.
+
+Validaciones ejecutadas durante el cierre:
+
+- `npm.cmd --prefix backend run build`
+- `npm.cmd --prefix backend run lint`
+- `npm.cmd --prefix frontend run lint`
+- `npm.cmd --prefix frontend run build`
+- Prueba HTTP del endpoint `/learning-objects/{id}/metadata` con respuesta `200`.
+- Prueba HTTP de la ficha `/objects/{id}` con respuesta `200`.
+
+Estado local conocido:
+
+- La rama activa de trabajo es `dev`.
+- Los cambios principales fueron subidos a `origin/dev`.
+- Quedan sin versionar `start-backend.bat` y `start-frontend.bat`; no forman parte de los commits recientes.
+- La base local ya tiene aplicada la migracion de colecciones usando `scripts/collections_migration.sql`.
+
+Punto exacto para retomar:
+
+- Siguiente paso recomendado: iniciar la Fase 4, OAI-PMH, usando como base el endpoint de metadatos ya creado.
+- Antes de implementar OAI-PMH conviene revisar que los OA publicados tengan completo el perfil ROA, porque los recolectores solo deberian exponer recursos publicables y bien descritos.
 
 ## Brechas principales
 
@@ -219,33 +260,65 @@ Indicadores:
 
 ### Fase 1: Perfil de metadatos y validacion editorial
 
-- Definir perfil institucional ROA.
-- Agregar campos faltantes al modelo.
-- Actualizar formulario admin.
-- Crear validacion antes de publicar.
-- Mostrar completitud de metadatos.
+- [x] Definir perfil institucional ROA minimo.
+- [x] Agregar campos faltantes al modelo mediante `lomMetadata` JSONB.
+- [x] Actualizar formulario admin.
+- [x] Crear validacion backend antes de publicar.
+- [x] Mostrar completitud de metadatos.
+
+Campos actualmente exigidos para publicar:
+
+- Titulo.
+- Descripcion.
+- Autor.
+- Archivo.
+- Coleccion.
+- Idioma.
+- Palabras clave.
+- Tipo de recurso.
+- Nivel de dificultad.
+- Nivel educativo.
+- Audiencia.
+- Licencia.
 
 ### Fase 2: Licencias, derechos e identificadores
 
-- Agregar licencias y derechos.
-- Mostrar licencia en catalogo.
-- Crear URL canonica por OA.
-- Preparar identificador persistente interno.
+- [x] Agregar licencias y derechos.
+- [x] Mostrar licencia en catalogo.
+- [x] Mostrar licencia en vista LTI.
+- [x] Crear URL canonica por OA: `/objects/{id}`.
+- [ ] Preparar identificador persistente externo o institucional.
+
+Decision actual:
+
+- El UUID sigue siendo el identificador interno.
+- La URL canonica publica es el identificador estable operativo.
+- Queda pendiente evaluar DOI, Handle o ARK si existe soporte institucional.
 
 ### Fase 3: Exportacion e interoperabilidad
 
-- Implementar mapeo LOM -> Dublin Core.
-- Implementar JSON-LD LRMI/schema.org.
-- Agregar endpoint publico de metadatos por OA.
-- Preparar OAI-PMH.
+- [x] Implementar mapeo LOM -> Dublin Core.
+- [x] Implementar JSON-LD LRMI/schema.org.
+- [x] Agregar endpoint publico de metadatos por OA.
+- [x] Embebido JSON-LD en ficha publica del OA.
+- [ ] Preparar OAI-PMH.
+
+Endpoint disponible:
+
+- `GET /learning-objects/{id}/metadata`
+
+Formatos devueltos:
+
+- `dublinCore`
+- `lrmi`
 
 ### Fase 4: OAI-PMH
 
-- Implementar verbos basicos OAI-PMH.
-- Exponer `oai_dc`.
-- Exponer sets por coleccion.
-- Validar XML.
-- Documentar endpoint de cosecha.
+- [ ] Implementar verbos basicos OAI-PMH.
+- [ ] Exponer `oai_dc`.
+- [ ] Exponer sets por coleccion.
+- [ ] Validar XML.
+- [ ] Documentar endpoint de cosecha.
 
 ### Fase 5: Versionado y preservacion
 
@@ -270,13 +343,18 @@ Indicadores:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada es la Fase 1:
+La siguiente tarea recomendada al retomar es la Fase 4: OAI-PMH.
 
-1. Definir los campos obligatorios del perfil ROA.
-2. Agregarlos al backend.
-3. Actualizar el admin.
-4. Bloquear publicacion si faltan campos criticos.
-5. Mostrar un indicador de completitud.
+Orden sugerido:
+
+1. Crear modulo backend `oai` o `metadata-harvesting`.
+2. Implementar `Identify` y `ListMetadataFormats`.
+3. Implementar `ListSets` usando colecciones.
+4. Implementar `ListIdentifiers` y `ListRecords` para OA publicados.
+5. Generar XML `oai_dc` a partir del mapeo Dublin Core ya disponible.
+6. Validar respuestas XML y documentar la URL de cosecha.
+
+Despues de OAI-PMH, continuar con Fase 5: versionado y preservacion.
 
 ## Referencias
 
