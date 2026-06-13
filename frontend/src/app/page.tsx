@@ -135,7 +135,7 @@ function ObjectList({
                 {getResourceType(obj) && (
                   <div className="resource-type-tag">
                     <span className="resource-type-icon">Tipo:</span>
-                    <span>{getTypeLabel(getResourceType(obj))}</span>
+                    <span className="resource-type-value">{getTypeLabel(getResourceType(obj))}</span>
                   </div>
                 )}
                 
@@ -162,7 +162,7 @@ function ObjectList({
                     <span className="author-name">{obj.author}</span>
                   </div>
                   <div className="card-actions">
-                    <button 
+                    <button
                       onClick={() => {
                         navigator.clipboard.writeText(obj.id);
                         alert('ID Copiado al portapapeles');
@@ -172,9 +172,9 @@ function ObjectList({
                       Copiar ID
                     </button>
                     {obj.fileUrl && (
-                      <a 
-                        href={`${API_URL}/${obj.fileUrl}`} 
-                        download 
+                      <a
+                        href={`${API_URL}/${obj.fileUrl}`}
+                        download
                         className="btn-download"
                       >
                         Descargar
@@ -968,7 +968,7 @@ function HomeContent() {
 
         .id-copy-btn {
           font-size: 0.7rem;
-          padding: 0.45rem 0.65rem;
+          padding: 0.45rem 0.8rem;
           cursor: pointer;
           background: white;
           border: 1px solid #e0e0e0;
@@ -976,6 +976,10 @@ function HomeContent() {
           transition: all 0.2s;
           color: #1a1a1a;
           font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
         }
 
         .id-copy-btn:hover {
@@ -993,15 +997,25 @@ function HomeContent() {
         .resource-type-tag {
           background: #f5f8fd;
           border: 1px solid #d6e3f5;
-          padding: 0.45rem 0.6rem;
+          padding: 0.45rem 0.75rem;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.4rem;
           font-size: 0.8rem;
           color: #174a96;
           width: fit-content;
           font-weight: 700;
+        }
+
+        .resource-type-icon {
+          white-space: nowrap;
+        }
+
+        .resource-type-value {
+          color: #1a1a1a;
+          font-weight: 700;
+          white-space: nowrap;
         }
 
         .lom-box {
@@ -1063,22 +1077,27 @@ function HomeContent() {
 
         .card-actions {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.75rem;
           align-items: center;
           flex-wrap: wrap;
           justify-content: flex-end;
           margin-left: auto;
+          padding-left: 0.25rem;
         }
 
         .btn-download {
           background: #1f5fbf;
-          padding: 0.45rem 0.7rem;
+          padding: 0.45rem 0.8rem;
           border-radius: 0.375rem;
           text-decoration: none;
           color: white;
           font-size: 0.8rem;
           font-weight: 800;
           transition: all 0.2s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
         }
 
         .btn-download:hover {
