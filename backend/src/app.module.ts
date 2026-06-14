@@ -12,6 +12,7 @@ import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
 import { AuthModule } from './auth/auth.module';
 import { CollectionsModule } from './collections/collections.module';
+import { OaiModule } from './oai/oai.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CollectionsModule } from './collections/collections.module';
     CollectionsModule,
     LearningObjectsModule,
     LtiModule,
+    OaiModule,
   ],
   controllers: [AppController],
   providers: [AppService, AiService],

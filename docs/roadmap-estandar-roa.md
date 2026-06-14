@@ -25,9 +25,9 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 
 ## Estado al cierre del 13 de junio de 2026
 
-Ultimo commit registrado en `dev`:
+Ultimo commit registrado antes de iniciar OAI-PMH:
 
-- `ae2e42e Add metadata export endpoint`
+- `fe3e5f9 Update ROA roadmap progress`
 
 Trabajo completado en esta sesion de estabilizacion:
 
@@ -36,6 +36,7 @@ Trabajo completado en esta sesion de estabilizacion:
 - `33ee711 Add ROA profile publication validation`: se agrego el perfil ROA minimo y el bloqueo backend para impedir publicar recursos incompletos.
 - `b43352d Add public object detail pages`: se creo la ficha publica estable `/objects/{id}` y se hizo visible la licencia en catalogo/LTI.
 - `ae2e42e Add metadata export endpoint`: se agrego el endpoint publico de exportacion Dublin Core/LRMI y JSON-LD en la ficha publica.
+- `fe3e5f9 Update ROA roadmap progress`: se documento el estado de avance y el punto exacto para retomar.
 
 Validaciones ejecutadas durante el cierre:
 
@@ -55,8 +56,8 @@ Estado local conocido:
 
 Punto exacto para retomar:
 
-- Siguiente paso recomendado: iniciar la Fase 4, OAI-PMH, usando como base el endpoint de metadatos ya creado.
-- Antes de implementar OAI-PMH conviene revisar que los OA publicados tengan completo el perfil ROA, porque los recolectores solo deberian exponer recursos publicables y bien descritos.
+- Fase 4, OAI-PMH, fue iniciada despues de este cierre.
+- Siguiente paso recomendado tras OAI-PMH: Fase 5, versionado y preservacion.
 
 ## Brechas principales
 
@@ -314,11 +315,32 @@ Formatos devueltos:
 
 ### Fase 4: OAI-PMH
 
-- [ ] Implementar verbos basicos OAI-PMH.
-- [ ] Exponer `oai_dc`.
-- [ ] Exponer sets por coleccion.
-- [ ] Validar XML.
-- [ ] Documentar endpoint de cosecha.
+- [x] Implementar verbos basicos OAI-PMH.
+- [x] Exponer `oai_dc`.
+- [x] Exponer sets por coleccion.
+- [x] Validar respuestas basicas por HTTP.
+- [ ] Documentar endpoint de cosecha para administradores externos.
+
+Endpoint disponible:
+
+- `GET /oai`
+
+Verbos implementados:
+
+- `Identify`
+- `ListMetadataFormats`
+- `ListSets`
+- `ListIdentifiers`
+- `ListRecords`
+- `GetRecord`
+
+Ejemplos:
+
+- `/oai?verb=Identify`
+- `/oai?verb=ListMetadataFormats`
+- `/oai?verb=ListSets`
+- `/oai?verb=ListRecords&metadataPrefix=oai_dc`
+- `/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:repositorio-oa:{id}`
 
 ### Fase 5: Versionado y preservacion
 
@@ -343,18 +365,20 @@ Formatos devueltos:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es la Fase 4: OAI-PMH.
+La siguiente tarea recomendada al retomar es la Fase 5: versionado y preservacion.
 
 Orden sugerido:
 
-1. Crear modulo backend `oai` o `metadata-harvesting`.
-2. Implementar `Identify` y `ListMetadataFormats`.
-3. Implementar `ListSets` usando colecciones.
-4. Implementar `ListIdentifiers` y `ListRecords` para OA publicados.
-5. Generar XML `oai_dc` a partir del mapeo Dublin Core ya disponible.
-6. Validar respuestas XML y documentar la URL de cosecha.
+1. Definir modelo de version: recurso, version, archivo, metadatos, autor del cambio y fecha.
+2. Crear entidad de versiones de OA.
+3. Registrar snapshot de metadatos al publicar o actualizar un OA publicado.
+4. Calcular checksum SHA-256 del archivo al subirlo.
+5. Mostrar version y checksum en ficha publica/admin.
+6. Preparar eventos de preservacion para auditoria futura.
 
-Despues de OAI-PMH, continuar con Fase 5: versionado y preservacion.
+Pendiente menor de Fase 4:
+
+- Documentar formalmente para terceros la URL de cosecha OAI-PMH y ejemplos de uso.
 
 ## Referencias
 
