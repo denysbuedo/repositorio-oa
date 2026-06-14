@@ -153,6 +153,7 @@ export class LearningObjectsController {
       file.mimetype,
       file.originalname,
       file.size,
+      file.path,
     );
 
     void this.processUploadedFile(id, file.path, file.mimetype);

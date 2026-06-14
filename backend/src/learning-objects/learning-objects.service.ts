@@ -7,12 +7,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createHash } from 'crypto';
 import * as mammoth from 'mammoth';
 import {
   LearningObject,
   ObjectStatus,
   ProcessingStatus,
 } from './entities/learning-object.entity';
+import {
+  LearningObjectVersion,
+  VersionChangeType,
+} from './entities/learning-object-version.entity';
 import { Collection } from '../collections/entities/collection.entity';
 import {
   CreateLearningObjectDto,
@@ -45,6 +50,8 @@ export class LearningObjectsService {
   constructor(
     @InjectRepository(LearningObject)
     private readonly repository: Repository<LearningObject>,
+    @InjectRepository(LearningObjectVersion)
+    private readonly versionRepository: Repository<LearningObjectVersion>,
     @InjectRepository(Collection)
     private readonly collectionRepository: Repository<Collection>,
   ) {}
@@ -172,6 +179,8 @@ export class LearningObjectsService {
     updateDto: UpdateLearningObjectDto,
   ): Promise<LearningObject> {
     const object = await this.findOne(id);
+    const previousStatus = object.status;
+    const previousVersion = object.currentVersion;
     await this.validateCollection(updateDto.collectionId);
     const updated = this.repository.merge(object, updateDto);
 
@@ -179,7 +188,29 @@ export class LearningObjectsService {
       this.validatePublishProfile(updated);
     }
 
-    return await this.repository.save(updated);
+    const shouldSnapshot = updated.status === ObjectStatus.PUBLISHED;
+
+    if (shouldSnapshot) {
+      updated.currentVersion =
+        previousStatus === ObjectStatus.PUBLISHED
+          ? getNextMinorVersion(previousVersion)
+          : previousVersion && previousVersion !== '0.1'
+            ? previousVersion
+            : '1.0';
+    }
+
+    const saved = await this.repository.save(updated);
+
+    if (shouldSnapshot) {
+      await this.createVersionSnapshot(
+        saved,
+        previousStatus === ObjectStatus.PUBLISHED
+          ? VersionChangeType.METADATA_UPDATE
+          : VersionChangeType.INITIAL_PUBLICATION,
+      );
+    }
+
+    return saved;
   }
 
   async remove(id: string): Promise<void> {
@@ -193,16 +224,29 @@ export class LearningObjectsService {
     mimeType: string,
     originalFilename: string,
     fileSize: number,
+    filePath: string,
   ): Promise<LearningObject> {
     const object = await this.findOne(id);
     object.fileUrl = fileUrl;
     object.fileMimeType = mimeType;
+    object.fileChecksumSha256 = await calculateSha256(filePath);
     object.originalFilename = originalFilename;
     object.fileSize = fileSize;
     object.uploadedAt = new Date();
     object.processingStatus = ProcessingStatus.PENDING;
     object.processingError = null;
-    return await this.repository.save(object);
+
+    if (object.status === ObjectStatus.PUBLISHED) {
+      object.currentVersion = getNextMinorVersion(object.currentVersion);
+    }
+
+    const saved = await this.repository.save(object);
+
+    if (saved.status === ObjectStatus.PUBLISHED) {
+      await this.createVersionSnapshot(saved, VersionChangeType.FILE_UPDATE);
+    }
+
+    return saved;
   }
 
   async markProcessing(id: string): Promise<LearningObject> {
@@ -292,6 +336,38 @@ export class LearningObjectsService {
       });
     }
   }
+
+  private async createVersionSnapshot(
+    object: LearningObject,
+    changeType: VersionChangeType,
+  ) {
+    const existing = await this.versionRepository.findOne({
+      where: {
+        learningObjectId: object.id,
+        versionLabel: object.currentVersion,
+      },
+    });
+
+    if (existing) return existing;
+
+    const snapshot = this.versionRepository.create({
+      learningObjectId: object.id,
+      versionLabel: object.currentVersion,
+      changeType,
+      title: object.title,
+      description: object.description ?? null,
+      author: object.author,
+      lomMetadata: object.lomMetadata ?? null,
+      fileUrl: object.fileUrl ?? null,
+      fileMimeType: object.fileMimeType ?? null,
+      originalFilename: object.originalFilename ?? null,
+      fileSize: object.fileSize ?? null,
+      fileChecksumSha256: object.fileChecksumSha256 ?? null,
+      changeNote: getVersionChangeNote(changeType),
+    });
+
+    return await this.versionRepository.save(snapshot);
+  }
 }
 
 function getPublishProfileMissingFields(object: LearningObject): string[] {
@@ -349,6 +425,7 @@ function buildMetadataExport(object: LearningObject) {
       relation: object.collection?.name ?? null,
       date: object.createdAt,
       source: fileUrl,
+      version: object.currentVersion,
     },
     lrmi: {
       '@context': 'https://schema.org',
@@ -381,10 +458,43 @@ function buildMetadataExport(object: LearningObject) {
         : undefined,
       encodingFormat: object.fileMimeType ?? undefined,
       contentUrl: fileUrl ?? undefined,
+      version: object.currentVersion,
+      sha256: object.fileChecksumSha256 ?? undefined,
       dateCreated: object.createdAt,
       dateModified: object.updatedAt,
     },
   };
+}
+
+async function calculateSha256(filePath: string) {
+  const hash = createHash('sha256');
+  const stream = fs.createReadStream(filePath);
+
+  for await (const chunk of stream) {
+    hash.update(chunk as Buffer);
+  }
+
+  return hash.digest('hex');
+}
+
+function getNextMinorVersion(currentVersion?: string | null) {
+  const [majorValue, minorValue] = (currentVersion ?? '1.0')
+    .split('.')
+    .map((value) => Number.parseInt(value, 10));
+  const major = Number.isFinite(majorValue) && majorValue > 0 ? majorValue : 1;
+  const minor = Number.isFinite(minorValue) ? minorValue + 1 : 1;
+  return `${major}.${minor}`;
+}
+
+function getVersionChangeNote(changeType: VersionChangeType) {
+  switch (changeType) {
+    case VersionChangeType.FILE_UPDATE:
+      return 'Actualizacion del archivo preservado.';
+    case VersionChangeType.METADATA_UPDATE:
+      return 'Actualizacion de metadatos de un recurso publicado.';
+    default:
+      return 'Primera publicacion del recurso.';
+  }
 }
 
 function buildCanonicalUrl(id: string) {

@@ -5,13 +5,18 @@ import { LearningObjectFiltersController } from './learning-object-filters.contr
 import { LearningObjectsController } from './learning-objects.controller';
 import { LearningObjectsService } from './learning-objects.service';
 import { LearningObject } from './entities/learning-object.entity';
+import { LearningObjectVersion } from './entities/learning-object-version.entity';
 import { AiService } from '../ai/ai.service';
 import { AuthModule } from '../auth/auth.module';
 import { Collection } from '../collections/entities/collection.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([LearningObject, Collection]),
+    TypeOrmModule.forFeature([
+      LearningObject,
+      LearningObjectVersion,
+      Collection,
+    ]),
     AuthModule,
     JwtModule,
   ],

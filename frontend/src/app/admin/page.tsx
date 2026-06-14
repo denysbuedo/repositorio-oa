@@ -25,8 +25,10 @@ interface LearningObject {
   status: ObjectStatus;
   fileUrl?: string;
   fileMimeType?: string;
+  fileChecksumSha256?: string | null;
   originalFilename?: string | null;
   fileSize?: number | null;
+  currentVersion?: string;
   uploadedAt?: string | null;
   processingStatus?: ProcessingStatus;
   processingError?: string | null;
@@ -506,6 +508,7 @@ export default function AdminPage() {
                   <th>Coleccion</th>
                   <th>Tipo</th>
                   <th>Dificultad</th>
+                  <th>Version</th>
                   <th>Perfil</th>
                   <th>Actualizado</th>
                   <th>Acciones</th>
@@ -513,9 +516,9 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={10} className="empty-row">Cargando recursos...</td></tr>
+                  <tr><td colSpan={11} className="empty-row">Cargando recursos...</td></tr>
                 ) : filteredObjects.length === 0 ? (
-                  <tr><td colSpan={10} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
+                  <tr><td colSpan={11} className="empty-row">No hay recursos para los filtros actuales.</td></tr>
                 ) : (
                   filteredObjects.map((object) => (
                     <tr key={object.id} className={selectedObject?.id === object.id ? 'selected-row' : ''}>
@@ -535,6 +538,7 @@ export default function AdminPage() {
                       <td>{object.collection?.name ?? 'Sin coleccion'}</td>
                       <td>{object.lomMetadata?.educational?.learningResourceType ?? 'Sin tipo'}</td>
                       <td>{object.lomMetadata?.educational?.difficulty ?? 'Sin nivel'}</td>
+                      <td>{object.currentVersion ?? '0.1'}</td>
                       <td>
                         <span className={`profile-pill ${getProfileCompletion(object).missing.length === 0 ? 'profile-complete' : 'profile-incomplete'}`}>
                           {getProfileCompletion(object).percent}%
@@ -725,8 +729,10 @@ export default function AdminPage() {
 
               <dl className="file-summary">
                 <div><dt>ID</dt><dd>{selectedObject.id}</dd></div>
+                <div><dt>Version actual</dt><dd>{selectedObject.currentVersion ?? '0.1'}</dd></div>
                 <div><dt>Archivo</dt><dd>{selectedObject.originalFilename ?? (selectedObject.fileUrl ? 'Disponible' : 'Pendiente')}</dd></div>
                 <div><dt>Tamano</dt><dd>{formatFileSize(selectedObject.fileSize)}</dd></div>
+                <div><dt>SHA-256</dt><dd>{selectedObject.fileChecksumSha256 ?? 'Pendiente'}</dd></div>
                 <div><dt>Subido</dt><dd>{formatDate(selectedObject.uploadedAt)}</dd></div>
                 <div>
                   <dt>Procesamiento IA</dt>

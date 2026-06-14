@@ -37,8 +37,9 @@ Trabajo completado en esta sesion de estabilizacion:
 - `b43352d Add public object detail pages`: se creo la ficha publica estable `/objects/{id}` y se hizo visible la licencia en catalogo/LTI.
 - `ae2e42e Add metadata export endpoint`: se agrego el endpoint publico de exportacion Dublin Core/LRMI y JSON-LD en la ficha publica.
 - `fe3e5f9 Update ROA roadmap progress`: se documento el estado de avance y el punto exacto para retomar.
+- `39405a5 Add OAI-PMH harvesting endpoint`: se implemento el endpoint publico de cosecha OAI-PMH con `oai_dc` y sets por coleccion.
 
-Validaciones ejecutadas durante el cierre:
+Validaciones ejecutadas durante el cierre y fases posteriores:
 
 - `npm.cmd --prefix backend run build`
 - `npm.cmd --prefix backend run lint`
@@ -46,6 +47,7 @@ Validaciones ejecutadas durante el cierre:
 - `npm.cmd --prefix frontend run build`
 - Prueba HTTP del endpoint `/learning-objects/{id}/metadata` con respuesta `200`.
 - Prueba HTTP de la ficha `/objects/{id}` con respuesta `200`.
+- Pruebas HTTP OAI-PMH basicas con respuesta `200`.
 
 Estado local conocido:
 
@@ -344,10 +346,24 @@ Ejemplos:
 
 ### Fase 5: Versionado y preservacion
 
-- Crear entidad de versiones.
-- Registrar cambios de archivo y metadatos.
-- Calcular checksum.
-- Guardar eventos de preservacion.
+- [x] Crear entidad de versiones.
+- [x] Registrar snapshots al publicar o actualizar un OA publicado.
+- [x] Calcular checksum SHA-256 al subir archivos.
+- [x] Mostrar version y checksum en admin.
+- [x] Mostrar version y checksum en ficha publica.
+- [x] Preparar migracion SQL inicial.
+- [ ] Crear vista historica completa de versiones.
+- [ ] Guardar eventos de preservacion independientes.
+- [ ] Validar MIME real por contenido, no solo por declaracion del navegador.
+
+Implementacion inicial:
+
+- Campo `currentVersion` en cada OA.
+- Campo `fileChecksumSha256` en cada OA.
+- Entidad `LearningObjectVersion` con snapshot de metadatos, archivo y checksum.
+- Version `1.0` al publicar por primera vez.
+- Incremento menor automatico para actualizaciones de archivo o metadatos en OA ya publicados.
+- Script disponible: `scripts/versioning_preservation_migration.sql`.
 
 ### Fase 6: Accesibilidad y calidad de recursos
 
@@ -365,16 +381,15 @@ Ejemplos:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es la Fase 5: versionado y preservacion.
+La siguiente tarea recomendada al retomar es completar la Fase 5 con historial visible y eventos de preservacion.
 
 Orden sugerido:
 
-1. Definir modelo de version: recurso, version, archivo, metadatos, autor del cambio y fecha.
-2. Crear entidad de versiones de OA.
-3. Registrar snapshot de metadatos al publicar o actualizar un OA publicado.
-4. Calcular checksum SHA-256 del archivo al subirlo.
-5. Mostrar version y checksum en ficha publica/admin.
-6. Preparar eventos de preservacion para auditoria futura.
+1. Crear endpoint admin para listar versiones de un OA.
+2. Mostrar historial de versiones en el panel admin.
+3. Crear eventos de preservacion: checksum calculado, archivo reemplazado, metadata snapshot, auditoria futura.
+4. Agregar validacion de MIME real por firma/contenido.
+5. Preparar una politica de formatos aceptados.
 
 Pendiente menor de Fase 4:
 

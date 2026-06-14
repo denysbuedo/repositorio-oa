@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { Collection } from '../../collections/entities/collection.entity';
+import { LearningObjectVersion } from './learning-object-version.entity';
 
 export enum ObjectStatus {
   DRAFT = 'draft',
@@ -58,6 +60,9 @@ export class LearningObject {
   fileMimeType: string;
 
   @Column({ type: 'varchar', nullable: true })
+  fileChecksumSha256: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
   originalFilename: string | null;
 
   @Column({ type: 'integer', nullable: true })
@@ -85,6 +90,12 @@ export class LearningObject {
   })
   @JoinColumn({ name: 'collectionId' })
   collection: Collection | null;
+
+  @Column({ type: 'varchar', default: '0.1' })
+  currentVersion: string;
+
+  @OneToMany(() => LearningObjectVersion, (version) => version.learningObject)
+  versions: LearningObjectVersion[];
 
   @CreateDateColumn()
   createdAt: Date;

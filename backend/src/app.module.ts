@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LearningObjectsModule } from './learning-objects/learning-objects.module';
 import { LearningObject } from './learning-objects/entities/learning-object.entity';
+import { LearningObjectVersion } from './learning-objects/entities/learning-object-version.entity';
 import { Collection } from './collections/entities/collection.entity';
 import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
@@ -31,7 +32,7 @@ import { OaiModule } from './oai/oai.module';
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_DATABASE'),
-        entities: [LearningObject, Collection],
+        entities: [LearningObject, LearningObjectVersion, Collection],
         synchronize: configService.get<string>('DB_SYNC') === 'true',
       }),
       inject: [ConfigService],

@@ -19,8 +19,10 @@ interface LearningObject {
   author: string;
   fileUrl?: string;
   fileMimeType?: string;
+  fileChecksumSha256?: string | null;
   originalFilename?: string | null;
   fileSize?: number | null;
+  currentVersion?: string;
   collection?: Collection | null;
   lomMetadata?: {
     general?: {
@@ -120,6 +122,7 @@ export default function ObjectDetailPage() {
           <h2>Ficha del OA</h2>
           <dl className="metadata-list">
             <MetadataRow label="Identificador" value={object.id} />
+            <MetadataRow label="Version" value={object.currentVersion ?? 'Sin version'} />
             <MetadataRow label="URL canonica" value={canonicalPath} />
             <MetadataRow label="Autor" value={object.author} />
             <MetadataRow label="Coleccion" value={object.collection?.name ?? 'Sin coleccion'} />
@@ -132,6 +135,7 @@ export default function ObjectDetailPage() {
             <MetadataRow label="Archivo" value={object.originalFilename ?? 'Archivo disponible'} />
             <MetadataRow label="Formato" value={object.fileMimeType ?? 'Sin formato'} />
             <MetadataRow label="Tamano" value={formatFileSize(object.fileSize)} />
+            <MetadataRow label="SHA-256" value={object.fileChecksumSha256 ?? 'Sin checksum'} />
           </dl>
         </article>
 
@@ -147,6 +151,11 @@ export default function ObjectDetailPage() {
           <a href={`${API_URL}/learning-objects/${object.id}/metadata`} className="metadata-export-link">
             Ver metadatos Dublin Core / LRMI
           </a>
+          <div className="preservation-card">
+            <span>Preservacion</span>
+            <strong>Version {object.currentVersion ?? '0.1'}</strong>
+            <p>{object.fileChecksumSha256 ? 'Archivo verificable con SHA-256.' : 'Checksum pendiente.'}</p>
+          </div>
 
           <h2>Palabras clave</h2>
           {keywords.length > 0 ? (
@@ -300,6 +309,34 @@ export default function ObjectDetailPage() {
           margin-bottom: 0.9rem;
         }
 
+        .preservation-card {
+          border: 1px solid #dbe4ef;
+          border-radius: 0.5rem;
+          background: #f7f9fc;
+          padding: 0.85rem;
+          margin-bottom: 1rem;
+        }
+
+        .preservation-card span {
+          display: block;
+          color: #666666;
+          font-size: 0.7rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          margin-bottom: 0.25rem;
+        }
+
+        .preservation-card strong {
+          color: #1f5fbf;
+          display: block;
+          font-size: 1rem;
+          margin-bottom: 0.35rem;
+        }
+
+        .preservation-card p {
+          margin: 0;
+        }
+
         .license-card span {
           display: block;
           color: #666666;
@@ -422,6 +459,8 @@ function buildJsonLd(object: LearningObject, canonicalPath: string) {
       : undefined,
     encodingFormat: object.fileMimeType,
     contentUrl: object.fileUrl ? `${API_URL}/${object.fileUrl}` : undefined,
+    version: object.currentVersion,
+    sha256: object.fileChecksumSha256,
   };
 }
 
