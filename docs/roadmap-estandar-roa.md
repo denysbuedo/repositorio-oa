@@ -22,12 +22,16 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Ficha publica del OA con metadatos academicos, licencia, derechos y palabras clave.
 - Exportacion publica de metadatos por OA en JSON: Dublin Core y LRMI/schema.org.
 - JSON-LD LRMI/schema.org embebido en la ficha publica.
+- Endpoint OAI-PMH publico para cosecha externa.
+- Version visible por OA.
+- Checksum SHA-256 del archivo preservado.
+- Snapshot versionado al publicar o actualizar un OA publicado.
 
-## Estado al cierre del 13 de junio de 2026
+## Estado al cierre del 14 de junio de 2026
 
-Ultimo commit registrado antes de iniciar OAI-PMH:
+Ultimo commit registrado al cierre:
 
-- `fe3e5f9 Update ROA roadmap progress`
+- `606bcc5 Add learning object versioning and checksums`
 
 Trabajo completado en esta sesion de estabilizacion:
 
@@ -38,6 +42,7 @@ Trabajo completado en esta sesion de estabilizacion:
 - `ae2e42e Add metadata export endpoint`: se agrego el endpoint publico de exportacion Dublin Core/LRMI y JSON-LD en la ficha publica.
 - `fe3e5f9 Update ROA roadmap progress`: se documento el estado de avance y el punto exacto para retomar.
 - `39405a5 Add OAI-PMH harvesting endpoint`: se implemento el endpoint publico de cosecha OAI-PMH con `oai_dc` y sets por coleccion.
+- `606bcc5 Add learning object versioning and checksums`: se inicio Fase 5 con versionado, checksum SHA-256, snapshots y visualizacion basica en admin/ficha publica.
 
 Validaciones ejecutadas durante el cierre y fases posteriores:
 
@@ -48,6 +53,7 @@ Validaciones ejecutadas durante el cierre y fases posteriores:
 - Prueba HTTP del endpoint `/learning-objects/{id}/metadata` con respuesta `200`.
 - Prueba HTTP de la ficha `/objects/{id}` con respuesta `200`.
 - Pruebas HTTP OAI-PMH basicas con respuesta `200`.
+- `npm.cmd --prefix backend test -- --runInBand`
 
 Estado local conocido:
 
@@ -55,11 +61,13 @@ Estado local conocido:
 - Los cambios principales fueron subidos a `origin/dev`.
 - Quedan sin versionar `start-backend.bat` y `start-frontend.bat`; no forman parte de los commits recientes.
 - La base local ya tiene aplicada la migracion de colecciones usando `scripts/collections_migration.sql`.
+- Para Fase 5 existe la migracion `scripts/versioning_preservation_migration.sql`; debe aplicarse si `DB_SYNC` no esta activo.
 
 Punto exacto para retomar:
 
-- Fase 4, OAI-PMH, fue iniciada despues de este cierre.
-- Siguiente paso recomendado tras OAI-PMH: Fase 5, versionado y preservacion.
+- Fase 4, OAI-PMH, quedo implementada y validada en backend.
+- Fase 5 quedo iniciada con version actual, checksum SHA-256 y snapshots.
+- Siguiente paso recomendado: endpoint admin para listar versiones de un OA y mostrar el historial en el panel admin.
 
 ## Brechas principales
 
@@ -304,7 +312,7 @@ Decision actual:
 - [x] Implementar JSON-LD LRMI/schema.org.
 - [x] Agregar endpoint publico de metadatos por OA.
 - [x] Embebido JSON-LD en ficha publica del OA.
-- [ ] Preparar OAI-PMH.
+- [x] Preparar OAI-PMH.
 
 Endpoint disponible:
 
