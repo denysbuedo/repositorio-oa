@@ -28,6 +28,8 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Snapshot versionado al publicar o actualizar un OA publicado.
 - Historial de versiones visible en el panel admin.
 - Eventos de preservacion visibles en el panel admin.
+- Validacion de contenido real para PDF/DOCX.
+- Politica inicial de formatos aceptados.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -69,7 +71,7 @@ Punto exacto para retomar:
 
 - Fase 4, OAI-PMH, quedo implementada y validada en backend.
 - Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots, historial visible y eventos de preservacion en admin.
-- Siguiente paso recomendado: validacion MIME real y politica de formatos aceptados.
+- Siguiente paso recomendado: documentar cosecha OAI-PMH para terceros y preparar Fase 6 de accesibilidad/calidad.
 
 ## Brechas principales
 
@@ -364,7 +366,8 @@ Ejemplos:
 - [x] Preparar migracion SQL inicial.
 - [x] Crear vista historica completa de versiones.
 - [x] Guardar eventos de preservacion independientes.
-- [ ] Validar MIME real por contenido, no solo por declaracion del navegador.
+- [x] Validar MIME real por contenido, no solo por declaracion del navegador.
+- [x] Preparar politica de formatos aceptados.
 
 Implementacion inicial:
 
@@ -374,6 +377,8 @@ Implementacion inicial:
 - Endpoint admin `GET /learning-objects/{id}/versions`.
 - Entidad `LearningObjectPreservationEvent` con eventos auditables.
 - Endpoint admin `GET /learning-objects/{id}/preservation-events`.
+- Validacion real de contenido para PDF y DOCX antes de registrar el archivo.
+- Documento `docs/politica-formatos-aceptados.md`.
 - Version `1.0` al publicar por primera vez.
 - Incremento menor automatico para actualizaciones de archivo o metadatos en OA ya publicados.
 - Script disponible: `scripts/versioning_preservation_migration.sql`.
@@ -394,13 +399,14 @@ Implementacion inicial:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es completar la Fase 5 con validacion MIME real y politica de formatos aceptados.
+La siguiente tarea recomendada al retomar es cerrar el pendiente menor de OAI-PMH y preparar la Fase 6 de accesibilidad y calidad.
 
 Orden sugerido:
 
-1. Agregar validacion de MIME real por firma/contenido.
-2. Preparar una politica de formatos aceptados.
-3. Documentar flujo de versionado y preservacion para administradores.
+1. Documentar formalmente para terceros la URL de cosecha OAI-PMH y ejemplos de uso.
+2. Documentar flujo de versionado y preservacion para administradores.
+3. Iniciar auditoria WCAG 2.2 AA de la UI.
+4. Crear checklist de calidad/accesibilidad por archivo.
 
 Pendiente menor de Fase 4:
 

@@ -27,11 +27,29 @@ import { extname } from 'path';
 import { AuthGuard } from '../auth/auth.guard';
 import { Public } from '../auth/public.decorator';
 import { AuthService } from '../auth/auth.service';
+import { promises as fs } from 'fs';
 
 const allowedMimeTypes = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+
+const acceptedFormatPolicy: Record<
+  string,
+  {
+    extensions: string[];
+    label: string;
+  }
+> = {
+  'application/pdf': {
+    extensions: ['.pdf'],
+    label: 'PDF',
+  },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+    extensions: ['.docx'],
+    label: 'DOCX',
+  },
+};
 
 @Controller('learning-objects')
 @UseGuards(AuthGuard)
@@ -156,6 +174,13 @@ export class LearningObjectsController {
       throw new BadRequestException('No se recibio ningun archivo valido');
     }
 
+    try {
+      await validateUploadedFileContent(file);
+    } catch (error) {
+      await removeUploadedFile(file.path);
+      throw error;
+    }
+
     const fileUrl = `uploads/${file.filename}`;
     const updatedObject = await this.service.updateFileReference(
       id,
@@ -199,5 +224,48 @@ export class LearningObjectsController {
       }
       console.error('Error en el procesamiento de IA:', error);
     }
+  }
+}
+
+async function validateUploadedFileContent(file: Express.Multer.File) {
+  const policy = acceptedFormatPolicy[file.mimetype];
+  const originalExtension = extname(file.originalname).toLowerCase();
+
+  if (!policy || !policy.extensions.includes(originalExtension)) {
+    throw new BadRequestException(
+      'El archivo no coincide con la politica de formatos aceptados',
+    );
+  }
+
+  const buffer = await fs.readFile(file.path);
+  const isValid =
+    file.mimetype === 'application/pdf' ? isPdf(buffer) : isDocx(buffer);
+
+  if (!isValid) {
+    throw new BadRequestException(
+      `El contenido del archivo no corresponde a un ${policy.label} valido`,
+    );
+  }
+}
+
+function isPdf(buffer: Buffer) {
+  return buffer.subarray(0, 5).toString('ascii') === '%PDF-';
+}
+
+function isDocx(buffer: Buffer) {
+  if (buffer.subarray(0, 2).toString('ascii') !== 'PK') return false;
+
+  const zipText = buffer.toString('latin1');
+  return (
+    zipText.includes('[Content_Types].xml') &&
+    zipText.includes('word/document.xml')
+  );
+}
+
+async function removeUploadedFile(filePath: string) {
+  try {
+    await fs.unlink(filePath);
+  } catch {
+    // El archivo pudo no haberse escrito o ya haber sido eliminado.
   }
 }
