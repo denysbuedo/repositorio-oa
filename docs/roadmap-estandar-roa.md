@@ -27,6 +27,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Checksum SHA-256 del archivo preservado.
 - Snapshot versionado al publicar o actualizar un OA publicado.
 - Historial de versiones visible en el panel admin.
+- Eventos de preservacion visibles en el panel admin.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -67,8 +68,8 @@ Estado local conocido:
 Punto exacto para retomar:
 
 - Fase 4, OAI-PMH, quedo implementada y validada en backend.
-- Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots e historial visible en admin.
-- Siguiente paso recomendado: eventos de preservacion independientes y validacion MIME real.
+- Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots, historial visible y eventos de preservacion en admin.
+- Siguiente paso recomendado: validacion MIME real y politica de formatos aceptados.
 
 ## Brechas principales
 
@@ -362,7 +363,7 @@ Ejemplos:
 - [x] Mostrar version y checksum en ficha publica.
 - [x] Preparar migracion SQL inicial.
 - [x] Crear vista historica completa de versiones.
-- [ ] Guardar eventos de preservacion independientes.
+- [x] Guardar eventos de preservacion independientes.
 - [ ] Validar MIME real por contenido, no solo por declaracion del navegador.
 
 Implementacion inicial:
@@ -371,6 +372,8 @@ Implementacion inicial:
 - Campo `fileChecksumSha256` en cada OA.
 - Entidad `LearningObjectVersion` con snapshot de metadatos, archivo y checksum.
 - Endpoint admin `GET /learning-objects/{id}/versions`.
+- Entidad `LearningObjectPreservationEvent` con eventos auditables.
+- Endpoint admin `GET /learning-objects/{id}/preservation-events`.
 - Version `1.0` al publicar por primera vez.
 - Incremento menor automatico para actualizaciones de archivo o metadatos en OA ya publicados.
 - Script disponible: `scripts/versioning_preservation_migration.sql`.
@@ -391,14 +394,13 @@ Implementacion inicial:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es completar la Fase 5 con eventos de preservacion independientes.
+La siguiente tarea recomendada al retomar es completar la Fase 5 con validacion MIME real y politica de formatos aceptados.
 
 Orden sugerido:
 
-1. Crear eventos de preservacion: checksum calculado, archivo reemplazado, metadata snapshot, auditoria futura.
-2. Agregar validacion de MIME real por firma/contenido.
-3. Preparar una politica de formatos aceptados.
-4. Documentar flujo de versionado y preservacion para administradores.
+1. Agregar validacion de MIME real por firma/contenido.
+2. Preparar una politica de formatos aceptados.
+3. Documentar flujo de versionado y preservacion para administradores.
 
 Pendiente menor de Fase 4:
 

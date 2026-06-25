@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Collection } from '../../collections/entities/collection.entity';
 import { LearningObjectVersion } from './learning-object-version.entity';
+import { LearningObjectPreservationEvent } from './learning-object-preservation-event.entity';
 
 export enum ObjectStatus {
   DRAFT = 'draft',
@@ -96,6 +97,12 @@ export class LearningObject {
 
   @OneToMany(() => LearningObjectVersion, (version) => version.learningObject)
   versions: LearningObjectVersion[];
+
+  @OneToMany(
+    () => LearningObjectPreservationEvent,
+    (event) => event.learningObject,
+  )
+  preservationEvents: LearningObjectPreservationEvent[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -6,6 +6,7 @@ import { LearningObjectsController } from './learning-objects.controller';
 import { LearningObjectsService } from './learning-objects.service';
 import { LearningObject } from './entities/learning-object.entity';
 import { LearningObjectVersion } from './entities/learning-object-version.entity';
+import { LearningObjectPreservationEvent } from './entities/learning-object-preservation-event.entity';
 import { AiService } from '../ai/ai.service';
 import { AuthModule } from '../auth/auth.module';
 import { Collection } from '../collections/entities/collection.entity';
@@ -15,6 +16,7 @@ import { Collection } from '../collections/entities/collection.entity';
     TypeOrmModule.forFeature([
       LearningObject,
       LearningObjectVersion,
+      LearningObjectPreservationEvent,
       Collection,
     ]),
     AuthModule,

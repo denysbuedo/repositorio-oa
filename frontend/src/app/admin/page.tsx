@@ -67,6 +67,16 @@ interface LearningObjectVersion {
   createdAt?: string;
 }
 
+interface PreservationEvent {
+  id: string;
+  eventType: 'checksum_calculated' | 'version_snapshot_created' | 'file_replaced';
+  versionLabel?: string | null;
+  message: string;
+  details?: Record<string, unknown> | null;
+  actor?: string | null;
+  createdAt?: string;
+}
+
 interface ReviewForm {
   title: string;
   description: string;
@@ -141,7 +151,9 @@ export default function AdminPage() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
   const [versionHistory, setVersionHistory] = useState<LearningObjectVersion[]>([]);
+  const [preservationEvents, setPreservationEvents] = useState<PreservationEvent[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
   const [collectionName, setCollectionName] = useState('');
   const [collectionDescription, setCollectionDescription] = useState('');
@@ -290,11 +302,37 @@ export default function AdminPage() {
     }
   }, [authToken]);
 
+  const fetchPreservationEvents = useCallback(async (objectId: string) => {
+    if (!authToken) return;
+
+    setLoadingEvents(true);
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${objectId}/preservation-events`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setPreservationEvents(Array.isArray(data) ? data as PreservationEvent[] : []);
+    } catch (error) {
+      console.error('Error loading preservation events:', error);
+      setPreservationEvents([]);
+      setErrorMessage('No se pudo cargar el registro de preservacion.');
+    } finally {
+      setLoadingEvents(false);
+    }
+  }, [authToken]);
+
   const selectObject = (object: LearningObject) => {
     setSelectedObject(object);
     setReviewForm(createReviewForm(object));
     setVersionHistory([]);
+    setPreservationEvents([]);
     void fetchVersions(object.id);
+    void fetchPreservationEvents(object.id);
   };
 
   const saveReview = async () => {
@@ -322,6 +360,7 @@ export default function AdminPage() {
       setSelectedObject(updatedObject);
       setReviewForm(createReviewForm(updatedObject));
       void fetchVersions(updatedObject.id);
+      void fetchPreservationEvents(updatedObject.id);
       setSuccessMessage('Revision guardada.');
     } catch (error) {
       console.error('Error saving review:', error);
@@ -405,6 +444,7 @@ export default function AdminPage() {
       if (selectedObject?.id === updatedObject.id) {
         setReviewForm(createReviewForm(updatedObject));
         void fetchVersions(updatedObject.id);
+        void fetchPreservationEvents(updatedObject.id);
       }
       setSuccessMessage(`Recurso marcado como ${getStatusLabel(status)}.`);
     } catch (error) {
@@ -431,6 +471,7 @@ export default function AdminPage() {
       }
       setSelectedObject((current) => (current?.id === id ? null : current));
       setVersionHistory((current) => (selectedObject?.id === id ? [] : current));
+      setPreservationEvents((current) => (selectedObject?.id === id ? [] : current));
       setSuccessMessage('Recurso eliminado.');
       fetchObjects();
     } catch (error) {
@@ -818,6 +859,34 @@ export default function AdminPage() {
                           <div><dt>Archivo</dt><dd>{version.originalFilename ?? 'Sin archivo'}</dd></div>
                           <div><dt>Tamano</dt><dd>{formatFileSize(version.fileSize)}</dd></div>
                           <div><dt>SHA-256</dt><dd>{formatChecksum(version.fileChecksumSha256)}</dd></div>
+                        </dl>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
+              <section className="preservation-events" aria-label="Eventos de preservacion">
+                <div className="version-history-header">
+                  <h4>Eventos de preservacion</h4>
+                  <span>{preservationEvents.length} registros</span>
+                </div>
+                {loadingEvents ? (
+                  <p className="history-empty">Cargando eventos...</p>
+                ) : preservationEvents.length === 0 ? (
+                  <p className="history-empty">Aun no hay eventos de preservacion para este recurso.</p>
+                ) : (
+                  <ol className="event-list">
+                    {preservationEvents.map((event) => (
+                      <li key={event.id} className="event-item">
+                        <div className="event-main">
+                          <strong>{getPreservationEventLabel(event.eventType)}</strong>
+                          {event.versionLabel && <span>v{event.versionLabel}</span>}
+                        </div>
+                        <p>{event.message}</p>
+                        <dl>
+                          <div><dt>Fecha</dt><dd>{formatDate(event.createdAt)}</dd></div>
+                          <div><dt>Actor</dt><dd>{event.actor ?? 'system'}</dd></div>
+                          <div><dt>Detalle</dt><dd>{formatEventDetails(event.details)}</dd></div>
                         </dl>
                       </li>
                     ))}
@@ -1386,7 +1455,8 @@ export default function AdminPage() {
           text-decoration: none;
         }
 
-        .version-history {
+        .version-history,
+        .preservation-events {
           border-top: 1px solid #e0e0e0;
           margin-top: 1rem;
           padding-top: 1rem;
@@ -1411,7 +1481,8 @@ export default function AdminPage() {
           font-weight: 700;
         }
 
-        .version-list {
+        .version-list,
+        .event-list {
           display: grid;
           gap: 0.75rem;
           list-style: none;
@@ -1419,14 +1490,16 @@ export default function AdminPage() {
           padding: 0;
         }
 
-        .version-item {
+        .version-item,
+        .event-item {
           border: 1px solid #e0e0e0;
           border-radius: 0.5rem;
           background: #f8fafc;
           padding: 0.85rem;
         }
 
-        .version-main {
+        .version-main,
+        .event-main {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -1451,14 +1524,30 @@ export default function AdminPage() {
           text-align: right;
         }
 
-        .version-item p {
+        .event-main span {
+          border-radius: 999px;
+          background: #eef4ff;
+          color: #174a96;
+          font-size: 0.75rem;
+          font-weight: 900;
+          padding: 0.25rem 0.55rem;
+        }
+
+        .event-main strong {
+          color: #1a1a1a;
+          font-size: 0.82rem;
+        }
+
+        .version-item p,
+        .event-item p {
           color: #666666;
           font-size: 0.82rem;
           line-height: 1.45;
           margin: 0 0 0.65rem;
         }
 
-        .version-item dl {
+        .version-item dl,
+        .event-item dl {
           gap: 0.45rem;
         }
 
@@ -1699,6 +1788,34 @@ function getVersionChangeLabel(changeType: LearningObjectVersion['changeType']) 
     default:
       return 'Primera publicacion';
   }
+}
+
+function getPreservationEventLabel(eventType: PreservationEvent['eventType']) {
+  switch (eventType) {
+    case 'file_replaced':
+      return 'Archivo reemplazado';
+    case 'version_snapshot_created':
+      return 'Snapshot versionado';
+    default:
+      return 'Checksum calculado';
+  }
+}
+
+function formatEventDetails(details?: Record<string, unknown> | null) {
+  if (!details) return 'Sin detalles';
+
+  const checksum = getStringDetail(details, 'checksumSha256') ?? getStringDetail(details, 'newChecksumSha256');
+  const filename = getStringDetail(details, 'originalFilename');
+  const changeType = getStringDetail(details, 'changeType');
+
+  return [filename, changeType, checksum ? formatChecksum(checksum) : null]
+    .filter(Boolean)
+    .join(' / ') || 'Detalles registrados';
+}
+
+function getStringDetail(details: Record<string, unknown>, key: string) {
+  const value = details[key];
+  return typeof value === 'string' && value.trim() ? value : null;
 }
 
 function formatChecksum(value?: string | null) {

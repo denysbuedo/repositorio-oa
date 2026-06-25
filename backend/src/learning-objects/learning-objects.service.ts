@@ -18,6 +18,10 @@ import {
   LearningObjectVersion,
   VersionChangeType,
 } from './entities/learning-object-version.entity';
+import {
+  LearningObjectPreservationEvent,
+  PreservationEventType,
+} from './entities/learning-object-preservation-event.entity';
 import { Collection } from '../collections/entities/collection.entity';
 import {
   CreateLearningObjectDto,
@@ -52,6 +56,8 @@ export class LearningObjectsService {
     private readonly repository: Repository<LearningObject>,
     @InjectRepository(LearningObjectVersion)
     private readonly versionRepository: Repository<LearningObjectVersion>,
+    @InjectRepository(LearningObjectPreservationEvent)
+    private readonly preservationEventRepository: Repository<LearningObjectPreservationEvent>,
     @InjectRepository(Collection)
     private readonly collectionRepository: Repository<Collection>,
   ) {}
@@ -195,6 +201,24 @@ export class LearningObjectsService {
     });
   }
 
+  async findPreservationEvents(id: string) {
+    await this.findOne(id);
+
+    return await this.preservationEventRepository.find({
+      where: { learningObjectId: id },
+      order: { createdAt: 'DESC' },
+      select: {
+        id: true,
+        eventType: true,
+        versionLabel: true,
+        message: true,
+        details: true,
+        actor: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async update(
     id: string,
     updateDto: UpdateLearningObjectDto,
@@ -248,6 +272,8 @@ export class LearningObjectsService {
     filePath: string,
   ): Promise<LearningObject> {
     const object = await this.findOne(id);
+    const previousFileUrl = object.fileUrl;
+    const previousChecksum = object.fileChecksumSha256;
     object.fileUrl = fileUrl;
     object.fileMimeType = mimeType;
     object.fileChecksumSha256 = await calculateSha256(filePath);
@@ -262,6 +288,31 @@ export class LearningObjectsService {
     }
 
     const saved = await this.repository.save(object);
+
+    await this.createPreservationEvent(saved, {
+      eventType: PreservationEventType.CHECKSUM_CALCULATED,
+      message: 'Checksum SHA-256 calculado para el archivo cargado.',
+      details: {
+        checksumSha256: saved.fileChecksumSha256,
+        originalFilename: saved.originalFilename,
+        fileSize: saved.fileSize,
+        fileMimeType: saved.fileMimeType,
+      },
+    });
+
+    if (previousFileUrl) {
+      await this.createPreservationEvent(saved, {
+        eventType: PreservationEventType.FILE_REPLACED,
+        message: 'Archivo del objeto de aprendizaje reemplazado.',
+        details: {
+          previousFileUrl,
+          newFileUrl: saved.fileUrl,
+          previousChecksumSha256: previousChecksum,
+          newChecksumSha256: saved.fileChecksumSha256,
+          originalFilename: saved.originalFilename,
+        },
+      });
+    }
 
     if (saved.status === ObjectStatus.PUBLISHED) {
       await this.createVersionSnapshot(saved, VersionChangeType.FILE_UPDATE);
@@ -387,7 +438,45 @@ export class LearningObjectsService {
       changeNote: getVersionChangeNote(changeType),
     });
 
-    return await this.versionRepository.save(snapshot);
+    const savedSnapshot = await this.versionRepository.save(snapshot);
+
+    await this.createPreservationEvent(object, {
+      eventType: PreservationEventType.VERSION_SNAPSHOT_CREATED,
+      versionId: savedSnapshot.id,
+      versionLabel: savedSnapshot.versionLabel,
+      message: getVersionChangeNote(changeType),
+      details: {
+        changeType,
+        originalFilename: savedSnapshot.originalFilename,
+        checksumSha256: savedSnapshot.fileChecksumSha256,
+      },
+    });
+
+    return savedSnapshot;
+  }
+
+  private async createPreservationEvent(
+    object: LearningObject,
+    event: {
+      eventType: PreservationEventType;
+      message: string;
+      versionId?: string | null;
+      versionLabel?: string | null;
+      details?: Record<string, unknown> | null;
+      actor?: string | null;
+    },
+  ) {
+    const preservationEvent = this.preservationEventRepository.create({
+      learningObjectId: object.id,
+      versionId: event.versionId ?? null,
+      versionLabel: event.versionLabel ?? object.currentVersion ?? null,
+      eventType: event.eventType,
+      message: event.message,
+      details: event.details ?? null,
+      actor: event.actor ?? 'system',
+    });
+
+    return await this.preservationEventRepository.save(preservationEvent);
   }
 }
 

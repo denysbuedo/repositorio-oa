@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { LearningObjectsService } from './learning-objects.service';
 import { LearningObject } from './entities/learning-object.entity';
 import { LearningObjectVersion } from './entities/learning-object-version.entity';
+import { LearningObjectPreservationEvent } from './entities/learning-object-preservation-event.entity';
 import { Collection } from '../collections/entities/collection.entity';
 
 describe('LearningObjectsService', () => {
@@ -18,6 +19,12 @@ describe('LearningObjectsService', () => {
   const versionRepositoryMock = {
     create: jest.fn(),
     findOne: jest.fn(),
+    find: jest.fn(),
+    save: jest.fn(),
+  };
+  const preservationEventRepositoryMock = {
+    create: jest.fn(),
+    find: jest.fn(),
     save: jest.fn(),
   };
   const collectionRepositoryMock = {
@@ -35,6 +42,10 @@ describe('LearningObjectsService', () => {
         {
           provide: getRepositoryToken(LearningObjectVersion),
           useValue: versionRepositoryMock,
+        },
+        {
+          provide: getRepositoryToken(LearningObjectPreservationEvent),
+          useValue: preservationEventRepositoryMock,
         },
         {
           provide: getRepositoryToken(Collection),

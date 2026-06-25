@@ -104,6 +104,11 @@ export class LearningObjectsController {
     return this.service.findVersions(id);
   }
 
+  @Get(':id/preservation-events')
+  findPreservationEvents(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findPreservationEvents(id);
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {

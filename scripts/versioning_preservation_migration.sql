@@ -35,3 +35,30 @@ CREATE TABLE IF NOT EXISTS learning_object_versions (
 
 CREATE INDEX IF NOT EXISTS learning_object_versions_object_idx
   ON learning_object_versions ("learningObjectId");
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'learning_object_preservation_events_eventtype_enum') THEN
+    CREATE TYPE learning_object_preservation_events_eventtype_enum AS ENUM (
+      'checksum_calculated',
+      'version_snapshot_created',
+      'file_replaced'
+    );
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS learning_object_preservation_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "learningObjectId" uuid NOT NULL REFERENCES learning_objects(id) ON DELETE CASCADE,
+  "versionId" uuid REFERENCES learning_object_versions(id) ON DELETE SET NULL,
+  "eventType" learning_object_preservation_events_eventtype_enum NOT NULL,
+  "versionLabel" varchar,
+  message text NOT NULL,
+  details jsonb,
+  actor varchar,
+  "createdAt" timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS learning_object_preservation_events_object_created_idx
+  ON learning_object_preservation_events ("learningObjectId", "createdAt");
