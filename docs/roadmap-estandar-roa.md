@@ -32,6 +32,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Politica inicial de formatos aceptados.
 - Foco visible global y soporte `prefers-reduced-motion` en la UI.
 - Checklist inicial de calidad/accesibilidad por OA.
+- Campos estructurados de accesibilidad en admin, ficha publica y LRMI.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -395,12 +396,22 @@ Implementacion inicial:
 - [x] Foco visible global para navegacion por teclado.
 - [x] Soporte basico para usuarios con movimiento reducido.
 - [x] Checklist de accesibilidad por archivo.
-- [ ] Campos de accesibilidad en metadatos.
+- [x] Campos de accesibilidad en metadatos.
 - [ ] Reporte de calidad por OA.
 
 Documentacion:
 
 - `docs/checklist-calidad-accesibilidad-oa.md`
+
+Campos iniciales:
+
+- Texto seleccionable.
+- Encabezados estructurados.
+- Texto alternativo.
+- Orden de lectura.
+- Contraste suficiente.
+- Subtitulos o transcripcion.
+- Observaciones de accesibilidad.
 
 ### Fase 7: LTI avanzado y analitica
 
@@ -411,13 +422,13 @@ Documentacion:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es continuar la Fase 6 con campos estructurados de accesibilidad y reporte de calidad por OA.
+La siguiente tarea recomendada al retomar es continuar la Fase 6 con reporte de calidad por OA.
 
 Orden sugerido:
 
 1. Documentar flujo de versionado y preservacion para administradores.
-2. Agregar campos de accesibilidad en metadatos/admin.
-3. Crear reporte de calidad por OA.
+2. Crear reporte de calidad por OA.
+3. Incorporar bloqueos o advertencias de accesibilidad al flujo editorial.
 
 ## Referencias
 

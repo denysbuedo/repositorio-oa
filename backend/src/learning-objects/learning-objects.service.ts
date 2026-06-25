@@ -47,7 +47,18 @@ type LomMetadata = {
     license?: string;
     description?: string;
   };
+  accessibility?: {
+    textSelectable?: AccessibilityValue;
+    structuredHeadings?: AccessibilityValue;
+    altText?: AccessibilityValue;
+    readingOrder?: AccessibilityValue;
+    sufficientContrast?: AccessibilityValue;
+    captionsOrTranscript?: AccessibilityValue;
+    notes?: string;
+  };
 };
+
+type AccessibilityValue = 'yes' | 'no' | 'not_applicable' | '';
 
 @Injectable()
 export class LearningObjectsService {
@@ -570,6 +581,8 @@ function buildMetadataExport(object: LearningObject) {
       contentUrl: fileUrl ?? undefined,
       version: object.currentVersion,
       sha256: object.fileChecksumSha256 ?? undefined,
+      accessibilitySummary: metadata.accessibility?.notes ?? undefined,
+      accessibilityFeature: getAccessibilityFeatures(metadata.accessibility),
       dateCreated: object.createdAt,
       dateModified: object.updatedAt,
     },
@@ -605,6 +618,20 @@ function getVersionChangeNote(changeType: VersionChangeType) {
     default:
       return 'Primera publicacion del recurso.';
   }
+}
+
+function getAccessibilityFeatures(metadata?: LomMetadata['accessibility']) {
+  if (!metadata) return undefined;
+
+  const features = [
+    metadata.textSelectable === 'yes' ? 'textual' : null,
+    metadata.structuredHeadings === 'yes' ? 'structuralNavigation' : null,
+    metadata.altText === 'yes' ? 'alternativeText' : null,
+    metadata.readingOrder === 'yes' ? 'readingOrder' : null,
+    metadata.captionsOrTranscript === 'yes' ? 'captions' : null,
+  ].filter(Boolean);
+
+  return features.length > 0 ? features : undefined;
 }
 
 function buildCanonicalUrl(id: string) {

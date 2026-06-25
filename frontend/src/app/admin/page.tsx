@@ -51,7 +51,20 @@ interface LearningObject {
       license?: string;
       description?: string;
     };
+    accessibility?: AccessibilityMetadata;
   };
+}
+
+type AccessibilityValue = 'yes' | 'no' | 'not_applicable' | '';
+
+interface AccessibilityMetadata {
+  textSelectable?: AccessibilityValue;
+  structuredHeadings?: AccessibilityValue;
+  altText?: AccessibilityValue;
+  readingOrder?: AccessibilityValue;
+  sufficientContrast?: AccessibilityValue;
+  captionsOrTranscript?: AccessibilityValue;
+  notes?: string;
 }
 
 interface LearningObjectVersion {
@@ -90,6 +103,13 @@ interface ReviewForm {
   license: string;
   rightsDescription: string;
   keywords: string;
+  textSelectable: AccessibilityValue;
+  structuredHeadings: AccessibilityValue;
+  altText: AccessibilityValue;
+  readingOrder: AccessibilityValue;
+  sufficientContrast: AccessibilityValue;
+  captionsOrTranscript: AccessibilityValue;
+  accessibilityNotes: string;
 }
 
 const statusOptions: Array<{ value: ObjectStatus; label: string }> = [
@@ -137,6 +157,12 @@ const licenseOptions = [
   { value: 'Dominio publico', label: 'Dominio publico' },
   { value: 'Uso institucional restringido', label: 'Uso institucional restringido' },
   { value: 'Copyright reservado', label: 'Copyright reservado' },
+];
+const accessibilityOptions: Array<{ value: AccessibilityValue; label: string }> = [
+  { value: '', label: 'Sin revisar' },
+  { value: 'yes', label: 'Cumple' },
+  { value: 'no', label: 'No cumple' },
+  { value: 'not_applicable', label: 'No aplica' },
 ];
 
 export default function AdminPage() {
@@ -804,6 +830,85 @@ export default function AdminPage() {
                     rows={3}
                     placeholder="Condiciones de uso, atribucion o restricciones"
                     onChange={(event) => setReviewForm((current) => ({ ...current, rightsDescription: event.target.value }))}
+                  />
+                </label>
+              </section>
+
+              <section className="review-section">
+                <h4>Accesibilidad del recurso</h4>
+                <label className="field">
+                  <span>Texto seleccionable</span>
+                  <select
+                    value={reviewForm.textSelectable}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, textSelectable: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Encabezados estructurados</span>
+                  <select
+                    value={reviewForm.structuredHeadings}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, structuredHeadings: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Texto alternativo</span>
+                  <select
+                    value={reviewForm.altText}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, altText: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Orden de lectura</span>
+                  <select
+                    value={reviewForm.readingOrder}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, readingOrder: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Contraste suficiente</span>
+                  <select
+                    value={reviewForm.sufficientContrast}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, sufficientContrast: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Subtitulos o transcripcion</span>
+                  <select
+                    value={reviewForm.captionsOrTranscript}
+                    onChange={(event) => setReviewForm((current) => ({ ...current, captionsOrTranscript: event.target.value as AccessibilityValue }))}
+                  >
+                    {accessibilityOptions.map((option) => (
+                      <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Observaciones de accesibilidad</span>
+                  <textarea
+                    value={reviewForm.accessibilityNotes}
+                    rows={3}
+                    placeholder="Bloqueos, advertencias o mejoras pendientes"
+                    onChange={(event) => setReviewForm((current) => ({ ...current, accessibilityNotes: event.target.value }))}
                   />
                 </label>
               </section>
@@ -1662,6 +1767,13 @@ function createReviewForm(object: LearningObject | null): ReviewForm {
     license: object?.lomMetadata?.rights?.license ?? '',
     rightsDescription: object?.lomMetadata?.rights?.description ?? '',
     keywords: object?.lomMetadata?.general?.keyword?.join(', ') ?? '',
+    textSelectable: object?.lomMetadata?.accessibility?.textSelectable ?? '',
+    structuredHeadings: object?.lomMetadata?.accessibility?.structuredHeadings ?? '',
+    altText: object?.lomMetadata?.accessibility?.altText ?? '',
+    readingOrder: object?.lomMetadata?.accessibility?.readingOrder ?? '',
+    sufficientContrast: object?.lomMetadata?.accessibility?.sufficientContrast ?? '',
+    captionsOrTranscript: object?.lomMetadata?.accessibility?.captionsOrTranscript ?? '',
+    accessibilityNotes: object?.lomMetadata?.accessibility?.notes ?? '',
   };
 }
 
@@ -1696,6 +1808,16 @@ function buildReviewPayload(object: LearningObject, form: ReviewForm) {
         ...(object.lomMetadata?.rights ?? {}),
         license: form.license,
         description: form.rightsDescription.trim(),
+      },
+      accessibility: {
+        ...(object.lomMetadata?.accessibility ?? {}),
+        textSelectable: form.textSelectable || undefined,
+        structuredHeadings: form.structuredHeadings || undefined,
+        altText: form.altText || undefined,
+        readingOrder: form.readingOrder || undefined,
+        sufficientContrast: form.sufficientContrast || undefined,
+        captionsOrTranscript: form.captionsOrTranscript || undefined,
+        notes: form.accessibilityNotes.trim(),
       },
     },
   };

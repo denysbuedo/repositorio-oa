@@ -39,7 +39,20 @@ interface LearningObject {
       license?: string;
       description?: string;
     };
+    accessibility?: AccessibilityMetadata;
   };
+}
+
+type AccessibilityValue = 'yes' | 'no' | 'not_applicable' | '';
+
+interface AccessibilityMetadata {
+  textSelectable?: AccessibilityValue;
+  structuredHeadings?: AccessibilityValue;
+  altText?: AccessibilityValue;
+  readingOrder?: AccessibilityValue;
+  sufficientContrast?: AccessibilityValue;
+  captionsOrTranscript?: AccessibilityValue;
+  notes?: string;
 }
 
 export default function ObjectDetailPage() {
@@ -136,6 +149,12 @@ export default function ObjectDetailPage() {
             <MetadataRow label="Formato" value={object.fileMimeType ?? 'Sin formato'} />
             <MetadataRow label="Tamano" value={formatFileSize(object.fileSize)} />
             <MetadataRow label="SHA-256" value={object.fileChecksumSha256 ?? 'Sin checksum'} />
+            <MetadataRow label="Texto seleccionable" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.textSelectable)} />
+            <MetadataRow label="Encabezados" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.structuredHeadings)} />
+            <MetadataRow label="Texto alternativo" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.altText)} />
+            <MetadataRow label="Orden de lectura" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.readingOrder)} />
+            <MetadataRow label="Contraste" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.sufficientContrast)} />
+            <MetadataRow label="Subtitulos/transcripcion" value={getAccessibilityLabel(object.lomMetadata?.accessibility?.captionsOrTranscript)} />
           </dl>
         </article>
 
@@ -146,6 +165,9 @@ export default function ObjectDetailPage() {
             <strong>{object.lomMetadata?.rights?.license ?? 'Sin licencia declarada'}</strong>
           </div>
           <p>{object.lomMetadata?.rights?.description || 'No se han especificado notas adicionales de derechos.'}</p>
+
+          <h2>Accesibilidad</h2>
+          <p>{object.lomMetadata?.accessibility?.notes || 'Sin observaciones de accesibilidad registradas.'}</p>
 
           <h2>Interoperabilidad</h2>
           <a href={`${API_URL}/learning-objects/${object.id}/metadata`} className="metadata-export-link">
@@ -461,6 +483,8 @@ function buildJsonLd(object: LearningObject, canonicalPath: string) {
     contentUrl: object.fileUrl ? `${API_URL}/${object.fileUrl}` : undefined,
     version: object.currentVersion,
     sha256: object.fileChecksumSha256,
+    accessibilitySummary: object.lomMetadata?.accessibility?.notes,
+    accessibilityFeature: getAccessibilityFeatures(object.lomMetadata?.accessibility),
   };
 }
 
@@ -477,6 +501,33 @@ function getLanguageLabel(value?: string) {
     default:
       return 'Sin idioma';
   }
+}
+
+function getAccessibilityLabel(value?: AccessibilityValue) {
+  switch (value) {
+    case 'yes':
+      return 'Cumple';
+    case 'no':
+      return 'No cumple';
+    case 'not_applicable':
+      return 'No aplica';
+    default:
+      return 'Sin revisar';
+  }
+}
+
+function getAccessibilityFeatures(accessibility?: AccessibilityMetadata) {
+  if (!accessibility) return undefined;
+
+  const features = [
+    accessibility.textSelectable === 'yes' ? 'textual' : null,
+    accessibility.structuredHeadings === 'yes' ? 'structuralNavigation' : null,
+    accessibility.altText === 'yes' ? 'alternativeText' : null,
+    accessibility.readingOrder === 'yes' ? 'readingOrder' : null,
+    accessibility.captionsOrTranscript === 'yes' ? 'captions' : null,
+  ].filter(Boolean);
+
+  return features.length > 0 ? features : undefined;
 }
 
 function formatFileSize(value?: number | null) {
