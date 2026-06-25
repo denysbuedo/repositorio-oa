@@ -54,6 +54,19 @@ interface LearningObject {
   };
 }
 
+interface LearningObjectVersion {
+  id: string;
+  versionLabel: string;
+  changeType: 'initial_publication' | 'metadata_update' | 'file_update';
+  title: string;
+  author: string;
+  originalFilename?: string | null;
+  fileSize?: number | null;
+  fileChecksumSha256?: string | null;
+  changeNote?: string | null;
+  createdAt?: string;
+}
+
 interface ReviewForm {
   title: string;
   description: string;
@@ -127,6 +140,8 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
+  const [versionHistory, setVersionHistory] = useState<LearningObjectVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
   const [collectionName, setCollectionName] = useState('');
   const [collectionDescription, setCollectionDescription] = useState('');
@@ -251,9 +266,35 @@ export default function AdminPage() {
     return { total, published, draft, archived, withMetadata, withCollection, completeProfile, processing };
   }, [objects]);
 
+  const fetchVersions = useCallback(async (objectId: string) => {
+    if (!authToken) return;
+
+    setLoadingVersions(true);
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${objectId}/versions`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setVersionHistory(Array.isArray(data) ? data as LearningObjectVersion[] : []);
+    } catch (error) {
+      console.error('Error loading version history:', error);
+      setVersionHistory([]);
+      setErrorMessage('No se pudo cargar el historial de versiones.');
+    } finally {
+      setLoadingVersions(false);
+    }
+  }, [authToken]);
+
   const selectObject = (object: LearningObject) => {
     setSelectedObject(object);
     setReviewForm(createReviewForm(object));
+    setVersionHistory([]);
+    void fetchVersions(object.id);
   };
 
   const saveReview = async () => {
@@ -280,6 +321,7 @@ export default function AdminPage() {
       );
       setSelectedObject(updatedObject);
       setReviewForm(createReviewForm(updatedObject));
+      void fetchVersions(updatedObject.id);
       setSuccessMessage('Revision guardada.');
     } catch (error) {
       console.error('Error saving review:', error);
@@ -362,6 +404,7 @@ export default function AdminPage() {
       setSelectedObject((current) => current?.id === updatedObject.id ? updatedObject : current);
       if (selectedObject?.id === updatedObject.id) {
         setReviewForm(createReviewForm(updatedObject));
+        void fetchVersions(updatedObject.id);
       }
       setSuccessMessage(`Recurso marcado como ${getStatusLabel(status)}.`);
     } catch (error) {
@@ -387,6 +430,7 @@ export default function AdminPage() {
         throw new Error(`HTTP ${res.status}`);
       }
       setSelectedObject((current) => (current?.id === id ? null : current));
+      setVersionHistory((current) => (selectedObject?.id === id ? [] : current));
       setSuccessMessage('Recurso eliminado.');
       fetchObjects();
     } catch (error) {
@@ -751,6 +795,35 @@ export default function AdminPage() {
                   Descargar archivo
                 </a>
               )}
+              <section className="version-history" aria-label="Historial de versiones">
+                <div className="version-history-header">
+                  <h4>Historial de versiones</h4>
+                  <span>{versionHistory.length} registros</span>
+                </div>
+                {loadingVersions ? (
+                  <p className="history-empty">Cargando historial...</p>
+                ) : versionHistory.length === 0 ? (
+                  <p className="history-empty">Aun no hay snapshots versionados para este recurso.</p>
+                ) : (
+                  <ol className="version-list">
+                    {versionHistory.map((version) => (
+                      <li key={version.id} className="version-item">
+                        <div className="version-main">
+                          <span className="version-label">v{version.versionLabel}</span>
+                          <strong>{getVersionChangeLabel(version.changeType)}</strong>
+                        </div>
+                        <p>{version.changeNote ?? 'Snapshot de preservacion registrado.'}</p>
+                        <dl>
+                          <div><dt>Fecha</dt><dd>{formatDate(version.createdAt)}</dd></div>
+                          <div><dt>Archivo</dt><dd>{version.originalFilename ?? 'Sin archivo'}</dd></div>
+                          <div><dt>Tamano</dt><dd>{formatFileSize(version.fileSize)}</dd></div>
+                          <div><dt>SHA-256</dt><dd>{formatChecksum(version.fileChecksumSha256)}</dd></div>
+                        </dl>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </section>
               <details className="metadata">
                 <summary>Metadatos LOM</summary>
                 <pre>{JSON.stringify(selectedObject.lomMetadata ?? {}, null, 2)}</pre>
@@ -1313,6 +1386,82 @@ export default function AdminPage() {
           text-decoration: none;
         }
 
+        .version-history {
+          border-top: 1px solid #e0e0e0;
+          margin-top: 1rem;
+          padding-top: 1rem;
+        }
+
+        .version-history-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .version-history-header h4 {
+          margin: 0;
+        }
+
+        .version-history-header span,
+        .history-empty {
+          color: #666666;
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+
+        .version-list {
+          display: grid;
+          gap: 0.75rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .version-item {
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          background: #f8fafc;
+          padding: 0.85rem;
+        }
+
+        .version-main {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .version-label {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 999px;
+          background: #1f5fbf;
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 900;
+          padding: 0.25rem 0.55rem;
+        }
+
+        .version-main strong {
+          color: #1a1a1a;
+          font-size: 0.8rem;
+          text-align: right;
+        }
+
+        .version-item p {
+          color: #666666;
+          font-size: 0.82rem;
+          line-height: 1.45;
+          margin: 0 0 0.65rem;
+        }
+
+        .version-item dl {
+          gap: 0.45rem;
+        }
+
         .metadata summary {
           cursor: pointer;
           font-weight: 800;
@@ -1539,6 +1688,23 @@ function getProcessingLabel(status?: ProcessingStatus, hasFile = true) {
     default:
       return 'Pendiente';
   }
+}
+
+function getVersionChangeLabel(changeType: LearningObjectVersion['changeType']) {
+  switch (changeType) {
+    case 'file_update':
+      return 'Archivo actualizado';
+    case 'metadata_update':
+      return 'Metadatos actualizados';
+    default:
+      return 'Primera publicacion';
+  }
+}
+
+function formatChecksum(value?: string | null) {
+  if (!value) return 'Pendiente';
+  if (value.length <= 16) return value;
+  return `${value.slice(0, 12)}...${value.slice(-8)}`;
 }
 
 function formatFileSize(value?: number | null) {

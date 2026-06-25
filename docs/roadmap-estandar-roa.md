@@ -26,6 +26,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Version visible por OA.
 - Checksum SHA-256 del archivo preservado.
 - Snapshot versionado al publicar o actualizar un OA publicado.
+- Historial de versiones visible en el panel admin.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -66,8 +67,8 @@ Estado local conocido:
 Punto exacto para retomar:
 
 - Fase 4, OAI-PMH, quedo implementada y validada en backend.
-- Fase 5 quedo iniciada con version actual, checksum SHA-256 y snapshots.
-- Siguiente paso recomendado: endpoint admin para listar versiones de un OA y mostrar el historial en el panel admin.
+- Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots e historial visible en admin.
+- Siguiente paso recomendado: eventos de preservacion independientes y validacion MIME real.
 
 ## Brechas principales
 
@@ -360,7 +361,7 @@ Ejemplos:
 - [x] Mostrar version y checksum en admin.
 - [x] Mostrar version y checksum en ficha publica.
 - [x] Preparar migracion SQL inicial.
-- [ ] Crear vista historica completa de versiones.
+- [x] Crear vista historica completa de versiones.
 - [ ] Guardar eventos de preservacion independientes.
 - [ ] Validar MIME real por contenido, no solo por declaracion del navegador.
 
@@ -369,6 +370,7 @@ Implementacion inicial:
 - Campo `currentVersion` en cada OA.
 - Campo `fileChecksumSha256` en cada OA.
 - Entidad `LearningObjectVersion` con snapshot de metadatos, archivo y checksum.
+- Endpoint admin `GET /learning-objects/{id}/versions`.
 - Version `1.0` al publicar por primera vez.
 - Incremento menor automatico para actualizaciones de archivo o metadatos en OA ya publicados.
 - Script disponible: `scripts/versioning_preservation_migration.sql`.
@@ -389,15 +391,14 @@ Implementacion inicial:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es completar la Fase 5 con historial visible y eventos de preservacion.
+La siguiente tarea recomendada al retomar es completar la Fase 5 con eventos de preservacion independientes.
 
 Orden sugerido:
 
-1. Crear endpoint admin para listar versiones de un OA.
-2. Mostrar historial de versiones en el panel admin.
-3. Crear eventos de preservacion: checksum calculado, archivo reemplazado, metadata snapshot, auditoria futura.
-4. Agregar validacion de MIME real por firma/contenido.
-5. Preparar una politica de formatos aceptados.
+1. Crear eventos de preservacion: checksum calculado, archivo reemplazado, metadata snapshot, auditoria futura.
+2. Agregar validacion de MIME real por firma/contenido.
+3. Preparar una politica de formatos aceptados.
+4. Documentar flujo de versionado y preservacion para administradores.
 
 Pendiente menor de Fase 4:
 

@@ -174,6 +174,27 @@ export class LearningObjectsService {
     return buildMetadataExport(object);
   }
 
+  async findVersions(id: string) {
+    await this.findOne(id);
+
+    return await this.versionRepository.find({
+      where: { learningObjectId: id },
+      order: { createdAt: 'DESC' },
+      select: {
+        id: true,
+        versionLabel: true,
+        changeType: true,
+        title: true,
+        author: true,
+        originalFilename: true,
+        fileSize: true,
+        fileChecksumSha256: true,
+        changeNote: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async update(
     id: string,
     updateDto: UpdateLearningObjectDto,

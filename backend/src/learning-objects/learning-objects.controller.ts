@@ -99,6 +99,11 @@ export class LearningObjectsController {
     return { html };
   }
 
+  @Get(':id/versions')
+  findVersions(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findVersions(id);
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {
