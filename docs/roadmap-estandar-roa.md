@@ -34,6 +34,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Checklist inicial de calidad/accesibilidad por OA.
 - Campos estructurados de accesibilidad en admin, ficha publica y LRMI.
 - Reporte de calidad calculado por OA en admin.
+- Bloqueos y advertencias de calidad conectados al flujo de publicacion.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -419,6 +420,8 @@ Reporte de calidad:
 - Endpoint admin `GET /learning-objects/{id}/quality-report`.
 - Score calculado por metadatos, archivo, preservacion y accesibilidad.
 - Bloqueos y advertencias visibles en el panel admin.
+- Los bloqueos impiden publicar.
+- Las advertencias solicitan confirmacion editorial antes de publicar.
 
 ### Fase 7: LTI avanzado y analitica
 
@@ -429,13 +432,13 @@ Reporte de calidad:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es conectar bloqueos o advertencias de accesibilidad al flujo editorial.
+La siguiente tarea recomendada al retomar es documentar el flujo de versionado, preservacion y calidad para administradores.
 
 Orden sugerido:
 
 1. Documentar flujo de versionado y preservacion para administradores.
-2. Incorporar bloqueos o advertencias de accesibilidad al flujo editorial.
-3. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
+2. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
+3. Preparar Fase 7: LTI avanzado y analitica.
 
 ## Referencias
 

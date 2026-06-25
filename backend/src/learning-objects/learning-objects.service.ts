@@ -248,6 +248,7 @@ export class LearningObjectsService {
 
     if (updateDto.status === ObjectStatus.PUBLISHED) {
       this.validatePublishProfile(updated);
+      this.validateQualityForPublication(updated);
     }
 
     const shouldSnapshot = updated.status === ObjectStatus.PUBLISHED;
@@ -422,6 +423,18 @@ export class LearningObjectsService {
       throw new BadRequestException({
         message: 'El recurso no cumple el perfil minimo para publicacion',
         missingFields: missing,
+      });
+    }
+  }
+
+  private validateQualityForPublication(object: LearningObject) {
+    const report = buildQualityReport(object);
+
+    if (report.blockers.length > 0) {
+      throw new BadRequestException({
+        message: 'El recurso tiene bloqueos de calidad antes de publicar',
+        qualityBlockers: report.blockers,
+        qualityWarnings: report.warnings,
       });
     }
   }

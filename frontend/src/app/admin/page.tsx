@@ -487,10 +487,21 @@ export default function AdminPage() {
   const updateStatus = async (id: string, status: ObjectStatus) => {
     const targetObject = objects.find((object) => object.id === id);
     if (status === 'published' && targetObject) {
-      const blockers = getPublishBlockers(targetObject);
-      if (blockers.length > 0) {
+      const report =
+        selectedObject?.id === id && qualityReport
+          ? qualityReport
+          : await loadQualityReportForDecision(id);
+
+      if (report?.blockers.length) {
+        setErrorMessage(
+          `No se puede publicar. Bloqueos: ${report.blockers.map((issue) => issue.label).join(' ')}`
+        );
+        return;
+      }
+
+      if (report?.warnings.length) {
         const confirmed = window.confirm(
-          `El recurso tiene advertencias antes de publicar:\n\n${blockers.join('\n')}\n\nPublicar de todos modos?`
+          `El recurso tiene avisos de calidad antes de publicar:\n\n${report.warnings.map((issue) => `- ${issue.label}`).join('\n')}\n\nPublicar de todos modos?`
         );
         if (!confirmed) return;
       }
@@ -525,6 +536,23 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Error updating status:', error);
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo actualizar el estado del recurso.');
+    }
+  };
+
+  const loadQualityReportForDecision = async (id: string) => {
+    if (!authToken) return null;
+
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${id}/quality-report`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) return null;
+      return await res.json() as QualityReport;
+    } catch (error) {
+      console.error('Error loading quality report for publish decision:', error);
+      return null;
     }
   };
 
@@ -1975,11 +2003,6 @@ function buildReviewPayload(object: LearningObject, form: ReviewForm) {
   };
 }
 
-function getPublishBlockers(object: LearningObject) {
-  const completion = getProfileCompletion(object);
-  return completion.missing.map((field) => `- Falta ${field}.`);
-}
-
 function getQualityStatusLabel(report: QualityReport) {
   if (report.status === 'blocked') {
     return `${report.summary.blockerCount} bloqueos y ${report.summary.warningCount} avisos antes de publicar.`;
@@ -2019,7 +2042,15 @@ function getProfileCompletion(object: LearningObject) {
 
 async function getApiErrorMessage(response: Response, fallback: string) {
   try {
-    const payload = await response.json() as { message?: string | string[]; missingFields?: string[] };
+    const payload = await response.json() as {
+      message?: string | string[];
+      missingFields?: string[];
+      qualityBlockers?: QualityIssue[];
+    };
+    if (Array.isArray(payload.qualityBlockers) && payload.qualityBlockers.length > 0) {
+      return `${payload.message ?? fallback}: ${payload.qualityBlockers.map((issue) => issue.label).join(' ')}`;
+    }
+
     if (Array.isArray(payload.missingFields) && payload.missingFields.length > 0) {
       return `${payload.message ?? fallback}: ${payload.missingFields.join(', ')}.`;
     }
