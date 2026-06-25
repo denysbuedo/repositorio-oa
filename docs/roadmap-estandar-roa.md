@@ -35,6 +35,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Campos estructurados de accesibilidad en admin, ficha publica y LRMI.
 - Reporte de calidad calculado por OA en admin.
 - Bloqueos y advertencias de calidad conectados al flujo de publicacion.
+- Guia administrativa de versionado, preservacion y calidad.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -404,6 +405,7 @@ Implementacion inicial:
 Documentacion:
 
 - `docs/checklist-calidad-accesibilidad-oa.md`
+- `docs/guia-admin-versionado-preservacion-calidad.md`
 
 Campos iniciales:
 
@@ -432,13 +434,13 @@ Reporte de calidad:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es documentar el flujo de versionado, preservacion y calidad para administradores.
+La siguiente tarea recomendada al retomar es revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
 
 Orden sugerido:
 
-1. Documentar flujo de versionado y preservacion para administradores.
-2. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
-3. Preparar Fase 7: LTI avanzado y analitica.
+1. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
+2. Preparar Fase 7: LTI avanzado y analitica.
+3. Definir analitica minima: vistas, descargas y lanzamientos LTI.
 
 ## Referencias
 
