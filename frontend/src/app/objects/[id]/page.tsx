@@ -91,12 +91,12 @@ export default function ObjectDetailPage() {
   };
 
   if (loading) {
-    return <main className="detail-shell">Cargando ficha del recurso...</main>;
+    return <main id="main-content" className="detail-shell">Cargando ficha del recurso...</main>;
   }
 
   if (errorMessage || !object) {
     return (
-      <main className="detail-shell">
+      <main id="main-content" className="detail-shell">
         <section className="message-panel">
           <h1>Ficha no disponible</h1>
           <p>{errorMessage || 'El recurso no existe o no esta publicado.'}</p>
@@ -107,7 +107,7 @@ export default function ObjectDetailPage() {
   }
 
   return (
-    <main className="detail-shell">
+    <main id="main-content" className="detail-shell">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

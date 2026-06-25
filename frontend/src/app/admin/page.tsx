@@ -590,11 +590,11 @@ export default function AdminPage() {
   };
 
   if (!authChecked || !authToken) {
-    return <main className="admin-shell">Validando sesion...</main>;
+    return <main id="main-content" className="admin-shell">Validando sesion...</main>;
   }
 
   return (
-    <main className="admin-shell">
+    <main id="main-content" className="admin-shell">
       <header className="admin-header">
         <div>
           <p className="eyebrow">Administracion</p>

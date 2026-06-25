@@ -36,6 +36,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Reporte de calidad calculado por OA en admin.
 - Bloqueos y advertencias de calidad conectados al flujo de publicacion.
 - Guia administrativa de versionado, preservacion y calidad.
+- Enlace global para saltar al contenido principal.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -397,6 +398,7 @@ Implementacion inicial:
 
 - [x] Auditoria inicial WCAG 2.2 AA de la UI.
 - [x] Foco visible global para navegacion por teclado.
+- [x] Enlace global para saltar al contenido principal.
 - [x] Soporte basico para usuarios con movimiento reducido.
 - [x] Checklist de accesibilidad por archivo.
 - [x] Campos de accesibilidad en metadatos.
@@ -434,13 +436,13 @@ Reporte de calidad:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
+La siguiente tarea recomendada al retomar es preparar Fase 7: LTI avanzado y analitica.
 
 Orden sugerido:
 
-1. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
-2. Preparar Fase 7: LTI avanzado y analitica.
-3. Definir analitica minima: vistas, descargas y lanzamientos LTI.
+1. Definir analitica minima: vistas, descargas y lanzamientos LTI.
+2. Preparar modelo de eventos de uso.
+3. Mejorar LTI con registro de plataformas y lanzamientos.
 
 ## Referencias
 

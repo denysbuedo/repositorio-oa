@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="login-shell">
+    <main id="main-content" className="login-shell">
       <section className="login-panel">
         <p className="eyebrow">Administracion</p>
         <h1>Acceso admin</h1>

@@ -385,7 +385,7 @@ function HomeContent() {
   }, [fetchObjects]);
 
   return (
-    <main className="container">
+    <main id="main-content" className="container">
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
@@ -1187,7 +1187,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<main className="container">Cargando repositorio...</main>}>
+    <Suspense fallback={<main id="main-content" className="container">Cargando repositorio...</main>}>
       <HomeContent />
     </Suspense>
   );
