@@ -71,7 +71,7 @@ Punto exacto para retomar:
 
 - Fase 4, OAI-PMH, quedo implementada y validada en backend.
 - Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots, historial visible y eventos de preservacion en admin.
-- Siguiente paso recomendado: documentar cosecha OAI-PMH para terceros y preparar Fase 6 de accesibilidad/calidad.
+- Siguiente paso recomendado: preparar Fase 6 de accesibilidad y calidad.
 
 ## Brechas principales
 
@@ -333,7 +333,7 @@ Formatos devueltos:
 - [x] Exponer `oai_dc`.
 - [x] Exponer sets por coleccion.
 - [x] Validar respuestas basicas por HTTP.
-- [ ] Documentar endpoint de cosecha para administradores externos.
+- [x] Documentar endpoint de cosecha para administradores externos.
 
 Endpoint disponible:
 
@@ -355,6 +355,10 @@ Ejemplos:
 - `/oai?verb=ListSets`
 - `/oai?verb=ListRecords&metadataPrefix=oai_dc`
 - `/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:repositorio-oa:{id}`
+
+Documentacion:
+
+- `docs/oai-pmh-cosecha.md`
 
 ### Fase 5: Versionado y preservacion
 
@@ -399,18 +403,13 @@ Implementacion inicial:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es cerrar el pendiente menor de OAI-PMH y preparar la Fase 6 de accesibilidad y calidad.
+La siguiente tarea recomendada al retomar es preparar la Fase 6 de accesibilidad y calidad.
 
 Orden sugerido:
 
-1. Documentar formalmente para terceros la URL de cosecha OAI-PMH y ejemplos de uso.
-2. Documentar flujo de versionado y preservacion para administradores.
-3. Iniciar auditoria WCAG 2.2 AA de la UI.
-4. Crear checklist de calidad/accesibilidad por archivo.
-
-Pendiente menor de Fase 4:
-
-- Documentar formalmente para terceros la URL de cosecha OAI-PMH y ejemplos de uso.
+1. Documentar flujo de versionado y preservacion para administradores.
+2. Iniciar auditoria WCAG 2.2 AA de la UI.
+3. Crear checklist de calidad/accesibilidad por archivo.
 
 ## Referencias
 
