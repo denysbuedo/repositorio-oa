@@ -402,7 +402,13 @@ function HomeContent() {
         <div className="stats-panel">
           <div className="stats-header">
             <h3 className="stats-title">Estadistica del Repositorio</h3>
-            <button className="stats-close" onClick={() => setShowStats(false)}>x</button>
+            <button
+              className="stats-close"
+              onClick={() => setShowStats(false)}
+              aria-label="Cerrar estadisticas"
+            >
+              x
+            </button>
           </div>
           <div className="stats-grid">
             <div className="stat-card">

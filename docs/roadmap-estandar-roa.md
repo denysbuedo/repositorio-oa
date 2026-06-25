@@ -30,6 +30,8 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Eventos de preservacion visibles en el panel admin.
 - Validacion de contenido real para PDF/DOCX.
 - Politica inicial de formatos aceptados.
+- Foco visible global y soporte `prefers-reduced-motion` en la UI.
+- Checklist inicial de calidad/accesibilidad por OA.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -389,10 +391,16 @@ Implementacion inicial:
 
 ### Fase 6: Accesibilidad y calidad de recursos
 
-- Auditoria WCAG 2.2 AA de la UI.
-- Checklist de accesibilidad por archivo.
-- Campos de accesibilidad en metadatos.
-- Reporte de calidad por OA.
+- [x] Auditoria inicial WCAG 2.2 AA de la UI.
+- [x] Foco visible global para navegacion por teclado.
+- [x] Soporte basico para usuarios con movimiento reducido.
+- [x] Checklist de accesibilidad por archivo.
+- [ ] Campos de accesibilidad en metadatos.
+- [ ] Reporte de calidad por OA.
+
+Documentacion:
+
+- `docs/checklist-calidad-accesibilidad-oa.md`
 
 ### Fase 7: LTI avanzado y analitica
 
@@ -403,13 +411,13 @@ Implementacion inicial:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es preparar la Fase 6 de accesibilidad y calidad.
+La siguiente tarea recomendada al retomar es continuar la Fase 6 con campos estructurados de accesibilidad y reporte de calidad por OA.
 
 Orden sugerido:
 
 1. Documentar flujo de versionado y preservacion para administradores.
-2. Iniciar auditoria WCAG 2.2 AA de la UI.
-3. Crear checklist de calidad/accesibilidad por archivo.
+2. Agregar campos de accesibilidad en metadatos/admin.
+3. Crear reporte de calidad por OA.
 
 ## Referencias
 
