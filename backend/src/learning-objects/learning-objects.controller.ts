@@ -127,6 +127,11 @@ export class LearningObjectsController {
     return this.service.findPreservationEvents(id);
   }
 
+  @Get(':id/quality-report')
+  getQualityReport(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.getQualityReport(id);
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {

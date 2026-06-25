@@ -90,6 +90,26 @@ interface PreservationEvent {
   createdAt?: string;
 }
 
+interface QualityIssue {
+  code: string;
+  label: string;
+  severity: 'blocker' | 'warning';
+  category: 'metadata' | 'file' | 'preservation' | 'accessibility';
+}
+
+interface QualityReport {
+  score: number;
+  status: 'ready' | 'needs_review' | 'blocked';
+  blockers: QualityIssue[];
+  warnings: QualityIssue[];
+  summary: {
+    totalChecks: number;
+    passedChecks: number;
+    blockerCount: number;
+    warningCount: number;
+  };
+}
+
 interface ReviewForm {
   title: string;
   description: string;
@@ -178,8 +198,10 @@ export default function AdminPage() {
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
   const [versionHistory, setVersionHistory] = useState<LearningObjectVersion[]>([]);
   const [preservationEvents, setPreservationEvents] = useState<PreservationEvent[]>([]);
+  const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [loadingQuality, setLoadingQuality] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
   const [collectionName, setCollectionName] = useState('');
   const [collectionDescription, setCollectionDescription] = useState('');
@@ -352,13 +374,38 @@ export default function AdminPage() {
     }
   }, [authToken]);
 
+  const fetchQualityReport = useCallback(async (objectId: string) => {
+    if (!authToken) return;
+
+    setLoadingQuality(true);
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/${objectId}/quality-report`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      setQualityReport(await res.json() as QualityReport);
+    } catch (error) {
+      console.error('Error loading quality report:', error);
+      setQualityReport(null);
+      setErrorMessage('No se pudo cargar el reporte de calidad.');
+    } finally {
+      setLoadingQuality(false);
+    }
+  }, [authToken]);
+
   const selectObject = (object: LearningObject) => {
     setSelectedObject(object);
     setReviewForm(createReviewForm(object));
     setVersionHistory([]);
     setPreservationEvents([]);
+    setQualityReport(null);
     void fetchVersions(object.id);
     void fetchPreservationEvents(object.id);
+    void fetchQualityReport(object.id);
   };
 
   const saveReview = async () => {
@@ -387,6 +434,7 @@ export default function AdminPage() {
       setReviewForm(createReviewForm(updatedObject));
       void fetchVersions(updatedObject.id);
       void fetchPreservationEvents(updatedObject.id);
+      void fetchQualityReport(updatedObject.id);
       setSuccessMessage('Revision guardada.');
     } catch (error) {
       console.error('Error saving review:', error);
@@ -471,6 +519,7 @@ export default function AdminPage() {
         setReviewForm(createReviewForm(updatedObject));
         void fetchVersions(updatedObject.id);
         void fetchPreservationEvents(updatedObject.id);
+        void fetchQualityReport(updatedObject.id);
       }
       setSuccessMessage(`Recurso marcado como ${getStatusLabel(status)}.`);
     } catch (error) {
@@ -498,6 +547,7 @@ export default function AdminPage() {
       setSelectedObject((current) => (current?.id === id ? null : current));
       setVersionHistory((current) => (selectedObject?.id === id ? [] : current));
       setPreservationEvents((current) => (selectedObject?.id === id ? [] : current));
+      setQualityReport((current) => (selectedObject?.id === id ? null : current));
       setSuccessMessage('Recurso eliminado.');
       fetchObjects();
     } catch (error) {
@@ -682,6 +732,7 @@ export default function AdminPage() {
               </div>
 
               <ProfileSummary object={selectedObject} />
+              <QualitySummary report={qualityReport} loading={loadingQuality} />
 
               <div className="review-actions">
                 <button className="primary-button" onClick={() => updateStatus(selectedObject.id, 'published')} disabled={selectedObject.status === 'published'}>
@@ -1474,6 +1525,65 @@ export default function AdminPage() {
           margin: 0;
         }
 
+        .quality-summary {
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          background: #f8fafc;
+          padding: 0.85rem;
+          margin-bottom: 1rem;
+        }
+
+        .quality-summary-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #1a1a1a;
+          font-size: 0.82rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .quality-bar {
+          height: 0.45rem;
+          border-radius: 999px;
+          background: #e0e0e0;
+          overflow: hidden;
+          margin: 0.65rem 0;
+        }
+
+        .quality-bar span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: #1f5fbf;
+        }
+
+        .quality-blocked .quality-bar span {
+          background: #991b1b;
+        }
+
+        .quality-needs_review .quality-bar span {
+          background: #92400e;
+        }
+
+        .quality-summary p,
+        .quality-summary li {
+          color: #666666;
+          font-size: 0.82rem;
+          line-height: 1.45;
+        }
+
+        .quality-summary p {
+          margin: 0;
+        }
+
+        .quality-summary ul {
+          display: grid;
+          gap: 0.35rem;
+          margin: 0.65rem 0 0;
+          padding-left: 1rem;
+        }
+
         .review-actions button,
         .save-review-button {
           width: 100%;
@@ -1753,6 +1863,48 @@ function ProfileSummary({ object }: { object: LearningObject }) {
   );
 }
 
+function QualitySummary({ report, loading }: { report: QualityReport | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <section className="quality-summary" aria-label="Reporte de calidad">
+        <p>Cargando reporte de calidad...</p>
+      </section>
+    );
+  }
+
+  if (!report) {
+    return (
+      <section className="quality-summary" aria-label="Reporte de calidad">
+        <p>Reporte de calidad no disponible.</p>
+      </section>
+    );
+  }
+
+  const issues = [...report.blockers, ...report.warnings].slice(0, 5);
+
+  return (
+    <section className={`quality-summary quality-${report.status}`} aria-label="Reporte de calidad">
+      <div className="quality-summary-header">
+        <span>Calidad OA</span>
+        <strong>{report.score}%</strong>
+      </div>
+      <div className="quality-bar" aria-hidden="true">
+        <span style={{ width: `${report.score}%` }}></span>
+      </div>
+      <p>{getQualityStatusLabel(report)}</p>
+      {issues.length > 0 && (
+        <ul>
+          {issues.map((issue) => (
+            <li key={issue.code}>
+              <strong>{issue.severity === 'blocker' ? 'Bloqueo' : 'Aviso'}:</strong> {issue.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function createReviewForm(object: LearningObject | null): ReviewForm {
   return {
     title: object?.title ?? '',
@@ -1826,6 +1978,18 @@ function buildReviewPayload(object: LearningObject, form: ReviewForm) {
 function getPublishBlockers(object: LearningObject) {
   const completion = getProfileCompletion(object);
   return completion.missing.map((field) => `- Falta ${field}.`);
+}
+
+function getQualityStatusLabel(report: QualityReport) {
+  if (report.status === 'blocked') {
+    return `${report.summary.blockerCount} bloqueos y ${report.summary.warningCount} avisos antes de publicar.`;
+  }
+
+  if (report.status === 'needs_review') {
+    return `${report.summary.warningCount} avisos pendientes de revision editorial.`;
+  }
+
+  return 'Sin bloqueos ni avisos relevantes.';
 }
 
 function getProfileCompletion(object: LearningObject) {

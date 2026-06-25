@@ -33,6 +33,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Foco visible global y soporte `prefers-reduced-motion` en la UI.
 - Checklist inicial de calidad/accesibilidad por OA.
 - Campos estructurados de accesibilidad en admin, ficha publica y LRMI.
+- Reporte de calidad calculado por OA en admin.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -397,7 +398,7 @@ Implementacion inicial:
 - [x] Soporte basico para usuarios con movimiento reducido.
 - [x] Checklist de accesibilidad por archivo.
 - [x] Campos de accesibilidad en metadatos.
-- [ ] Reporte de calidad por OA.
+- [x] Reporte de calidad por OA.
 
 Documentacion:
 
@@ -413,6 +414,12 @@ Campos iniciales:
 - Subtitulos o transcripcion.
 - Observaciones de accesibilidad.
 
+Reporte de calidad:
+
+- Endpoint admin `GET /learning-objects/{id}/quality-report`.
+- Score calculado por metadatos, archivo, preservacion y accesibilidad.
+- Bloqueos y advertencias visibles en el panel admin.
+
 ### Fase 7: LTI avanzado y analitica
 
 - Mejorar configuracion LTI.
@@ -422,13 +429,13 @@ Campos iniciales:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es continuar la Fase 6 con reporte de calidad por OA.
+La siguiente tarea recomendada al retomar es conectar bloqueos o advertencias de accesibilidad al flujo editorial.
 
 Orden sugerido:
 
 1. Documentar flujo de versionado y preservacion para administradores.
-2. Crear reporte de calidad por OA.
-3. Incorporar bloqueos o advertencias de accesibilidad al flujo editorial.
+2. Incorporar bloqueos o advertencias de accesibilidad al flujo editorial.
+3. Revisar contraste y navegacion por teclado con pruebas manuales sobre home/admin/ficha.
 
 ## Referencias
 

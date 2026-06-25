@@ -59,6 +59,7 @@ type LomMetadata = {
 };
 
 type AccessibilityValue = 'yes' | 'no' | 'not_applicable' | '';
+type QualityIssueSeverity = 'blocker' | 'warning';
 
 @Injectable()
 export class LearningObjectsService {
@@ -228,6 +229,11 @@ export class LearningObjectsService {
         createdAt: true,
       },
     });
+  }
+
+  async getQualityReport(id: string) {
+    const object = await this.findOne(id);
+    return buildQualityReport(object);
   }
 
   async update(
@@ -520,6 +526,130 @@ function getPublishProfileMissingFields(object: LearningObject): string[] {
   if (!metadata.rights?.license?.trim()) missing.push('licencia');
 
   return missing;
+}
+
+function buildQualityReport(object: LearningObject) {
+  const issues: Array<{
+    code: string;
+    label: string;
+    severity: QualityIssueSeverity;
+    category: 'metadata' | 'file' | 'preservation' | 'accessibility';
+  }> = [];
+
+  for (const field of getPublishProfileMissingFields(object)) {
+    issues.push({
+      code: `missing_${field.replace(/\s+/g, '_')}`,
+      label: `Falta ${field}.`,
+      severity: 'blocker',
+      category: 'metadata',
+    });
+  }
+
+  if (!object.fileChecksumSha256) {
+    issues.push({
+      code: 'missing_checksum',
+      label: 'Falta checksum SHA-256 del archivo.',
+      severity: 'blocker',
+      category: 'preservation',
+    });
+  }
+
+  if (!object.currentVersion) {
+    issues.push({
+      code: 'missing_version',
+      label: 'Falta version visible del recurso.',
+      severity: 'warning',
+      category: 'preservation',
+    });
+  }
+
+  const accessibility = ((object.lomMetadata ?? {}) as LomMetadata)
+    .accessibility;
+  for (const item of getAccessibilityQualityItems(accessibility)) {
+    issues.push(item);
+  }
+
+  const blockers = issues.filter((issue) => issue.severity === 'blocker');
+  const warnings = issues.filter((issue) => issue.severity === 'warning');
+  const totalChecks = 12 + getAccessibilityCheckKeys().length;
+  const passedChecks = Math.max(totalChecks - issues.length, 0);
+
+  return {
+    score: Math.round((passedChecks / totalChecks) * 100),
+    status:
+      blockers.length > 0
+        ? 'blocked'
+        : warnings.length > 0
+          ? 'needs_review'
+          : 'ready',
+    blockers,
+    warnings,
+    summary: {
+      totalChecks,
+      passedChecks,
+      blockerCount: blockers.length,
+      warningCount: warnings.length,
+    },
+  };
+}
+
+function getAccessibilityQualityItems(
+  accessibility?: LomMetadata['accessibility'],
+) {
+  return getAccessibilityCheckKeys().flatMap((item) => {
+    const value = accessibility?.[item.key];
+
+    if (!value) {
+      return [
+        {
+          code: `accessibility_unreviewed_${item.key}`,
+          label: `${item.label} sin revisar.`,
+          severity: 'warning' as const,
+          category: 'accessibility' as const,
+        },
+      ];
+    }
+
+    if (value === 'no') {
+      return [
+        {
+          code: `accessibility_failed_${item.key}`,
+          label: `${item.label}: no cumple.`,
+          severity: item.required ? ('blocker' as const) : ('warning' as const),
+          category: 'accessibility' as const,
+        },
+      ];
+    }
+
+    return [];
+  });
+}
+
+function getAccessibilityCheckKeys(): Array<{
+  key: keyof NonNullable<LomMetadata['accessibility']>;
+  label: string;
+  required: boolean;
+}> {
+  return [
+    { key: 'textSelectable', label: 'Texto seleccionable', required: true },
+    {
+      key: 'structuredHeadings',
+      label: 'Encabezados estructurados',
+      required: false,
+    },
+    { key: 'altText', label: 'Texto alternativo', required: false },
+    { key: 'readingOrder', label: 'Orden de lectura', required: true },
+    {
+      key: 'sufficientContrast',
+      label: 'Contraste suficiente',
+      required: true,
+    },
+    {
+      key: 'captionsOrTranscript',
+      label: 'Subtitulos o transcripcion',
+      required: false,
+    },
+  ];
 }
 
 function buildMetadataExport(object: LearningObject) {
