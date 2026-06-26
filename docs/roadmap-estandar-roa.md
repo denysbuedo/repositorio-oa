@@ -587,8 +587,8 @@ Implementacion inicial:
 
 ### Fase 8: Operacion, documentacion e identificadores persistentes
 
-- [ ] Documentar configuracion operativa LTI para Moodle/Canvas.
-- [ ] Crear checklist de pruebas para launch, Deep Linking y analitica.
+- [x] Documentar configuracion operativa LTI para Moodle/Canvas.
+- [x] Crear checklist de pruebas para launch, Deep Linking y analitica.
 - [ ] Definir estrategia institucional de identificadores persistentes.
 - [ ] Evaluar DOI, Handle o ARK.
 - [ ] Definir politica de citacion de OA y versiones.
@@ -603,14 +603,18 @@ Resultado esperado:
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada es iniciar Fase 8 con documentacion operativa LTI y pruebas guiadas con Moodle/Canvas.
+La siguiente tarea recomendada es ejecutar una prueba guiada con Moodle/Canvas real o avanzar hacia identificadores persistentes.
 
 Orden sugerido:
 
-1. Documentar configuracion de herramienta externa LTI.
-2. Documentar flujo de Deep Linking.
-3. Crear checklist de prueba para launch, seleccion y analitica.
-4. Preparar datos de ejemplo para validar plataforma/curso.
+1. Preparar datos de ejemplo para validar plataforma/curso.
+2. Ejecutar checklist de `docs/guia-operativa-lti.md` contra un LMS real.
+3. Registrar hallazgos de configuracion Moodle/Canvas.
+4. Definir estrategia institucional de identificadores persistentes.
+
+Documentacion disponible:
+
+- `docs/guia-operativa-lti.md`
 
 ## Referencias
 
