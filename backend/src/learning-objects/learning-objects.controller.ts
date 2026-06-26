@@ -157,6 +157,11 @@ export class LearningObjectsController {
     return this.service.getIntegrityAudit();
   }
 
+  @Post('admin/recalculate-checksums')
+  recalculateMissingChecksums() {
+    return this.service.recalculateMissingChecksums();
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {

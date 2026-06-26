@@ -588,6 +588,7 @@ Implementacion inicial:
 - Campos `canonicalUrl`, `persistentIdentifier` y `citationText` para citacion e interoperabilidad.
 - Endpoint publico `GET /health` para verificacion operativa de backend, base de datos y carpeta de archivos.
 - Endpoint admin `GET /learning-objects/admin/integrity-audit` para auditoria de existencia y checksum de archivos.
+- Endpoint admin `POST /learning-objects/admin/recalculate-checksums` para reparar checksums faltantes en archivos existentes.
 
 ### Fase 8: Operacion, documentacion e identificadores persistentes
 
@@ -599,6 +600,7 @@ Implementacion inicial:
 - [x] Preparar guia de despliegue/operacion para entorno institucional.
 - [x] Preparar plan de copias de seguridad y auditoria de integridad.
 - [x] Implementar endpoint administrativo de auditoria de checksums.
+- [x] Implementar recalculo controlado de checksums faltantes.
 
 Resultado esperado:
 

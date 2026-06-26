@@ -81,6 +81,7 @@ Resultado esperado:
 Endpoint disponible:
 
 - `GET /learning-objects/admin/integrity-audit`
+- `POST /learning-objects/admin/recalculate-checksums`
 
 Documentacion especifica:
 

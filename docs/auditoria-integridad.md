@@ -5,6 +5,7 @@ La auditoria de integridad verifica que los archivos almacenados en `uploads` si
 ## Endpoint
 
 - `GET /learning-objects/admin/integrity-audit`
+- `POST /learning-objects/admin/recalculate-checksums`
 
 Requiere token administrativo:
 
@@ -38,6 +39,32 @@ Authorization: Bearer <token>
 - `missing_checksum`: el archivo existe, pero no hay checksum guardado.
 - `checksum_mismatch`: el archivo existe, pero el checksum actual no coincide con el registrado.
 
+## Reparacion de checksums faltantes
+
+El endpoint `POST /learning-objects/admin/recalculate-checksums` calcula y guarda el SHA-256 de archivos existentes que no tienen checksum registrado.
+
+La accion:
+
+- Actualiza solo recursos con `missing_checksum`.
+- No sobrescribe checksums existentes.
+- No corrige `checksum_mismatch`, porque eso debe revisarse como posible incidente de integridad.
+- Registra un evento de preservacion `checksum_calculated` por cada recurso actualizado.
+
+Respuesta esperada:
+
+```json
+{
+  "status": "ok",
+  "summary": {
+    "total": 2,
+    "updated": 2,
+    "skipped_no_file": 0,
+    "skipped_missing_file": 0,
+    "skipped_invalid_path": 0
+  }
+}
+```
+
 ## Interpretacion operativa
 
 El estado general sera:
@@ -56,7 +83,8 @@ Para `missing_file`:
 Para `missing_checksum`:
 
 - Revisar si el OA fue creado antes de la etapa de preservacion.
-- Reprocesar o reemplazar el archivo para generar checksum.
+- Ejecutar `POST /learning-objects/admin/recalculate-checksums` si el archivo existe.
+- Reprocesar o reemplazar el archivo si no puede calcularse el checksum.
 
 Para `checksum_mismatch`:
 

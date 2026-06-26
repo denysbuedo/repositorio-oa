@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createHash } from 'crypto';
@@ -286,6 +286,42 @@ export class LearningObjectsService {
       generatedAt: new Date().toISOString(),
       summary,
       items,
+    };
+  }
+
+  async recalculateMissingChecksums() {
+    const objects = await this.repository.find({
+      where: { fileChecksumSha256: IsNull() },
+      order: { updatedAt: 'DESC' },
+    });
+
+    const results = await Promise.all(
+      objects.map((object) => this.recalculateObjectChecksum(object)),
+    );
+
+    const summary = results.reduce(
+      (acc, result) => {
+        acc.total += 1;
+        acc[result.status] += 1;
+        return acc;
+      },
+      {
+        total: 0,
+        updated: 0,
+        skipped_no_file: 0,
+        skipped_missing_file: 0,
+        skipped_invalid_path: 0,
+      },
+    );
+
+    return {
+      status:
+        summary.skipped_missing_file > 0 || summary.skipped_invalid_path > 0
+          ? 'attention_required'
+          : 'ok',
+      generatedAt: new Date().toISOString(),
+      summary,
+      results,
     };
   }
 
@@ -578,6 +614,60 @@ export class LearningObjectsService {
           ? ('ok' as const)
           : ('checksum_mismatch' as const),
       actualChecksumSha256,
+    };
+  }
+
+  private async recalculateObjectChecksum(object: LearningObject) {
+    const baseResult = {
+      id: object.id,
+      title: object.title,
+      resourceStatus: object.status,
+      fileUrl: object.fileUrl,
+    };
+
+    if (!object.fileUrl) {
+      return {
+        ...baseResult,
+        status: 'skipped_no_file' as const,
+        checksumSha256: null,
+      };
+    }
+
+    const filePath = resolveUploadPath(object.fileUrl);
+    if (!filePath) {
+      return {
+        ...baseResult,
+        status: 'skipped_invalid_path' as const,
+        checksumSha256: null,
+      };
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return {
+        ...baseResult,
+        status: 'skipped_missing_file' as const,
+        checksumSha256: null,
+      };
+    }
+
+    const checksumSha256 = await calculateSha256(filePath);
+    object.fileChecksumSha256 = checksumSha256;
+    const saved = await this.repository.save(object);
+
+    await this.createPreservationEvent(saved, {
+      eventType: PreservationEventType.CHECKSUM_CALCULATED,
+      message: 'Checksum SHA-256 recalculado para un archivo existente.',
+      details: {
+        checksumSha256,
+        fileUrl: saved.fileUrl,
+        originalFilename: saved.originalFilename,
+      },
+    });
+
+    return {
+      ...baseResult,
+      status: 'updated' as const,
+      checksumSha256,
     };
   }
 
