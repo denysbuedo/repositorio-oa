@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LtiController } from './lti.controller';
 import { LtiService } from './lti.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { LearningObjectsService } from '../learning-objects/learning-objects.service';
 
 jest.mock('jose', () => ({
   exportJWK: jest.fn().mockResolvedValue({ kty: 'RSA' }),
@@ -17,9 +18,16 @@ describe('LtiController', () => {
     getJwks: jest.fn(),
     validateOidcLogin: jest.fn(),
     buildLaunchRedirectUrl: jest.fn(),
+    validateDeepLinkingToken: jest.fn(),
+    createDeepLinkingSession: jest.fn(),
+    buildDeepLinkingRedirectUrl: jest.fn(),
+    buildDeepLinkingResponse: jest.fn(),
   };
   const analyticsServiceMock = {
     recordEvent: jest.fn(),
+  };
+  const learningObjectsServiceMock = {
+    findPublishedOne: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -33,6 +41,10 @@ describe('LtiController', () => {
         {
           provide: AnalyticsService,
           useValue: analyticsServiceMock,
+        },
+        {
+          provide: LearningObjectsService,
+          useValue: learningObjectsServiceMock,
         },
       ],
     }).compile();

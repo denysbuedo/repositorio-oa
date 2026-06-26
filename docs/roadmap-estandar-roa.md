@@ -442,7 +442,7 @@ Reporte de calidad:
 - [x] Mejorar configuracion LTI por plataforma LMS.
 - [x] Validar launches LTI con `id_token` firmado contra JWKS registrado.
 - [x] Extraer curso/contexto, usuario y roles del launch LTI.
-- [ ] Agregar Deep Linking.
+- [x] Agregar Deep Linking.
 - [x] Registrar uso por curso/plataforma.
 - [ ] Crear dashboard avanzado de analitica.
 
@@ -459,16 +459,19 @@ Implementacion inicial:
 - Script disponible: `scripts/lti_platforms_migration.sql`.
 - Validacion de `id_token` LTI con issuer, audience, expiracion/firma y deployment ID.
 - Eventos `lti_launch` enriquecidos con plataforma, curso/contexto, usuario y roles.
+- Endpoint `POST /lti/deep-linking-launch` para iniciar seleccion desde LMS.
+- Endpoint `POST /lti/deep-linking-response` para firmar el recurso seleccionado.
+- Vista `/lti/deep-link` para seleccionar OA publicados y devolver el content item al LMS.
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es continuar Fase 7 con Deep Linking LTI.
+La siguiente tarea recomendada al retomar es continuar Fase 7 con dashboard avanzado de analitica.
 
 Orden sugerido:
 
-1. Implementar endpoint de Deep Linking launch.
-2. Construir respuesta JWT de seleccion de contenido.
-3. Permitir seleccionar OA publicados desde el flujo LMS.
+1. Desglosar analitica por plataforma LTI, curso/contexto y OA.
+2. Agregar filtros de periodo y origen.
+3. Mostrar tendencias basicas en admin.
 4. Documentar configuracion Moodle/Canvas de prueba.
 
 ## Referencias

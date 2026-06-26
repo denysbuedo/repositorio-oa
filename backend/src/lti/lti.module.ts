@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { AuthModule } from '../auth/auth.module';
+import { LearningObjectsModule } from '../learning-objects/learning-objects.module';
 import { LtiController } from './lti.controller';
 import { LtiPlatformsController } from './lti-platforms.controller';
 import { LtiService } from './lti.service';
@@ -14,6 +15,7 @@ import { LtiPlatformsService } from './lti-platforms.service';
     TypeOrmModule.forFeature([LtiPlatform]),
     AnalyticsModule,
     AuthModule,
+    LearningObjectsModule,
     JwtModule,
   ],
   controllers: [LtiController, LtiPlatformsController],
