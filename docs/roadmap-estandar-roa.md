@@ -40,6 +40,7 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Analitica minima de uso: vistas, descargas y lanzamientos LTI.
 - Descargas servidas por endpoint trazable.
 - Resumen de uso visible en el panel administrativo.
+- Registro administrativo inicial de plataformas LTI.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -438,7 +439,7 @@ Reporte de calidad:
 - [x] Registrar vistas desde la ficha publica del OA.
 - [x] Registrar lanzamientos LTI.
 - [x] Mostrar resumen inicial de analitica en admin.
-- [ ] Mejorar configuracion LTI por plataforma LMS.
+- [x] Mejorar configuracion LTI por plataforma LMS.
 - [ ] Agregar Deep Linking.
 - [ ] Registrar uso por curso/plataforma.
 - [ ] Crear dashboard avanzado de analitica.
@@ -450,16 +451,20 @@ Implementacion inicial:
 - Endpoint admin `GET /analytics/summary`.
 - Endpoint publico `GET /learning-objects/{id}/download?source={origen}`.
 - Script disponible: `scripts/usage_analytics_migration.sql`.
+- Entidad `LtiPlatform` sobre la tabla `lti_platforms`.
+- Endpoint admin `GET/POST/PATCH/DELETE /lti/platforms`.
+- Login OIDC con `clientId` y endpoint de autenticacion por plataforma registrada.
+- Script disponible: `scripts/lti_platforms_migration.sql`.
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es continuar Fase 7 con configuracion LTI por plataforma LMS.
+La siguiente tarea recomendada al retomar es continuar Fase 7 con validacion real del launch LTI y contexto LMS.
 
 Orden sugerido:
 
-1. Crear registro administrativo de plataformas LTI.
-2. Guardar issuer, client ID, deployment ID, JWKS URL y dominios permitidos.
-3. Validar launches contra plataformas registradas.
+1. Validar `id_token` firmado contra JWKS de la plataforma registrada.
+2. Validar issuer, audience, deployment ID, nonce y expiracion.
+3. Extraer roles, curso/contexto y usuario del launch.
 4. Asociar eventos LTI a plataforma/curso/contexto.
 
 ## Referencias

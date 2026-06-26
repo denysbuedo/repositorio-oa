@@ -11,6 +11,7 @@ import { LearningObjectVersion } from './learning-objects/entities/learning-obje
 import { LearningObjectPreservationEvent } from './learning-objects/entities/learning-object-preservation-event.entity';
 import { Collection } from './collections/entities/collection.entity';
 import { UsageEvent } from './analytics/entities/usage-event.entity';
+import { LtiPlatform } from './lti/entities/lti-platform.entity';
 import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
 import { AuthModule } from './auth/auth.module';
@@ -41,6 +42,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
           LearningObjectPreservationEvent,
           Collection,
           UsageEvent,
+          LtiPlatform,
         ],
         synchronize: configService.get<string>('DB_SYNC') === 'true',
       }),

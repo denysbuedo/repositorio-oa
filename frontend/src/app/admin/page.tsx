@@ -17,6 +17,19 @@ interface Collection {
   description?: string | null;
 }
 
+interface LtiPlatform {
+  id: string;
+  name: string;
+  issuer: string;
+  clientId: string;
+  deploymentId?: string | null;
+  authLoginUrl?: string | null;
+  authTokenUrl?: string | null;
+  jwksUrl?: string | null;
+  enabled: boolean;
+  notes?: string | null;
+}
+
 interface LearningObject {
   id: string;
   title: string;
@@ -204,6 +217,7 @@ export default function AdminPage() {
   const router = useRouter();
   const [objects, setObjects] = useState<LearningObject[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [ltiPlatforms, setLtiPlatforms] = useState<LtiPlatform[]>([]);
   const [loading, setLoading] = useState(true);
   const [authToken, setAuthToken] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
@@ -221,7 +235,14 @@ export default function AdminPage() {
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
   const [collectionName, setCollectionName] = useState('');
   const [collectionDescription, setCollectionDescription] = useState('');
+  const [ltiPlatformName, setLtiPlatformName] = useState('');
+  const [ltiIssuer, setLtiIssuer] = useState('');
+  const [ltiClientId, setLtiClientId] = useState('');
+  const [ltiDeploymentId, setLtiDeploymentId] = useState('');
+  const [ltiAuthLoginUrl, setLtiAuthLoginUrl] = useState('');
+  const [ltiJwksUrl, setLtiJwksUrl] = useState('');
   const [savingCollection, setSavingCollection] = useState(false);
+  const [savingLtiPlatform, setSavingLtiPlatform] = useState(false);
   const [savingReview, setSavingReview] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -305,6 +326,32 @@ export default function AdminPage() {
       });
   }, [authChecked, authToken]);
 
+  const fetchLtiPlatforms = useCallback(() => {
+    if (!authChecked || !authToken) {
+      return;
+    }
+
+    fetch(`${API_URL}/lti/platforms`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setLtiPlatforms(Array.isArray(data) ? data as LtiPlatform[] : []);
+      })
+      .catch((error) => {
+        console.error('Error loading LTI platforms:', error);
+        setLtiPlatforms([]);
+        setErrorMessage('No se pudieron cargar las plataformas LTI.');
+      });
+  }, [authChecked, authToken]);
+
   const fetchAnalyticsSummary = useCallback(() => {
     if (!authChecked || !authToken) {
       return;
@@ -334,8 +381,9 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchObjects();
     fetchCollections();
+    fetchLtiPlatforms();
     fetchAnalyticsSummary();
-  }, [fetchObjects, fetchCollections, fetchAnalyticsSummary]);
+  }, [fetchObjects, fetchCollections, fetchLtiPlatforms, fetchAnalyticsSummary]);
 
   const filteredObjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -526,6 +574,58 @@ export default function AdminPage() {
     }
   };
 
+  const createLtiPlatform = async () => {
+    const name = ltiPlatformName.trim();
+    const issuer = ltiIssuer.trim();
+    const clientId = ltiClientId.trim();
+
+    if (!name || !issuer || !clientId) {
+      setErrorMessage('Completa nombre, issuer y client ID de la plataforma LTI.');
+      return;
+    }
+
+    setSavingLtiPlatform(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const res = await fetch(`${API_URL}/lti/platforms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          name,
+          issuer,
+          clientId,
+          deploymentId: ltiDeploymentId.trim() || undefined,
+          authLoginUrl: ltiAuthLoginUrl.trim() || undefined,
+          jwksUrl: ltiJwksUrl.trim() || undefined,
+          enabled: true,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(await getApiErrorMessage(res, 'No se pudo crear la plataforma LTI.'));
+      }
+      const platform = await res.json() as LtiPlatform;
+      setLtiPlatforms((current) =>
+        [...current, platform].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      setLtiPlatformName('');
+      setLtiIssuer('');
+      setLtiClientId('');
+      setLtiDeploymentId('');
+      setLtiAuthLoginUrl('');
+      setLtiJwksUrl('');
+      setSuccessMessage('Plataforma LTI creada.');
+    } catch (error) {
+      console.error('Error creating LTI platform:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'No se pudo crear la plataforma LTI.');
+    } finally {
+      setSavingLtiPlatform(false);
+    }
+  };
+
   const updateStatus = async (id: string, status: ObjectStatus) => {
     const targetObject = objects.find((object) => object.id === id);
     if (status === 'published' && targetObject) {
@@ -710,6 +810,84 @@ export default function AdminPage() {
           <button className="primary-button" onClick={createCollection} disabled={savingCollection}>
             {savingCollection ? 'Creando...' : 'Crear coleccion'}
           </button>
+        </div>
+      </section>
+
+      <section className="lti-platforms-panel" aria-label="Gestion de plataformas LTI">
+        <div>
+          <p className="panel-kicker">LTI</p>
+          <h2>Plataformas LMS</h2>
+          <p>Registra consumidores LTI para usar client ID y endpoints por plataforma.</p>
+        </div>
+        <div className="lti-platform-form">
+          <label className="field">
+            <span>Nombre</span>
+            <input
+              value={ltiPlatformName}
+              onChange={(event) => setLtiPlatformName(event.target.value)}
+              placeholder="Ej. Moodle institucional"
+            />
+          </label>
+          <label className="field">
+            <span>Issuer</span>
+            <input
+              value={ltiIssuer}
+              onChange={(event) => setLtiIssuer(event.target.value)}
+              placeholder="https://lms.ejemplo.edu"
+            />
+          </label>
+          <label className="field">
+            <span>Client ID</span>
+            <input
+              value={ltiClientId}
+              onChange={(event) => setLtiClientId(event.target.value)}
+              placeholder="client-id"
+            />
+          </label>
+          <label className="field">
+            <span>Deployment ID</span>
+            <input
+              value={ltiDeploymentId}
+              onChange={(event) => setLtiDeploymentId(event.target.value)}
+              placeholder="Opcional"
+            />
+          </label>
+          <label className="field">
+            <span>Login URL</span>
+            <input
+              value={ltiAuthLoginUrl}
+              onChange={(event) => setLtiAuthLoginUrl(event.target.value)}
+              placeholder="OIDC auth endpoint"
+            />
+          </label>
+          <label className="field">
+            <span>JWKS URL</span>
+            <input
+              value={ltiJwksUrl}
+              onChange={(event) => setLtiJwksUrl(event.target.value)}
+              placeholder="Endpoint de llaves del LMS"
+            />
+          </label>
+          <button className="primary-button" onClick={createLtiPlatform} disabled={savingLtiPlatform}>
+            {savingLtiPlatform ? 'Registrando...' : 'Registrar LMS'}
+          </button>
+        </div>
+        <div className="lti-platform-list">
+          {ltiPlatforms.length > 0 ? (
+            ltiPlatforms.map((platform) => (
+              <article key={platform.id} className="lti-platform-item">
+                <div>
+                  <strong>{platform.name}</strong>
+                  <span>{platform.issuer}</span>
+                </div>
+                <span className={platform.enabled ? 'status-pill published' : 'status-pill archived'}>
+                  {platform.enabled ? 'Activa' : 'Inactiva'}
+                </span>
+              </article>
+            ))
+          ) : (
+            <p className="empty-analytics">No hay plataformas LTI registradas.</p>
+          )}
         </div>
       </section>
 
@@ -1369,12 +1547,26 @@ export default function AdminPage() {
           margin: 0 !important;
         }
 
-        .collections-panel h2 {
+        .lti-platforms-panel {
+          display: grid;
+          grid-template-columns: 280px minmax(0, 1.3fr) minmax(260px, 0.7fr);
+          gap: 1rem;
+          align-items: start;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .collections-panel h2,
+        .lti-platforms-panel h2 {
           font-size: 1rem;
           margin: 0;
         }
 
-        .collections-panel p {
+        .collections-panel p,
+        .lti-platforms-panel p {
           color: #666666;
           margin: 0.35rem 0 0;
           font-size: 0.875rem;
@@ -1392,6 +1584,51 @@ export default function AdminPage() {
           grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) auto;
           gap: 0.75rem;
           align-items: end;
+        }
+
+        .lti-platform-form {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+          align-items: end;
+        }
+
+        .lti-platform-list {
+          display: grid;
+          gap: 0.5rem;
+        }
+
+        .lti-platform-item {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          align-items: center;
+          border: 1px solid #e0e0e0;
+          border-radius: 0.45rem;
+          background: #f8fafc;
+          padding: 0.75rem;
+        }
+
+        .lti-platform-item div {
+          min-width: 0;
+        }
+
+        .lti-platform-item strong,
+        .lti-platform-item span {
+          display: block;
+        }
+
+        .lti-platform-item strong {
+          color: #1a1a1a;
+          font-size: 0.85rem;
+        }
+
+        .lti-platform-item div span {
+          color: #666666;
+          font-size: 0.75rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .field {
@@ -1960,6 +2197,11 @@ export default function AdminPage() {
             grid-template-columns: 1fr;
           }
 
+          .lti-platforms-panel,
+          .lti-platform-form {
+            grid-template-columns: 1fr;
+          }
+
           .admin-workspace {
             grid-template-columns: 1fr;
           }
@@ -1974,12 +2216,14 @@ export default function AdminPage() {
           .toolbar,
           .collections-panel,
           .analytics-panel,
+          .lti-platforms-panel,
           .collection-form {
             flex-direction: column;
             align-items: stretch;
           }
 
           .collections-panel,
+          .lti-platforms-panel,
           .collection-form {
             display: flex;
           }

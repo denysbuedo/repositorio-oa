@@ -30,8 +30,8 @@ export class LtiController {
   }
 
   @Get('login')
-  login(@Query() query: OidcLoginParams, @Res() res: Response) {
-    const redirectUrl = this.ltiService.validateOidcLogin(query);
+  async login(@Query() query: OidcLoginParams, @Res() res: Response) {
+    const redirectUrl = await this.ltiService.validateOidcLogin(query);
     return res.redirect(redirectUrl);
   }
 

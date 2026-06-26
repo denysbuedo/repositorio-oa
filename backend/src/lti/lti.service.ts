@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { exportJWK, generateKeyPair, GenerateKeyPairResult } from 'jose';
 import * as crypto from 'crypto';
+import { LtiPlatformsService } from './lti-platforms.service';
 
 export interface JwksResponse {
   keys: Array<Record<string, unknown>>;
@@ -19,13 +20,14 @@ export class LtiService implements OnModuleInit {
   private jwks: JwksResponse = { keys: [] };
   private readonly frontendUrl =
     process.env.FRONTEND_URL ?? 'http://localhost:3000';
-  private readonly clientId = process.env.LTI_CLIENT_ID ?? 'moodle_client_id';
+  private readonly fallbackClientId =
+    process.env.LTI_CLIENT_ID ?? 'moodle_client_id';
+
+  constructor(private readonly platformsService: LtiPlatformsService) {}
 
   async onModuleInit() {
-    // Generar par de llaves directamente
     this.keys = await generateKeyPair('RS256');
 
-    // Generar el JWKS público desde la llave pública
     const jwk = await exportJWK(this.keys.publicKey);
     this.jwks = {
       keys: [
@@ -43,19 +45,22 @@ export class LtiService implements OnModuleInit {
     return this.jwks;
   }
 
-  validateOidcLogin(params: OidcLoginParams): string {
+  async validateOidcLogin(params: OidcLoginParams): Promise<string> {
     const { iss, login_hint, target_link_uri, lti_message_hint } = params;
+    const platform = await this.platformsService.findEnabledByIssuer(iss);
 
-    // Usamos el módulo nativo solo para generar IDs aleatorios
     const state = crypto.randomUUID();
     const nonce = crypto.randomUUID();
+    const redirectUrl = new URL(platform?.authLoginUrl || iss);
 
-    const redirectUrl = new URL(iss);
     redirectUrl.searchParams.append('response_type', 'id_token');
     redirectUrl.searchParams.append('response_mode', 'form_post');
     redirectUrl.searchParams.append('id_token_signed_response_alg', 'RS256');
     redirectUrl.searchParams.append('scope', 'openid');
-    redirectUrl.searchParams.append('client_id', this.clientId);
+    redirectUrl.searchParams.append(
+      'client_id',
+      platform?.clientId || this.fallbackClientId,
+    );
     redirectUrl.searchParams.append('login_hint', login_hint);
     redirectUrl.searchParams.append('lti_message_hint', lti_message_hint);
     redirectUrl.searchParams.append('prompt', 'none');
