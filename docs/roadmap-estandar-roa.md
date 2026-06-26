@@ -136,6 +136,7 @@ Migraciones aplicadas localmente:
 - `scripts/versioning_preservation_migration.sql`
 - `scripts/usage_analytics_migration.sql`
 - `scripts/lti_platforms_migration.sql`
+- `scripts/persistent_identifiers_migration.sql`
 
 Estado local conocido:
 
@@ -584,14 +585,15 @@ Implementacion inicial:
 - Endpoint `POST /lti/deep-linking-response` para firmar el recurso seleccionado.
 - Vista `/lti/deep-link` para seleccionar OA publicados y devolver el content item al LMS.
 - Dashboard admin con filtros de periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
+- Campos `canonicalUrl`, `persistentIdentifier` y `citationText` para citacion e interoperabilidad.
 
 ### Fase 8: Operacion, documentacion e identificadores persistentes
 
 - [x] Documentar configuracion operativa LTI para Moodle/Canvas.
 - [x] Crear checklist de pruebas para launch, Deep Linking y analitica.
-- [ ] Definir estrategia institucional de identificadores persistentes.
+- [x] Definir estrategia institucional inicial de identificadores persistentes.
 - [ ] Evaluar DOI, Handle o ARK.
-- [ ] Definir politica de citacion de OA y versiones.
+- [x] Definir politica de citacion de OA y versiones.
 - [ ] Preparar guia de despliegue/operacion para entorno institucional.
 - [ ] Preparar plan de copias de seguridad y auditoria de integridad.
 
@@ -615,6 +617,7 @@ Orden sugerido:
 Documentacion disponible:
 
 - `docs/guia-operativa-lti.md`
+- `docs/politica-identificadores-citacion.md`
 
 ## Referencias
 

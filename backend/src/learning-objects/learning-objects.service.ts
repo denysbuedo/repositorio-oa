@@ -262,6 +262,8 @@ export class LearningObjectsService {
             : '1.0';
     }
 
+    this.refreshStableIdentifiers(updated);
+
     const saved = await this.repository.save(updated);
 
     if (shouldSnapshot) {
@@ -304,6 +306,8 @@ export class LearningObjectsService {
     if (object.status === ObjectStatus.PUBLISHED) {
       object.currentVersion = getNextMinorVersion(object.currentVersion);
     }
+
+    this.refreshStableIdentifiers(object);
 
     const saved = await this.repository.save(object);
 
@@ -467,6 +471,13 @@ export class LearningObjectsService {
         qualityWarnings: report.warnings,
       });
     }
+  }
+
+  private refreshStableIdentifiers(object: LearningObject) {
+    object.canonicalUrl = buildCanonicalUrl(object.id);
+    object.persistentIdentifier =
+      object.persistentIdentifier?.trim() || object.canonicalUrl;
+    object.citationText = buildCitationText(object);
   }
 
   private async createVersionSnapshot(
@@ -698,16 +709,20 @@ function getAccessibilityCheckKeys(): Array<{
 function buildMetadataExport(object: LearningObject) {
   const metadata = (object.lomMetadata ?? {}) as LomMetadata;
   const keywords = metadata.general?.keyword ?? [];
-  const canonicalUrl = buildCanonicalUrl(object.id);
+  const canonicalUrl = object.canonicalUrl ?? buildCanonicalUrl(object.id);
+  const persistentIdentifier = object.persistentIdentifier ?? canonicalUrl;
+  const citationText = object.citationText ?? buildCitationText(object);
   const fileUrl = object.fileUrl ? buildApiFileUrl(object.fileUrl) : null;
   const license = metadata.rights?.license ?? null;
 
   return {
     identifier: object.id,
     canonicalUrl,
+    persistentIdentifier,
+    citationText,
     formats: ['dublinCore', 'lrmi'],
     dublinCore: {
-      identifier: canonicalUrl,
+      identifier: persistentIdentifier,
       title: object.title,
       creator: object.author,
       description: object.description ?? '',
@@ -720,12 +735,14 @@ function buildMetadataExport(object: LearningObject) {
       date: object.createdAt,
       source: fileUrl,
       version: object.currentVersion,
+      bibliographicCitation: citationText,
     },
     lrmi: {
       '@context': 'https://schema.org',
       '@type': 'LearningResource',
       '@id': canonicalUrl,
       url: canonicalUrl,
+      identifier: persistentIdentifier,
       name: object.title,
       description: object.description ?? '',
       author: {
@@ -753,6 +770,7 @@ function buildMetadataExport(object: LearningObject) {
       encodingFormat: object.fileMimeType ?? undefined,
       contentUrl: fileUrl ?? undefined,
       version: object.currentVersion,
+      citation: citationText,
       sha256: object.fileChecksumSha256 ?? undefined,
       accessibilitySummary: metadata.accessibility?.notes ?? undefined,
       accessibilityFeature: getAccessibilityFeatures(metadata.accessibility),
@@ -813,6 +831,16 @@ function buildCanonicalUrl(id: string) {
     process.env.NEXT_PUBLIC_FRONTEND_URL ??
     'http://localhost:3000';
   return `${baseUrl.replace(/\/$/, '')}/objects/${id}`;
+}
+
+function buildCitationText(object: LearningObject) {
+  const year = object.updatedAt
+    ? new Date(object.updatedAt).getFullYear()
+    : new Date().getFullYear();
+  const canonicalUrl = object.canonicalUrl ?? buildCanonicalUrl(object.id);
+  const version = object.currentVersion ?? '0.1';
+
+  return `${object.author}. (${year}). ${object.title} (Version ${version}) [Objeto de aprendizaje]. Repositorio OA. ${canonicalUrl}`;
 }
 
 function buildApiFileUrl(filePath: string) {

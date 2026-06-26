@@ -95,6 +95,15 @@ export class LearningObject {
   @Column({ type: 'varchar', default: '0.1' })
   currentVersion: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  canonicalUrl: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  persistentIdentifier: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  citationText: string | null;
+
   @OneToMany(() => LearningObjectVersion, (version) => version.learningObject)
   versions: LearningObjectVersion[];
 

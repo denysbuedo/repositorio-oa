@@ -23,6 +23,9 @@ interface LearningObject {
   originalFilename?: string | null;
   fileSize?: number | null;
   currentVersion?: string;
+  canonicalUrl?: string | null;
+  persistentIdentifier?: string | null;
+  citationText?: string | null;
   collection?: Collection | null;
   lomMetadata?: {
     general?: {
@@ -63,6 +66,7 @@ export default function ObjectDetailPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const keywords = useMemo(() => object?.lomMetadata?.general?.keyword ?? [], [object]);
   const canonicalPath = `/objects/${objectId}`;
+  const canonicalUrl = object?.canonicalUrl ?? canonicalPath;
 
   useEffect(() => {
     if (!objectId) return;
@@ -88,7 +92,10 @@ export default function ObjectDetailPage() {
   }, [objectId]);
 
   const copyCanonicalUrl = () => {
-    void navigator.clipboard.writeText(`${window.location.origin}${canonicalPath}`);
+    const value = canonicalUrl.startsWith('http')
+      ? canonicalUrl
+      : `${window.location.origin}${canonicalUrl}`;
+    void navigator.clipboard.writeText(value);
   };
 
   if (loading) {
@@ -112,7 +119,7 @@ export default function ObjectDetailPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildJsonLd(object, canonicalPath)),
+          __html: JSON.stringify(buildJsonLd(object, canonicalUrl)),
         }}
       />
       <header className="detail-header">
@@ -136,8 +143,9 @@ export default function ObjectDetailPage() {
           <h2>Ficha del OA</h2>
           <dl className="metadata-list">
             <MetadataRow label="Identificador" value={object.id} />
+            <MetadataRow label="Identificador persistente" value={object.persistentIdentifier ?? canonicalUrl} />
             <MetadataRow label="Version" value={object.currentVersion ?? 'Sin version'} />
-            <MetadataRow label="URL canonica" value={canonicalPath} />
+            <MetadataRow label="URL canonica" value={canonicalUrl} />
             <MetadataRow label="Autor" value={object.author} />
             <MetadataRow label="Coleccion" value={object.collection?.name ?? 'Sin coleccion'} />
             <MetadataRow label="Tipo" value={object.lomMetadata?.educational?.learningResourceType ?? 'Sin tipo'} />
@@ -174,6 +182,10 @@ export default function ObjectDetailPage() {
           <a href={`${API_URL}/learning-objects/${object.id}/metadata`} className="metadata-export-link">
             Ver metadatos Dublin Core / LRMI
           </a>
+          <div className="citation-card">
+            <span>Cita recomendada</span>
+            <p>{object.citationText ?? buildFallbackCitation(object, canonicalUrl)}</p>
+          </div>
           <div className="preservation-card">
             <span>Preservacion</span>
             <strong>Version {object.currentVersion ?? '0.1'}</strong>
@@ -332,7 +344,8 @@ export default function ObjectDetailPage() {
           margin-bottom: 0.9rem;
         }
 
-        .preservation-card {
+        .preservation-card,
+        .citation-card {
           border: 1px solid #dbe4ef;
           border-radius: 0.5rem;
           background: #f7f9fc;
@@ -340,7 +353,8 @@ export default function ObjectDetailPage() {
           margin-bottom: 1rem;
         }
 
-        .preservation-card span {
+        .preservation-card span,
+        .citation-card span {
           display: block;
           color: #666666;
           font-size: 0.7rem;
@@ -357,6 +371,14 @@ export default function ObjectDetailPage() {
         }
 
         .preservation-card p {
+          margin: 0;
+        }
+
+        .citation-card p {
+          color: #1a1a1a;
+          font-size: 0.86rem;
+          font-weight: 700;
+          line-height: 1.55;
           margin: 0;
         }
 
@@ -457,6 +479,7 @@ function buildJsonLd(object: LearningObject, canonicalPath: string) {
     '@type': 'LearningResource',
     '@id': canonicalPath,
     url: canonicalPath,
+    identifier: object.persistentIdentifier ?? canonicalPath,
     name: object.title,
     description: object.description ?? '',
     author: {
@@ -483,10 +506,15 @@ function buildJsonLd(object: LearningObject, canonicalPath: string) {
     encodingFormat: object.fileMimeType,
     contentUrl: object.fileUrl ? `${API_URL}/learning-objects/${object.id}/download?source=metadata` : undefined,
     version: object.currentVersion,
+    citation: object.citationText ?? buildFallbackCitation(object, canonicalPath),
     sha256: object.fileChecksumSha256,
     accessibilitySummary: object.lomMetadata?.accessibility?.notes,
     accessibilityFeature: getAccessibilityFeatures(object.lomMetadata?.accessibility),
   };
+}
+
+function buildFallbackCitation(object: LearningObject, canonicalUrl: string) {
+  return `${object.author}. ${object.title} (Version ${object.currentVersion ?? '0.1'}) [Objeto de aprendizaje]. Repositorio OA. ${canonicalUrl}`;
 }
 
 async function recordUsageEvent(
