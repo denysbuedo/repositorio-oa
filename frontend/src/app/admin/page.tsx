@@ -160,6 +160,29 @@ interface AnalyticsSummary {
   }>;
 }
 
+interface IntegrityAuditSummary {
+  total: number;
+  ok: number;
+  no_file: number;
+  missing_file: number;
+  missing_checksum: number;
+  checksum_mismatch: number;
+}
+
+interface IntegrityAudit {
+  status: 'ok' | 'attention_required';
+  generatedAt: string;
+  summary: IntegrityAuditSummary;
+}
+
+interface ChecksumRepairSummary {
+  total: number;
+  updated: number;
+  skipped_no_file: number;
+  skipped_missing_file: number;
+  skipped_invalid_path: number;
+}
+
 interface ReviewForm {
   title: string;
   description: string;
@@ -253,9 +276,11 @@ export default function AdminPage() {
   const [preservationEvents, setPreservationEvents] = useState<PreservationEvent[]>([]);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [integrityAudit, setIntegrityAudit] = useState<IntegrityAudit | null>(null);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingQuality, setLoadingQuality] = useState(false);
+  const [loadingIntegrity, setLoadingIntegrity] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(createReviewForm(null));
   const [collectionName, setCollectionName] = useState('');
   const [collectionDescription, setCollectionDescription] = useState('');
@@ -268,6 +293,7 @@ export default function AdminPage() {
   const [savingCollection, setSavingCollection] = useState(false);
   const [savingLtiPlatform, setSavingLtiPlatform] = useState(false);
   const [savingReview, setSavingReview] = useState(false);
+  const [repairingChecksums, setRepairingChecksums] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -406,13 +432,40 @@ export default function AdminPage() {
       });
   }, [analyticsDays, analyticsSource, authChecked, authToken]);
 
+  const fetchIntegrityAudit = useCallback(async () => {
+    if (!authChecked || !authToken) {
+      return;
+    }
+
+    setLoadingIntegrity(true);
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/admin/integrity-audit`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setIntegrityAudit(data as IntegrityAudit);
+    } catch (error) {
+      console.error('Error loading integrity audit:', error);
+      setIntegrityAudit(null);
+      setErrorMessage('No se pudo cargar la auditoria de integridad.');
+    } finally {
+      setLoadingIntegrity(false);
+    }
+  }, [authChecked, authToken]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchObjects();
     fetchCollections();
     fetchLtiPlatforms();
     fetchAnalyticsSummary();
-  }, [fetchObjects, fetchCollections, fetchLtiPlatforms, fetchAnalyticsSummary]);
+    fetchIntegrityAudit();
+  }, [fetchObjects, fetchCollections, fetchLtiPlatforms, fetchAnalyticsSummary, fetchIntegrityAudit]);
 
   const filteredObjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -515,6 +568,36 @@ export default function AdminPage() {
       setLoadingQuality(false);
     }
   }, [authToken]);
+
+  const recalculateChecksums = async () => {
+    if (!authToken || repairingChecksums) return;
+
+    setRepairingChecksums(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      const res = await fetch(`${API_URL}/learning-objects/admin/recalculate-checksums`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json() as { summary?: ChecksumRepairSummary };
+      const updated = data.summary?.updated ?? 0;
+      setSuccessMessage(`Checksums recalculados: ${updated} recurso(s) actualizado(s).`);
+      await fetchIntegrityAudit();
+      fetchObjects();
+    } catch (error) {
+      console.error('Error recalculating checksums:', error);
+      setErrorMessage('No se pudieron recalcular los checksums.');
+    } finally {
+      setRepairingChecksums(false);
+    }
+  };
 
   const selectObject = (object: LearningObject) => {
     setSelectedObject(object);
@@ -787,6 +870,32 @@ export default function AdminPage() {
         <Metric label="Perfil completo" value={stats.completeProfile} />
         <Metric label="Vistas" value={analyticsSummary?.views ?? 0} tone="blue" />
         <Metric label="Descargas" value={analyticsSummary?.downloads ?? 0} tone="blue" />
+      </section>
+
+      <section className={`integrity-panel integrity-${integrityAudit?.status ?? 'loading'}`} aria-label="Auditoria de integridad">
+        <div>
+          <p className="panel-kicker">Preservacion</p>
+          <h2>Integridad de archivos</h2>
+          <p>{getIntegrityStatusText(integrityAudit, loadingIntegrity)}</p>
+        </div>
+        <div className="integrity-summary">
+          <Metric label="Verificados" value={integrityAudit?.summary.ok ?? 0} compact />
+          <Metric label="Sin checksum" value={integrityAudit?.summary.missing_checksum ?? 0} compact />
+          <Metric label="Faltantes" value={integrityAudit?.summary.missing_file ?? 0} compact />
+          <Metric label="Alterados" value={integrityAudit?.summary.checksum_mismatch ?? 0} compact />
+        </div>
+        <div className="integrity-actions">
+          <button className="secondary-button" onClick={fetchIntegrityAudit} disabled={loadingIntegrity}>
+            {loadingIntegrity ? 'Verificando...' : 'Verificar'}
+          </button>
+          <button
+            className="primary-button"
+            onClick={recalculateChecksums}
+            disabled={repairingChecksums || loadingIntegrity || (integrityAudit?.summary.missing_checksum ?? 0) === 0}
+          >
+            {repairingChecksums ? 'Recalculando...' : 'Recalcular checksums'}
+          </button>
+        </div>
       </section>
 
       <section className="analytics-panel" aria-label="Analitica de uso">
@@ -1586,6 +1695,48 @@ export default function AdminPage() {
           margin-bottom: 1rem;
         }
 
+        .integrity-panel {
+          display: grid;
+          grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.3fr) auto;
+          gap: 1rem;
+          align-items: center;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-left: 0.35rem solid #1f5fbf;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .integrity-attention_required {
+          border-left-color: #b45309;
+        }
+
+        .integrity-panel h2 {
+          font-size: 1rem;
+          margin: 0;
+        }
+
+        .integrity-panel p {
+          color: #666666;
+          margin: 0.35rem 0 0;
+          font-size: 0.875rem;
+        }
+
+        .integrity-summary {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+
+        .integrity-actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
         .analytics-panel h2 {
           font-size: 1rem;
           margin: 0;
@@ -2355,6 +2506,14 @@ export default function AdminPage() {
             grid-template-columns: 1fr;
           }
 
+          .integrity-panel {
+            grid-template-columns: 1fr;
+          }
+
+          .integrity-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
           .analytics-breakdowns {
             grid-template-columns: 1fr;
           }
@@ -2598,6 +2757,27 @@ function getQualityStatusLabel(report: QualityReport) {
   }
 
   return 'Sin bloqueos ni avisos relevantes.';
+}
+
+function getIntegrityStatusText(audit: IntegrityAudit | null, loading: boolean) {
+  if (loading) {
+    return 'Verificando archivos, rutas y checksums registrados.';
+  }
+
+  if (!audit) {
+    return 'Auditoria no disponible.';
+  }
+
+  if (audit.status === 'ok') {
+    return `${audit.summary.ok} de ${audit.summary.total} recurso(s) con integridad correcta.`;
+  }
+
+  const findings =
+    audit.summary.missing_file +
+    audit.summary.missing_checksum +
+    audit.summary.checksum_mismatch;
+
+  return `${findings} hallazgo(s) requieren revision de preservacion.`;
 }
 
 function getTrendWidth(
