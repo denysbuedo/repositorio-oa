@@ -84,6 +84,66 @@ Punto exacto para retomar:
 - Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots, historial visible y eventos de preservacion en admin.
 - Siguiente paso recomendado: preparar Fase 6 de accesibilidad y calidad.
 
+## Estado al cierre del 26 de junio de 2026
+
+Ultimo commit registrado al cierre:
+
+- `069c8cc Add advanced analytics dashboard`
+
+Trabajo completado desde el cierre anterior:
+
+- `bf8f20b Show learning object version history`: se completo el historial de versiones visible en admin.
+- `0c4982c Add preservation event audit trail`: se agrego registro auditable de eventos de preservacion.
+- `25f9849 Validate uploaded resource file content`: se valido contenido real de PDF/DOCX antes de registrar archivos.
+- `8ee440a Document OAI-PMH harvesting`: se documento la cosecha OAI-PMH.
+- `019b762 Add accessibility quality checklist`: se agrego checklist inicial de accesibilidad/calidad.
+- `2ad4674 Add accessibility metadata fields`: se agregaron campos estructurados de accesibilidad.
+- `7817a17 Add learning object quality report`: se agrego reporte de calidad por OA.
+- `7f739c8 Enforce quality checks before publishing`: se conectaron bloqueos de calidad al flujo de publicacion.
+- `0cbf70d Document admin quality workflow`: se documento el flujo admin de calidad.
+- `378dc82 Add skip link for keyboard navigation`: se agrego enlace global para saltar al contenido.
+- `3d6d122 Add usage analytics tracking`: se implemento analitica minima y descargas trazables.
+- `27a63ba Add LTI platform registry`: se agrego registro administrativo de plataformas LTI.
+- `a623936 Validate LTI launch tokens`: se valido `id_token` LTI contra JWKS registrado y se guardo contexto LMS.
+- `915734e Add LTI deep linking flow`: se agrego flujo Deep Linking para seleccionar OA desde LMS.
+- `069c8cc Add advanced analytics dashboard`: se agrego dashboard admin con filtros y desgloses de analitica.
+
+Validaciones ejecutadas durante esta etapa:
+
+- `npm.cmd --prefix backend run build`
+- `npm.cmd --prefix backend run lint`
+- `npm.cmd --prefix backend test -- --runInBand`
+- `npm.cmd --prefix frontend run lint`
+- `npm.cmd --prefix frontend run build`
+- Prueba HTTP de `GET /learning-objects` con respuesta `200`.
+- Prueba HTTP de `POST /analytics/events` con respuesta `201`.
+- Prueba HTTP de `GET /analytics/summary?days=30&source=all` con token admin y datos de resumen.
+- Prueba HTTP de `GET /lti/platforms` sin token con respuesta `401`.
+- Prueba CRUD real de plataforma LTI temporal: crear, listar y eliminar.
+- Prueba HTTP legacy de `POST /lti/launch` con `custom_object_id` y redireccion `302`.
+- Prueba HTTP de `/lti/deep-link` con respuesta `200`.
+- Prueba HTTP de `POST /lti/deep-linking-response` sin payload con respuesta `400`.
+
+Migraciones aplicadas localmente:
+
+- `scripts/collections_migration.sql`
+- `scripts/versioning_preservation_migration.sql`
+- `scripts/usage_analytics_migration.sql`
+- `scripts/lti_platforms_migration.sql`
+
+Estado local conocido:
+
+- La rama activa de trabajo es `dev`.
+- Los cambios fueron subidos a `origin/dev`.
+- Quedan sin versionar `start-backend.bat` y `start-frontend.bat`; se mantienen locales.
+- Backend y frontend quedaron funcionales durante las pruebas en `http://localhost:3001` y `http://localhost:3000`.
+
+Punto exacto para retomar:
+
+- Fase 7 esta funcionalmente completa: analitica, plataformas LTI, validacion de launch, Deep Linking y dashboard.
+- Siguiente paso recomendado: cerrar Fase 7 con documentacion operativa LTI y checklist de pruebas Moodle/Canvas.
+- Despues de documentar LTI, evaluar inicio de una nueva fase centrada en identificadores persistentes externos, auditoria editorial avanzada o despliegue/operacion.
+
 ## Brechas principales
 
 ### 1. Perfil formal de metadatos
