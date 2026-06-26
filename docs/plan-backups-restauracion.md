@@ -78,6 +78,14 @@ Resultado esperado:
 - Si el archivo falta, el OA debe marcarse para revision.
 - Si el checksum no coincide, se debe investigar posible corrupcion o reemplazo no autorizado.
 
+Endpoint disponible:
+
+- `GET /learning-objects/admin/integrity-audit`
+
+Documentacion especifica:
+
+- `docs/auditoria-integridad.md`
+
 ## Incidentes
 
 Ante perdida o corrupcion:
@@ -91,7 +99,7 @@ Ante perdida o corrupcion:
 ## Pendientes de automatizacion
 
 - Script institucional de backup.
-- Script de auditoria de checksums.
+- Programacion institucional de la auditoria de checksums.
 - Alerta automatica si `/health` devuelve `degraded`.
 - Alerta por bajo espacio en disco.
 - Exportacion de reporte de integridad.

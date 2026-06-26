@@ -152,6 +152,11 @@ export class LearningObjectsController {
     return this.service.getQualityReport(id);
   }
 
+  @Get('admin/integrity-audit')
+  getIntegrityAudit() {
+    return this.service.getIntegrityAudit();
+  }
+
   @Get(':id')
   @Public()
   findOne(@Param('id', ParseUUIDPipe) id: string) {

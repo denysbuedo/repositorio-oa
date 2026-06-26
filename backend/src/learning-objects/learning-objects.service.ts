@@ -60,6 +60,12 @@ type LomMetadata = {
 
 type AccessibilityValue = 'yes' | 'no' | 'not_applicable' | '';
 type QualityIssueSeverity = 'blocker' | 'warning';
+type IntegrityAuditStatus =
+  | 'ok'
+  | 'no_file'
+  | 'missing_file'
+  | 'missing_checksum'
+  | 'checksum_mismatch';
 
 @Injectable()
 export class LearningObjectsService {
@@ -234,6 +240,53 @@ export class LearningObjectsService {
   async getQualityReport(id: string) {
     const object = await this.findOne(id);
     return buildQualityReport(object);
+  }
+
+  async getIntegrityAudit() {
+    const objects = await this.repository.find({
+      order: { updatedAt: 'DESC' },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        fileUrl: true,
+        originalFilename: true,
+        fileChecksumSha256: true,
+        updatedAt: true,
+      },
+    });
+
+    const items = await Promise.all(
+      objects.map((object) => this.auditObjectIntegrity(object)),
+    );
+
+    const summary = items.reduce(
+      (acc, item) => {
+        acc.total += 1;
+        acc[item.status] += 1;
+        return acc;
+      },
+      {
+        total: 0,
+        ok: 0,
+        no_file: 0,
+        missing_file: 0,
+        missing_checksum: 0,
+        checksum_mismatch: 0,
+      } satisfies Record<IntegrityAuditStatus | 'total', number>,
+    );
+
+    return {
+      status:
+        summary.missing_file > 0 ||
+        summary.missing_checksum > 0 ||
+        summary.checksum_mismatch > 0
+          ? 'attention_required'
+          : 'ok',
+      generatedAt: new Date().toISOString(),
+      summary,
+      items,
+    };
   }
 
   async update(
@@ -478,6 +531,54 @@ export class LearningObjectsService {
     object.persistentIdentifier =
       object.persistentIdentifier?.trim() || object.canonicalUrl;
     object.citationText = buildCitationText(object);
+  }
+
+  private async auditObjectIntegrity(object: LearningObject) {
+    const baseItem = {
+      id: object.id,
+      title: object.title,
+      resourceStatus: object.status,
+      originalFilename: object.originalFilename,
+      fileUrl: object.fileUrl,
+      expectedChecksumSha256: object.fileChecksumSha256,
+      checkedAt: new Date().toISOString(),
+    };
+
+    if (!object.fileUrl) {
+      return {
+        ...baseItem,
+        status: 'no_file' as const,
+        actualChecksumSha256: null,
+      };
+    }
+
+    const filePath = resolveUploadPath(object.fileUrl);
+    if (!filePath || !fs.existsSync(filePath)) {
+      return {
+        ...baseItem,
+        status: 'missing_file' as const,
+        actualChecksumSha256: null,
+      };
+    }
+
+    if (!object.fileChecksumSha256) {
+      return {
+        ...baseItem,
+        status: 'missing_checksum' as const,
+        actualChecksumSha256: await calculateSha256(filePath),
+      };
+    }
+
+    const actualChecksumSha256 = await calculateSha256(filePath);
+
+    return {
+      ...baseItem,
+      status:
+        actualChecksumSha256 === object.fileChecksumSha256
+          ? ('ok' as const)
+          : ('checksum_mismatch' as const),
+      actualChecksumSha256,
+    };
   }
 
   private async createVersionSnapshot(
@@ -846,4 +947,20 @@ function buildCitationText(object: LearningObject) {
 function buildApiFileUrl(filePath: string) {
   const baseUrl = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
   return `${baseUrl.replace(/\/$/, '')}/${filePath.replace(/\\/g, '/')}`;
+}
+
+function resolveUploadPath(fileUrl: string) {
+  const uploadsRoot = path.resolve(process.cwd(), 'uploads');
+  const filePath = path.resolve(process.cwd(), fileUrl);
+  const normalizedRoot = uploadsRoot.toLowerCase();
+  const normalizedFilePath = filePath.toLowerCase();
+
+  if (
+    normalizedFilePath !== normalizedRoot &&
+    !normalizedFilePath.startsWith(`${normalizedRoot}${path.sep}`)
+  ) {
+    return null;
+  }
+
+  return filePath;
 }

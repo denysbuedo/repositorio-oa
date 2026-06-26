@@ -361,10 +361,10 @@ Implementado:
 - Validacion de MIME real.
 - Politica de formatos aceptados.
 - Registro de eventos de preservacion.
+- Auditoria administrativa de integridad de archivos.
 
 Pendientes reales:
 
-- Auditoria de integridad.
 - Copias de seguridad.
 - Metadatos de preservacion compatibles con PREMIS en fases posteriores.
 
@@ -587,6 +587,7 @@ Implementacion inicial:
 - Dashboard admin con filtros de periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
 - Campos `canonicalUrl`, `persistentIdentifier` y `citationText` para citacion e interoperabilidad.
 - Endpoint publico `GET /health` para verificacion operativa de backend, base de datos y carpeta de archivos.
+- Endpoint admin `GET /learning-objects/admin/integrity-audit` para auditoria de existencia y checksum de archivos.
 
 ### Fase 8: Operacion, documentacion e identificadores persistentes
 
@@ -597,6 +598,7 @@ Implementacion inicial:
 - [x] Definir politica de citacion de OA y versiones.
 - [x] Preparar guia de despliegue/operacion para entorno institucional.
 - [x] Preparar plan de copias de seguridad y auditoria de integridad.
+- [x] Implementar endpoint administrativo de auditoria de checksums.
 
 Resultado esperado:
 
@@ -621,6 +623,7 @@ Documentacion disponible:
 - `docs/politica-identificadores-citacion.md`
 - `docs/guia-despliegue-operacion.md`
 - `docs/plan-backups-restauracion.md`
+- `docs/auditoria-integridad.md`
 
 ## Referencias
 
