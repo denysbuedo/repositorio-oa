@@ -41,8 +41,14 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Descargas servidas por endpoint trazable.
 - Resumen de uso visible en el panel administrativo.
 - Registro administrativo inicial de plataformas LTI.
+- Validacion real de launches LTI con `id_token` firmado contra JWKS registrado.
+- Deep Linking LTI para seleccionar OA publicados desde un LMS.
+- Eventos LTI enriquecidos con plataforma, curso/contexto, usuario y roles.
+- Dashboard admin de analitica con filtros por periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
 
-## Estado al cierre del 14 de junio de 2026
+## Historial de cierres
+
+### Cierre del 14 de junio de 2026
 
 Ultimo commit registrado al cierre:
 
@@ -78,17 +84,17 @@ Estado local conocido:
 - La base local ya tiene aplicada la migracion de colecciones usando `scripts/collections_migration.sql`.
 - Para Fase 5 existe la migracion `scripts/versioning_preservation_migration.sql`; debe aplicarse si `DB_SYNC` no esta activo.
 
-Punto exacto para retomar:
+Punto exacto documentado en ese cierre:
 
 - Fase 4, OAI-PMH, quedo implementada y validada en backend.
 - Fase 5 quedo iniciada con version actual, checksum SHA-256, snapshots, historial visible y eventos de preservacion en admin.
-- Siguiente paso recomendado: preparar Fase 6 de accesibilidad y calidad.
+- El siguiente paso recomendado entonces era preparar Fase 6 de accesibilidad y calidad.
 
-## Estado al cierre del 26 de junio de 2026
+### Cierre del 26 de junio de 2026
 
 Ultimo commit registrado al cierre:
 
-- `069c8cc Add advanced analytics dashboard`
+- `0f00cc0 Update roadmap closure status`
 
 Trabajo completado desde el cierre anterior:
 
@@ -148,7 +154,7 @@ Punto exacto para retomar:
 
 ### 1. Perfil formal de metadatos
 
-Actualmente se almacena `lomMetadata` como JSON flexible. Para un repositorio estandar se necesita definir un perfil institucional de metadatos:
+Actualmente se almacena `lomMetadata` como JSON flexible y ya existe un perfil ROA minimo para publicar. La brecha real es formalizarlo como perfil institucional versionado:
 
 - Campos obligatorios.
 - Campos opcionales.
@@ -156,7 +162,7 @@ Actualmente se almacena `lomMetadata` como JSON flexible. Para un repositorio es
 - Reglas de validacion.
 - Correspondencia entre IEEE LOM, Dublin Core y LRMI.
 
-Campos prioritarios:
+Campos ya priorizados en el sistema:
 
 - Titulo.
 - Descripcion.
@@ -176,11 +182,18 @@ Campos prioritarios:
 - Coleccion.
 - Relaciones con otros OA.
 
+Pendientes reales:
+
+- Convertir el perfil minimo en una especificacion institucional versionada.
+- Definir vocabularios controlados oficiales por campo.
+- Documentar el mapeo completo IEEE LOM -> Dublin Core -> LRMI.
+- Evaluar validacion estructural mas estricta sobre `lomMetadata`.
+
 ### 2. Validacion antes de publicar
 
-Un OA no debe publicarse si faltan datos criticos. El admin debe mostrar una lista clara de bloqueos o advertencias.
+El backend ya bloquea la publicacion si faltan datos criticos y el admin muestra completitud, bloqueos y advertencias.
 
-Campos minimos para publicar:
+Campos minimos exigidos para publicar:
 
 - Titulo.
 - Descripcion.
@@ -193,9 +206,15 @@ Campos minimos para publicar:
 - Palabras clave.
 - Coleccion o clasificacion tematica.
 
+Pendientes reales:
+
+- Agregar responsable/revisor editorial.
+- Guardar comentarios formales de revision.
+- Registrar fecha de aprobacion y decision editorial.
+
 ### 3. Licenciamiento y derechos
 
-Cada OA debe declarar su condicion de uso. Esto es clave para reutilizacion academica y OER.
+Cada OA ya puede declarar licencia y derechos. Esto es clave para reutilizacion academica y OER.
 
 Opciones sugeridas:
 
@@ -207,24 +226,34 @@ Opciones sugeridas:
 - Uso institucional restringido.
 - Copyright reservado.
 
-El sistema debe mostrar la licencia en el catalogo, admin, vista LTI y exportaciones.
+El sistema muestra la licencia en catalogo, admin, ficha publica, vista LTI y exportaciones.
+
+Pendientes reales:
+
+- Normalizar licencias como vocabulario controlado institucional.
+- Evaluar exposicion de URIs oficiales de Creative Commons cuando aplique.
 
 ### 4. Dublin Core y LRMI
 
-Ademas de LOM, el repositorio debe poder exponer metadatos en formatos ampliamente usados en repositorios y web semantica.
+Ademas de LOM, el repositorio ya expone metadatos en formatos ampliamente usados en repositorios y web semantica.
 
-Implementaciones recomendadas:
+Implementaciones completadas:
 
 - Endpoint JSON Dublin Core por OA.
 - Endpoint LRMI/schema.org JSON-LD por OA.
 - Marcado JSON-LD en la pagina publica del recurso.
 - Mapeo interno LOM -> Dublin Core -> LRMI.
 
+Pendientes reales:
+
+- Completar documentacion formal del mapeo.
+- Evaluar exportacion LOM XML si se requiere interoperabilidad con plataformas que no consumen JSON.
+
 ### 5. OAI-PMH
 
-Para interoperabilidad con recolectores externos, el repositorio debe implementar OAI-PMH.
+Para interoperabilidad con recolectores externos, el repositorio ya implementa OAI-PMH basico.
 
-Endpoints requeridos:
+Endpoints implementados:
 
 - `Identify`
 - `ListMetadataFormats`
@@ -233,15 +262,15 @@ Endpoints requeridos:
 - `ListRecords`
 - `GetRecord`
 
-Formatos iniciales:
+Formatos actuales y pendientes:
 
 - `oai_dc`
-- `lom`
-- `lrmi` o JSON-LD equivalente si se define como extension.
+- Pendiente: `lom` XML.
+- Pendiente: `lrmi` o JSON-LD equivalente si se define como extension.
 
 ### 6. Identificadores persistentes
 
-El UUID interno no es suficiente como identificador academico. Se necesita una URL publica estable y, si el contexto institucional lo permite, un identificador persistente.
+El UUID interno no es suficiente como identificador academico. Ya existe URL publica estable; queda pendiente evaluar un identificador persistente externo o institucional.
 
 Opciones:
 
@@ -250,17 +279,22 @@ Opciones:
 - DOI.
 - ARK.
 
-Primera fase recomendada:
+Implementado:
 
 - Crear URL publica estable por OA.
-- Guardar `canonicalUrl`.
 - Exponerla en metadatos y exportaciones.
+
+Pendientes reales:
+
+- Guardar `canonicalUrl` como campo persistido si se requiere independencia de configuracion.
+- Evaluar DOI, Handle o ARK segun soporte institucional.
+- Definir politica de citacion para versiones especificas.
 
 ### 7. Versionado de OA
 
-Un recurso publicado no debe cambiar silenciosamente. Debe existir historial.
+Un recurso publicado ya no cambia silenciosamente: existe version visible, snapshots y eventos de preservacion.
 
-Requisitos:
+Implementado:
 
 - Version visible: `1.0`, `1.1`, `2.0`.
 - Fecha de version.
@@ -268,28 +302,37 @@ Requisitos:
 - Motivo del cambio.
 - Historial de metadatos.
 - Historial de archivo.
+
+Pendientes reales:
+
+- Autor humano del cambio cuando exista sesion de editor/revisor.
+- Motivo del cambio capturado desde UI.
 - Posibilidad de citar una version especifica.
 
 ### 8. Accesibilidad
 
-La plataforma debe avanzar hacia WCAG 2.2 AA.
+La plataforma ya tiene avances iniciales hacia WCAG 2.2 AA.
 
-Areas a cubrir:
+Implementado o iniciado:
 
 - Contraste.
 - Navegacion por teclado.
 - Etiquetas ARIA cuando apliquen.
 - Estados de foco visibles.
 - Textos alternativos.
+
+Pendientes reales:
+
+- Auditoria formal WCAG 2.2 AA con evidencias.
 - PDFs accesibles.
 - Documentos DOCX con estructura.
 - Videos con subtitulos si se soportan.
 
 ### 9. LTI completo
 
-La integracion LTI actual debe madurar hacia un flujo mas robusto.
+La integracion LTI ya incluye registro de plataformas, validacion de `id_token`, contexto LMS, Deep Linking y analitica.
 
-Pendientes:
+Implementado:
 
 - Registro de plataformas LMS.
 - Validacion completa de claims.
@@ -300,23 +343,33 @@ Pendientes:
 - Seguridad por plataforma.
 - Configuracion admin por consumidor LTI.
 
+Pendientes reales:
+
+- Documentacion operativa Moodle/Canvas.
+- Pruebas guiadas contra un LMS real.
+- Manejo persistente de nonce/state si se endurece el flujo OIDC.
+- Soporte de multiples llaves de herramienta con rotacion.
+
 ### 10. Preservacion digital
 
-El repositorio debe garantizar que los archivos sean verificables y preservables.
+El repositorio ya calcula checksum, valida formato real y registra eventos de preservacion. Queda avanzar hacia politicas institucionales de preservacion.
 
-Pendientes:
+Implementado:
 
 - Checksum SHA-256 por archivo.
 - Validacion de MIME real.
 - Politica de formatos aceptados.
 - Registro de eventos de preservacion.
+
+Pendientes reales:
+
 - Auditoria de integridad.
 - Copias de seguridad.
 - Metadatos de preservacion compatibles con PREMIS en fases posteriores.
 
 ### 11. Calidad editorial
 
-La publicacion debe tener una trazabilidad clara.
+La publicacion ya tiene bloqueo por calidad y reporte por OA. La brecha real es trazabilidad editorial humana completa.
 
 Pendientes:
 
@@ -330,17 +383,25 @@ Pendientes:
 
 ### 12. Analitica y uso
 
-Para gestion profesional, el repositorio debe medir uso e impacto.
+Para gestion profesional, el repositorio ya mide uso e impacto basico y avanzado en admin.
 
-Indicadores:
+Indicadores implementados:
 
 - Descargas.
 - Visualizaciones.
 - Lanzamientos LTI.
 - OA mas usados.
+- Plataforma LTI.
+- Curso/contexto.
+- Origen.
+- Tendencia diaria.
+
+Pendientes reales:
+
 - Colecciones mas consultadas.
 - Filtros mas usados.
 - Recursos con baja completitud.
+- Exportacion CSV/Excel de analitica.
 
 ## Plan de desarrollo por fases
 
@@ -524,9 +585,25 @@ Implementacion inicial:
 - Vista `/lti/deep-link` para seleccionar OA publicados y devolver el content item al LMS.
 - Dashboard admin con filtros de periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
 
+### Fase 8: Operacion, documentacion e identificadores persistentes
+
+- [ ] Documentar configuracion operativa LTI para Moodle/Canvas.
+- [ ] Crear checklist de pruebas para launch, Deep Linking y analitica.
+- [ ] Definir estrategia institucional de identificadores persistentes.
+- [ ] Evaluar DOI, Handle o ARK.
+- [ ] Definir politica de citacion de OA y versiones.
+- [ ] Preparar guia de despliegue/operacion para entorno institucional.
+- [ ] Preparar plan de copias de seguridad y auditoria de integridad.
+
+Resultado esperado:
+
+- El repositorio queda listo para una prueba institucional con LMS real.
+- Los administradores tienen instrucciones de configuracion y validacion.
+- La institucion puede decidir el modelo de identificacion persistente antes de produccion.
+
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es cerrar Fase 7 con documentacion operativa LTI y pruebas guiadas con Moodle/Canvas.
+La siguiente tarea recomendada es iniciar Fase 8 con documentacion operativa LTI y pruebas guiadas con Moodle/Canvas.
 
 Orden sugerido:
 
