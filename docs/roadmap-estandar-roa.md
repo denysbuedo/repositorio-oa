@@ -444,7 +444,7 @@ Reporte de calidad:
 - [x] Extraer curso/contexto, usuario y roles del launch LTI.
 - [x] Agregar Deep Linking.
 - [x] Registrar uso por curso/plataforma.
-- [ ] Crear dashboard avanzado de analitica.
+- [x] Crear dashboard avanzado de analitica.
 
 Implementacion inicial:
 
@@ -462,17 +462,18 @@ Implementacion inicial:
 - Endpoint `POST /lti/deep-linking-launch` para iniciar seleccion desde LMS.
 - Endpoint `POST /lti/deep-linking-response` para firmar el recurso seleccionado.
 - Vista `/lti/deep-link` para seleccionar OA publicados y devolver el content item al LMS.
+- Dashboard admin con filtros de periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es continuar Fase 7 con dashboard avanzado de analitica.
+La siguiente tarea recomendada al retomar es cerrar Fase 7 con documentacion operativa LTI y pruebas guiadas con Moodle/Canvas.
 
 Orden sugerido:
 
-1. Desglosar analitica por plataforma LTI, curso/contexto y OA.
-2. Agregar filtros de periodo y origen.
-3. Mostrar tendencias basicas en admin.
-4. Documentar configuracion Moodle/Canvas de prueba.
+1. Documentar configuracion de herramienta externa LTI.
+2. Documentar flujo de Deep Linking.
+3. Crear checklist de prueba para launch, seleccion y analitica.
+4. Preparar datos de ejemplo para validar plataforma/curso.
 
 ## Referencias
 

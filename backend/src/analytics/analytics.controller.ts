@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { CreateUsageEventDto } from './dto/usage-event.dto';
 import { Public } from '../auth/public.decorator';
@@ -16,7 +16,10 @@ export class AnalyticsController {
   }
 
   @Get('summary')
-  getSummary() {
-    return this.analyticsService.getSummary();
+  getSummary(@Query('days') days?: string, @Query('source') source?: string) {
+    return this.analyticsService.getSummary({
+      days: days ? Number(days) : undefined,
+      source,
+    });
   }
 }

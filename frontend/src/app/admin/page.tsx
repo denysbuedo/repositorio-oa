@@ -128,6 +128,10 @@ interface AnalyticsSummary {
   downloads: number;
   ltiLaunches: number;
   totalEvents: number;
+  filters?: {
+    days: number;
+    source: string;
+  };
   topObjects: Array<{
     learningObjectId: string;
     title: string;
@@ -135,6 +139,24 @@ interface AnalyticsSummary {
     views: number;
     downloads: number;
     ltiLaunches: number;
+  }>;
+  bySource?: Array<{
+    source: string;
+    totalEvents: number;
+  }>;
+  byPlatform?: Array<{
+    platformId: string;
+    issuer?: string | null;
+    totalEvents: number;
+  }>;
+  byCourse?: Array<{
+    courseId: string;
+    courseTitle: string;
+    totalEvents: number;
+  }>;
+  daily?: Array<{
+    date: string;
+    totalEvents: number;
   }>;
 }
 
@@ -224,6 +246,8 @@ export default function AdminPage() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ObjectStatus>('all');
   const [collectionFilter, setCollectionFilter] = useState('all');
+  const [analyticsDays, setAnalyticsDays] = useState('30');
+  const [analyticsSource, setAnalyticsSource] = useState('all');
   const [selectedObject, setSelectedObject] = useState<LearningObject | null>(null);
   const [versionHistory, setVersionHistory] = useState<LearningObjectVersion[]>([]);
   const [preservationEvents, setPreservationEvents] = useState<PreservationEvent[]>([]);
@@ -357,7 +381,12 @@ export default function AdminPage() {
       return;
     }
 
-    fetch(`${API_URL}/analytics/summary`, {
+    const params = new URLSearchParams({
+      days: analyticsDays,
+      source: analyticsSource,
+    });
+
+    fetch(`${API_URL}/analytics/summary?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -375,7 +404,7 @@ export default function AdminPage() {
         console.error('Error loading analytics summary:', error);
         setAnalyticsSummary(null);
       });
-  }, [authChecked, authToken]);
+  }, [analyticsDays, analyticsSource, authChecked, authToken]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -764,13 +793,50 @@ export default function AdminPage() {
         <div>
           <p className="panel-kicker">Analitica</p>
           <h2>Uso del repositorio</h2>
-          <p>Eventos registrados desde la ficha publica, descargas y lanzamientos LTI.</p>
+          <p>Eventos por periodo, origen, recurso, plataforma y curso.</p>
+        </div>
+        <div className="analytics-filters">
+          <label className="field">
+            <span>Periodo</span>
+            <select value={analyticsDays} onChange={(event) => setAnalyticsDays(event.target.value)}>
+              <option value="7">7 dias</option>
+              <option value="30">30 dias</option>
+              <option value="90">90 dias</option>
+              <option value="365">365 dias</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Origen</span>
+            <select value={analyticsSource} onChange={(event) => setAnalyticsSource(event.target.value)}>
+              <option value="all">Todos</option>
+              <option value="detail">Ficha publica</option>
+              <option value="catalog">Catalogo</option>
+              <option value="admin">Admin</option>
+              <option value="lti">LTI</option>
+            </select>
+          </label>
         </div>
         <div className="analytics-summary">
           <Metric label="Eventos" value={analyticsSummary?.totalEvents ?? 0} compact />
           <Metric label="LTI" value={analyticsSummary?.ltiLaunches ?? 0} compact />
         </div>
+        <div className="analytics-trend" aria-label="Tendencia diaria">
+          {(analyticsSummary?.daily?.length ?? 0) > 0 ? (
+            analyticsSummary?.daily?.map((item) => (
+              <div key={item.date} className="trend-row">
+                <span>{formatShortDate(item.date)}</span>
+                <div>
+                  <i style={{ width: `${getTrendWidth(item.totalEvents, analyticsSummary?.daily ?? [])}%` }} />
+                </div>
+                <strong>{item.totalEvents}</strong>
+              </div>
+            ))
+          ) : (
+            <p className="empty-analytics">Sin eventos en el periodo seleccionado.</p>
+          )}
+        </div>
         <div className="top-objects">
+          <h3>OA mas usados</h3>
           {(analyticsSummary?.topObjects.length ?? 0) > 0 ? (
             analyticsSummary?.topObjects.map((item) => (
               <div key={item.learningObjectId} className="top-object-row">
@@ -781,6 +847,32 @@ export default function AdminPage() {
           ) : (
             <p className="empty-analytics">Aun no hay eventos de uso registrados.</p>
           )}
+        </div>
+        <div className="analytics-breakdowns">
+          <BreakdownList
+            title="Origen"
+            items={(analyticsSummary?.bySource ?? []).map((item) => ({
+              id: item.source,
+              label: getSourceLabel(item.source),
+              value: item.totalEvents,
+            }))}
+          />
+          <BreakdownList
+            title="Plataformas"
+            items={(analyticsSummary?.byPlatform ?? []).map((item) => ({
+              id: item.platformId,
+              label: item.issuer || item.platformId,
+              value: item.totalEvents,
+            }))}
+          />
+          <BreakdownList
+            title="Cursos"
+            items={(analyticsSummary?.byCourse ?? []).map((item) => ({
+              id: item.courseId,
+              label: item.courseTitle,
+              value: item.totalEvents,
+            }))}
+          />
         </div>
       </section>
 
@@ -1484,7 +1576,7 @@ export default function AdminPage() {
 
         .analytics-panel {
           display: grid;
-          grid-template-columns: minmax(220px, 320px) 220px minmax(0, 1fr);
+          grid-template-columns: minmax(220px, 280px) 260px 220px minmax(0, 1fr);
           gap: 1rem;
           align-items: stretch;
           background: white;
@@ -1511,10 +1603,61 @@ export default function AdminPage() {
           gap: 0.75rem;
         }
 
+        .analytics-filters {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+          align-items: end;
+        }
+
+        .analytics-trend {
+          display: grid;
+          gap: 0.45rem;
+          align-content: start;
+        }
+
+        .trend-row {
+          display: grid;
+          grid-template-columns: 64px minmax(0, 1fr) 32px;
+          gap: 0.5rem;
+          align-items: center;
+          color: #666666;
+          font-size: 0.75rem;
+          font-weight: 800;
+        }
+
+        .trend-row div {
+          overflow: hidden;
+          border-radius: 999px;
+          background: #eef2f7;
+          height: 0.55rem;
+        }
+
+        .trend-row i {
+          display: block;
+          height: 100%;
+          min-width: 0.25rem;
+          border-radius: inherit;
+          background: #1f5fbf;
+        }
+
+        .trend-row strong {
+          color: #1a1a1a;
+          font-size: 0.75rem;
+          text-align: right;
+        }
+
         .top-objects {
           display: grid;
           gap: 0.45rem;
           align-content: start;
+        }
+
+        .top-objects h3,
+        .breakdown-list h3 {
+          color: #1a1a1a;
+          font-size: 0.82rem;
+          margin: 0 0 0.15rem;
         }
 
         .top-object-row {
@@ -1545,6 +1688,21 @@ export default function AdminPage() {
           border-radius: 0.45rem;
           padding: 0.75rem;
           margin: 0 !important;
+        }
+
+        .analytics-breakdowns {
+          grid-column: 1 / -1;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+
+        .breakdown-list {
+          display: grid;
+          gap: 0.45rem;
+          align-content: start;
+          border-top: 1px solid #e0e0e0;
+          padding-top: 0.75rem;
         }
 
         .lti-platforms-panel {
@@ -2197,6 +2355,10 @@ export default function AdminPage() {
             grid-template-columns: 1fr;
           }
 
+          .analytics-breakdowns {
+            grid-template-columns: 1fr;
+          }
+
           .lti-platforms-panel,
           .lti-platform-form {
             grid-template-columns: 1fr;
@@ -2265,6 +2427,30 @@ function Metric({
     <div className={`metric${tone ? ` ${tone}` : ''}${compact ? ' compact' : ''}`}>
       <div className="metric-value">{value}</div>
       <div className="metric-label">{label}</div>
+    </div>
+  );
+}
+
+function BreakdownList({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{ id: string; label: string; value: number }>;
+}) {
+  return (
+    <div className="breakdown-list">
+      <h3>{title}</h3>
+      {items.length > 0 ? (
+        items.map((item) => (
+          <div key={item.id} className="top-object-row">
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+        ))
+      ) : (
+        <p className="empty-analytics">Sin datos.</p>
+      )}
     </div>
   );
 }
@@ -2412,6 +2598,38 @@ function getQualityStatusLabel(report: QualityReport) {
   }
 
   return 'Sin bloqueos ni avisos relevantes.';
+}
+
+function getTrendWidth(
+  value: number,
+  items: Array<{ totalEvents: number }>,
+) {
+  const max = Math.max(...items.map((item) => item.totalEvents), 1);
+  return Math.max((value / max) * 100, value > 0 ? 8 : 0);
+}
+
+function formatShortDate(value: string) {
+  const [, month, day] = value.split('-');
+  return `${day}/${month}`;
+}
+
+function getSourceLabel(value: string) {
+  switch (value) {
+    case 'detail':
+      return 'Ficha publica';
+    case 'catalog':
+      return 'Catalogo';
+    case 'admin':
+      return 'Admin';
+    case 'lti':
+      return 'LTI';
+    case 'metadata':
+      return 'Metadatos';
+    case 'sin_origen':
+      return 'Sin origen';
+    default:
+      return value;
+  }
 }
 
 function getProfileCompletion(object: LearningObject) {
