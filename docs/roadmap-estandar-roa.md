@@ -586,6 +586,7 @@ Implementacion inicial:
 - Vista `/lti/deep-link` para seleccionar OA publicados y devolver el content item al LMS.
 - Dashboard admin con filtros de periodo/origen, tendencia diaria y desgloses por OA, fuente, plataforma y curso.
 - Campos `canonicalUrl`, `persistentIdentifier` y `citationText` para citacion e interoperabilidad.
+- Endpoint publico `GET /health` para verificacion operativa de backend, base de datos y carpeta de archivos.
 
 ### Fase 8: Operacion, documentacion e identificadores persistentes
 
@@ -594,8 +595,8 @@ Implementacion inicial:
 - [x] Definir estrategia institucional inicial de identificadores persistentes.
 - [ ] Evaluar DOI, Handle o ARK.
 - [x] Definir politica de citacion de OA y versiones.
-- [ ] Preparar guia de despliegue/operacion para entorno institucional.
-- [ ] Preparar plan de copias de seguridad y auditoria de integridad.
+- [x] Preparar guia de despliegue/operacion para entorno institucional.
+- [x] Preparar plan de copias de seguridad y auditoria de integridad.
 
 Resultado esperado:
 
@@ -618,6 +619,8 @@ Documentacion disponible:
 
 - `docs/guia-operativa-lti.md`
 - `docs/politica-identificadores-citacion.md`
+- `docs/guia-despliegue-operacion.md`
+- `docs/plan-backups-restauracion.md`
 
 ## Referencias
 
