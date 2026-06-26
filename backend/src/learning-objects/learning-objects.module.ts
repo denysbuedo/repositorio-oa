@@ -10,6 +10,7 @@ import { LearningObjectPreservationEvent } from './entities/learning-object-pres
 import { AiService } from '../ai/ai.service';
 import { AuthModule } from '../auth/auth.module';
 import { Collection } from '../collections/entities/collection.entity';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Collection } from '../collections/entities/collection.entity';
     ]),
     AuthModule,
     JwtModule,
+    AnalyticsModule,
   ],
   controllers: [LearningObjectsController, LearningObjectFiltersController],
   providers: [LearningObjectsService, AiService],

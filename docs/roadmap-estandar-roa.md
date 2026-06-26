@@ -37,6 +37,9 @@ Construir un repositorio que no solo almacene OA, sino que pueda ser usado, cita
 - Bloqueos y advertencias de calidad conectados al flujo de publicacion.
 - Guia administrativa de versionado, preservacion y calidad.
 - Enlace global para saltar al contenido principal.
+- Analitica minima de uso: vistas, descargas y lanzamientos LTI.
+- Descargas servidas por endpoint trazable.
+- Resumen de uso visible en el panel administrativo.
 
 ## Estado al cierre del 14 de junio de 2026
 
@@ -429,20 +432,35 @@ Reporte de calidad:
 
 ### Fase 7: LTI avanzado y analitica
 
-- Mejorar configuracion LTI.
-- Agregar Deep Linking.
-- Registrar uso por curso/plataforma.
-- Crear dashboard de analitica.
+- [x] Definir analitica minima: vistas, descargas y lanzamientos LTI.
+- [x] Crear modelo de eventos de uso por OA.
+- [x] Registrar descargas desde endpoint backend trazable.
+- [x] Registrar vistas desde la ficha publica del OA.
+- [x] Registrar lanzamientos LTI.
+- [x] Mostrar resumen inicial de analitica en admin.
+- [ ] Mejorar configuracion LTI por plataforma LMS.
+- [ ] Agregar Deep Linking.
+- [ ] Registrar uso por curso/plataforma.
+- [ ] Crear dashboard avanzado de analitica.
+
+Implementacion inicial:
+
+- Entidad `UsageEvent` sobre la tabla `learning_object_usage_events`.
+- Endpoint publico `POST /analytics/events`.
+- Endpoint admin `GET /analytics/summary`.
+- Endpoint publico `GET /learning-objects/{id}/download?source={origen}`.
+- Script disponible: `scripts/usage_analytics_migration.sql`.
 
 ## Prioridad inmediata
 
-La siguiente tarea recomendada al retomar es preparar Fase 7: LTI avanzado y analitica.
+La siguiente tarea recomendada al retomar es continuar Fase 7 con configuracion LTI por plataforma LMS.
 
 Orden sugerido:
 
-1. Definir analitica minima: vistas, descargas y lanzamientos LTI.
-2. Preparar modelo de eventos de uso.
-3. Mejorar LTI con registro de plataformas y lanzamientos.
+1. Crear registro administrativo de plataformas LTI.
+2. Guardar issuer, client ID, deployment ID, JWKS URL y dominios permitidos.
+3. Validar launches contra plataformas registradas.
+4. Asociar eventos LTI a plataforma/curso/contexto.
 
 ## Referencias
 

@@ -4,6 +4,7 @@ import { LearningObjectsService } from './learning-objects.service';
 import { AiService } from '../ai/ai.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { AuthService } from '../auth/auth.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 describe('LearningObjectsController', () => {
   let controller: LearningObjectsController;
@@ -18,6 +19,7 @@ describe('LearningObjectsController', () => {
     markProcessing: jest.fn(),
     markProcessingReady: jest.fn(),
     markProcessingFailed: jest.fn(),
+    getDownloadFile: jest.fn(),
   };
   const aiServiceMock = {
     extractText: jest.fn(),
@@ -25,6 +27,9 @@ describe('LearningObjectsController', () => {
   };
   const authServiceMock = {
     validateBearerToken: jest.fn(),
+  };
+  const analyticsServiceMock = {
+    recordEvent: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -42,6 +47,10 @@ describe('LearningObjectsController', () => {
         {
           provide: AuthService,
           useValue: authServiceMock,
+        },
+        {
+          provide: AnalyticsService,
+          useValue: analyticsServiceMock,
         },
       ],
     })

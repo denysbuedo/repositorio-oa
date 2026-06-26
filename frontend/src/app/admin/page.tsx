@@ -110,6 +110,21 @@ interface QualityReport {
   };
 }
 
+interface AnalyticsSummary {
+  views: number;
+  downloads: number;
+  ltiLaunches: number;
+  totalEvents: number;
+  topObjects: Array<{
+    learningObjectId: string;
+    title: string;
+    totalEvents: number;
+    views: number;
+    downloads: number;
+    ltiLaunches: number;
+  }>;
+}
+
 interface ReviewForm {
   title: string;
   description: string;
@@ -199,6 +214,7 @@ export default function AdminPage() {
   const [versionHistory, setVersionHistory] = useState<LearningObjectVersion[]>([]);
   const [preservationEvents, setPreservationEvents] = useState<PreservationEvent[]>([]);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
   const [loadingVersions, setLoadingVersions] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [loadingQuality, setLoadingQuality] = useState(false);
@@ -289,11 +305,37 @@ export default function AdminPage() {
       });
   }, [authChecked, authToken]);
 
+  const fetchAnalyticsSummary = useCallback(() => {
+    if (!authChecked || !authToken) {
+      return;
+    }
+
+    fetch(`${API_URL}/analytics/summary`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setAnalyticsSummary(data as AnalyticsSummary);
+      })
+      .catch((error) => {
+        console.error('Error loading analytics summary:', error);
+        setAnalyticsSummary(null);
+      });
+  }, [authChecked, authToken]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchObjects();
     fetchCollections();
-  }, [fetchObjects, fetchCollections]);
+    fetchAnalyticsSummary();
+  }, [fetchObjects, fetchCollections, fetchAnalyticsSummary]);
 
   const filteredObjects = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -613,9 +655,33 @@ export default function AdminPage() {
         <Metric label="Total" value={stats.total} />
         <Metric label="Publicados" value={stats.published} />
         <Metric label="Borradores" value={stats.draft} />
-        <Metric label="Archivados" value={stats.archived} />
         <Metric label="Perfil completo" value={stats.completeProfile} />
-        <Metric label="En coleccion" value={stats.withCollection} />
+        <Metric label="Vistas" value={analyticsSummary?.views ?? 0} tone="blue" />
+        <Metric label="Descargas" value={analyticsSummary?.downloads ?? 0} tone="blue" />
+      </section>
+
+      <section className="analytics-panel" aria-label="Analitica de uso">
+        <div>
+          <p className="panel-kicker">Analitica</p>
+          <h2>Uso del repositorio</h2>
+          <p>Eventos registrados desde la ficha publica, descargas y lanzamientos LTI.</p>
+        </div>
+        <div className="analytics-summary">
+          <Metric label="Eventos" value={analyticsSummary?.totalEvents ?? 0} compact />
+          <Metric label="LTI" value={analyticsSummary?.ltiLaunches ?? 0} compact />
+        </div>
+        <div className="top-objects">
+          {(analyticsSummary?.topObjects.length ?? 0) > 0 ? (
+            analyticsSummary?.topObjects.map((item) => (
+              <div key={item.learningObjectId} className="top-object-row">
+                <span>{item.title}</span>
+                <strong>{item.totalEvents}</strong>
+              </div>
+            ))
+          ) : (
+            <p className="empty-analytics">Aun no hay eventos de uso registrados.</p>
+          )}
+        </div>
       </section>
 
       <section className="collections-panel" aria-label="Gestion de colecciones">
@@ -1016,7 +1082,7 @@ export default function AdminPage() {
                 <p className="processing-error">{selectedObject.processingError}</p>
               )}
               {selectedObject.fileUrl && (
-                <a className="download-link" href={`${API_URL}/${selectedObject.fileUrl}`} download>
+                <a className="download-link" href={`${API_URL}/learning-objects/${selectedObject.id}/download?source=admin`} download>
                   Descargar archivo
                 </a>
               )}
@@ -1194,6 +1260,15 @@ export default function AdminPage() {
           padding: 0.9rem;
         }
 
+        .metric.blue {
+          border-color: #b8cff1;
+          background: #f5f8fd;
+        }
+
+        .metric.compact {
+          padding: 0.75rem;
+        }
+
         .metric-value {
           font-size: 1.5rem;
           font-weight: 800;
@@ -1227,6 +1302,71 @@ export default function AdminPage() {
           border-radius: 0.5rem;
           padding: 1rem;
           margin-bottom: 1rem;
+        }
+
+        .analytics-panel {
+          display: grid;
+          grid-template-columns: minmax(220px, 320px) 220px minmax(0, 1fr);
+          gap: 1rem;
+          align-items: stretch;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 0.5rem;
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .analytics-panel h2 {
+          font-size: 1rem;
+          margin: 0;
+        }
+
+        .analytics-panel p {
+          color: #666666;
+          margin: 0.35rem 0 0;
+          font-size: 0.875rem;
+        }
+
+        .analytics-summary {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 0.75rem;
+        }
+
+        .top-objects {
+          display: grid;
+          gap: 0.45rem;
+          align-content: start;
+        }
+
+        .top-object-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          border: 1px solid #e0e0e0;
+          border-radius: 0.45rem;
+          background: #f8fafc;
+          padding: 0.6rem 0.7rem;
+          color: #1a1a1a;
+          font-size: 0.82rem;
+          font-weight: 700;
+        }
+
+        .top-object-row span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .top-object-row strong {
+          color: #1f5fbf;
+        }
+
+        .empty-analytics {
+          border: 1px dashed #d0d7e2;
+          border-radius: 0.45rem;
+          padding: 0.75rem;
+          margin: 0 !important;
         }
 
         .collections-panel h2 {
@@ -1816,6 +1956,10 @@ export default function AdminPage() {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
+          .analytics-panel {
+            grid-template-columns: 1fr;
+          }
+
           .admin-workspace {
             grid-template-columns: 1fr;
           }
@@ -1829,6 +1973,7 @@ export default function AdminPage() {
           .admin-header,
           .toolbar,
           .collections-panel,
+          .analytics-panel,
           .collection-form {
             flex-direction: column;
             align-items: stretch;
@@ -1861,9 +2006,19 @@ export default function AdminPage() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function Metric({
+  label,
+  value,
+  tone,
+  compact = false,
+}: {
+  label: string;
+  value: number;
+  tone?: 'blue';
+  compact?: boolean;
+}) {
   return (
-    <div className="metric">
+    <div className={`metric${tone ? ` ${tone}` : ''}${compact ? ' compact' : ''}`}>
       <div className="metric-value">{value}</div>
       <div className="metric-label">{label}</div>
     </div>

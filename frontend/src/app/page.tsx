@@ -187,7 +187,7 @@ function ObjectList({
                         Copiar ID
                       </button>
                       {obj.fileUrl && (
-                        <a href={`${API_URL}/${obj.fileUrl}`} download className="download-btn">
+                        <a href={`${API_URL}/learning-objects/${obj.id}/download?source=catalog`} download className="download-btn">
                           Descargar
                         </a>
                       )}

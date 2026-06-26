@@ -82,7 +82,7 @@ function LtiContent() {
           </p>
         </div>
         <a 
-          href={`${API_URL}/${object.fileUrl}`} 
+          href={`${API_URL}/learning-objects/${object.id}/download?source=lti`}
           download 
           style={{ 
             padding: '0.5rem 1rem', 
@@ -116,7 +116,7 @@ function LtiContent() {
         ) : (
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             <p>Este recurso es un archivo. Puedes descargarlo aqui:</p>
-            <a href={`${API_URL}/${object.fileUrl}`} className="btn" target="_blank">Descargar {object.title}</a>
+            <a href={`${API_URL}/learning-objects/${object.id}/download?source=lti`} className="btn" target="_blank">Descargar {object.title}</a>
           </div>
         )}
       </div>

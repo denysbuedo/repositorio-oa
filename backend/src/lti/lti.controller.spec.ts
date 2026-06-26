@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LtiController } from './lti.controller';
 import { LtiService } from './lti.service';
+import { AnalyticsService } from '../analytics/analytics.service';
 
 jest.mock('jose', () => ({
   exportJWK: jest.fn().mockResolvedValue({ kty: 'RSA' }),
@@ -15,6 +16,10 @@ describe('LtiController', () => {
   const ltiServiceMock = {
     getJwks: jest.fn(),
     validateOidcLogin: jest.fn(),
+    buildLaunchRedirectUrl: jest.fn(),
+  };
+  const analyticsServiceMock = {
+    recordEvent: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -24,6 +29,10 @@ describe('LtiController', () => {
         {
           provide: LtiService,
           useValue: ltiServiceMock,
+        },
+        {
+          provide: AnalyticsService,
+          useValue: analyticsServiceMock,
         },
       ],
     }).compile();

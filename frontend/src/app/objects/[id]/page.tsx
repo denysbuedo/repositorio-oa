@@ -77,6 +77,7 @@ export default function ObjectDetailPage() {
       .then((data) => {
         setObject(data as LearningObject);
         setLoading(false);
+        void recordUsageEvent(objectId, 'view', 'detail');
       })
       .catch((error) => {
         console.error('Error loading public object detail:', error);
@@ -123,7 +124,7 @@ export default function ObjectDetailPage() {
         <div className="header-actions">
           <button onClick={copyCanonicalUrl} className="secondary-button">Copiar enlace</button>
           {object.fileUrl && (
-            <a href={`${API_URL}/${object.fileUrl}`} download className="primary-button">
+            <a href={`${API_URL}/learning-objects/${object.id}/download?source=detail`} download className="primary-button">
               Descargar
             </a>
           )}
@@ -480,12 +481,28 @@ function buildJsonLd(object: LearningObject, canonicalPath: string) {
         }
       : undefined,
     encodingFormat: object.fileMimeType,
-    contentUrl: object.fileUrl ? `${API_URL}/${object.fileUrl}` : undefined,
+    contentUrl: object.fileUrl ? `${API_URL}/learning-objects/${object.id}/download?source=metadata` : undefined,
     version: object.currentVersion,
     sha256: object.fileChecksumSha256,
     accessibilitySummary: object.lomMetadata?.accessibility?.notes,
     accessibilityFeature: getAccessibilityFeatures(object.lomMetadata?.accessibility),
   };
+}
+
+async function recordUsageEvent(
+  learningObjectId: string,
+  eventType: 'view' | 'download' | 'lti_launch',
+  source: string,
+) {
+  try {
+    await fetch(`${API_URL}/analytics/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ learningObjectId, eventType, source }),
+    });
+  } catch (error) {
+    console.error('Error recording usage event:', error);
+  }
 }
 
 function getLanguageLabel(value?: string) {

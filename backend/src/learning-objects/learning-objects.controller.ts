@@ -13,8 +13,9 @@ import {
   Query,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { LearningObjectsService } from './learning-objects.service';
 import { AiService } from '../ai/ai.service';
@@ -28,6 +29,8 @@ import { AuthGuard } from '../auth/auth.guard';
 import { Public } from '../auth/public.decorator';
 import { AuthService } from '../auth/auth.service';
 import { promises as fs } from 'fs';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { UsageEventType } from '../analytics/entities/usage-event.entity';
 
 const allowedMimeTypes = new Set([
   'application/pdf',
@@ -58,6 +61,7 @@ export class LearningObjectsController {
     private readonly service: LearningObjectsService,
     private readonly aiService: AiService,
     private readonly authService: AuthService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   @Post()
@@ -115,6 +119,22 @@ export class LearningObjectsController {
   async getHtml(@Param('id', ParseUUIDPipe) id: string) {
     const html = await this.service.getObjectHtml(id, true);
     return { html };
+  }
+
+  @Get(':id/download')
+  @Public()
+  async downloadFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('source') source: string | undefined,
+    @Res() res: Response,
+  ) {
+    const file = await this.service.getDownloadFile(id);
+    await this.analyticsService.recordEvent({
+      learningObjectId: id,
+      eventType: UsageEventType.DOWNLOAD,
+      source: source || 'public',
+    });
+    return res.download(file.path, file.filename);
   }
 
   @Get(':id/versions')

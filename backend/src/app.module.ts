@@ -10,11 +10,13 @@ import { LearningObject } from './learning-objects/entities/learning-object.enti
 import { LearningObjectVersion } from './learning-objects/entities/learning-object-version.entity';
 import { LearningObjectPreservationEvent } from './learning-objects/entities/learning-object-preservation-event.entity';
 import { Collection } from './collections/entities/collection.entity';
+import { UsageEvent } from './analytics/entities/usage-event.entity';
 import { AiService } from './ai/ai.service';
 import { LtiModule } from './lti/lti.module';
 import { AuthModule } from './auth/auth.module';
 import { CollectionsModule } from './collections/collections.module';
 import { OaiModule } from './oai/oai.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { OaiModule } from './oai/oai.module';
           LearningObjectVersion,
           LearningObjectPreservationEvent,
           Collection,
+          UsageEvent,
         ],
         synchronize: configService.get<string>('DB_SYNC') === 'true',
       }),
@@ -48,6 +51,7 @@ import { OaiModule } from './oai/oai.module';
     LearningObjectsModule,
     LtiModule,
     OaiModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AiService],

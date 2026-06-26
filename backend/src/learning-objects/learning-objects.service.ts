@@ -404,6 +404,36 @@ export class LearningObjectsService {
     }
   }
 
+  async getDownloadFile(
+    id: string,
+  ): Promise<{ path: string; filename: string }> {
+    const object = await this.findPublishedOne(id);
+    if (!object.fileUrl) {
+      throw new NotFoundException('El recurso no tiene archivo disponible');
+    }
+
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads');
+    const filePath = path.resolve(process.cwd(), object.fileUrl);
+    const normalizedRoot = uploadsRoot.toLowerCase();
+    const normalizedFilePath = filePath.toLowerCase();
+
+    if (
+      normalizedFilePath !== normalizedRoot &&
+      !normalizedFilePath.startsWith(`${normalizedRoot}${path.sep}`)
+    ) {
+      throw new BadRequestException('Ruta de archivo no permitida');
+    }
+
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Archivo no encontrado en el servidor');
+    }
+
+    return {
+      path: filePath,
+      filename: object.originalFilename ?? path.basename(filePath),
+    };
+  }
+
   private async validateCollection(collectionId?: string | null) {
     if (!collectionId) return;
 
