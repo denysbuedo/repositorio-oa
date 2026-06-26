@@ -14,6 +14,7 @@ import { LtiService } from './lti.service';
 import type { OidcLoginParams } from './lti.service';
 
 interface LtiLaunchBody {
+  id_token?: string;
   custom_object_id?: string;
 }
 
@@ -37,15 +38,29 @@ export class LtiController {
 
   @Post('launch')
   async launch(@Body() body: LtiLaunchBody, @Res() res: Response) {
-    const objectId = body.custom_object_id;
+    const validatedLaunch = body.id_token
+      ? await this.ltiService.validateLaunchToken(body.id_token)
+      : null;
+    const objectId = validatedLaunch?.objectId ?? body.custom_object_id;
+
     if (!objectId) {
-      throw new BadRequestException('custom_object_id is required');
+      throw new BadRequestException('custom_object_id or id_token is required');
     }
 
     await this.analyticsService.recordEvent({
       learningObjectId: objectId,
       eventType: UsageEventType.LTI_LAUNCH,
       source: 'lti',
+      context: validatedLaunch
+        ? {
+            platformId: validatedLaunch.platformId,
+            issuer: validatedLaunch.issuer,
+            deploymentId: validatedLaunch.deploymentId,
+            course: validatedLaunch.context,
+            user: validatedLaunch.user,
+            roles: validatedLaunch.roles,
+          }
+        : undefined,
     });
 
     return res.redirect(this.ltiService.buildLaunchRedirectUrl(objectId));
